@@ -8,12 +8,18 @@ package views
 templ HomeContent() {
 	<div id="app-shell" class="flex flex-col min-h-screen overflow-x-hidden relative">
 
-		<!-- ── Animated background layer ──────────────────────────────────── -->
-		<div class="fixed inset-0 pointer-events-none z-[-20] bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]">
-			<div class="grid-glitch-overlay"></div>
+		<!-- ── Fixed Background Layer ─────────────────────────────────────── -->
+		<!-- Wrapping everything in a single fixed inset container ensures they do not scroll -->
+		<div class="fixed inset-0 w-full h-full pointer-events-none z-[-30]">
+			<!-- Grid mesh base layer -->
+			<div class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]">
+				<!-- Interactive glitch overlay -->
+				<div id="glitch-grid" class="grid-glitch-overlay"></div>
+			</div>
+			<!-- Colored glowing lights -->
+			<div class="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-tertiary-container/5 blur-3xl organic-blob-1 -z-10"></div>
+			<div class="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-primary-container/5 blur-3xl organic-blob-2 -z-10"></div>
 		</div>
-		<div class="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-tertiary-container/5 blur-3xl organic-blob-1 -z-10 pointer-events-none"></div>
-		<div class="fixed bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-primary-container/5 blur-3xl organic-blob-2 -z-10 pointer-events-none"></div>
 
 		<!-- ── Navigation ─────────────────────────────────────────────────── -->
 		@NavBar()
@@ -75,6 +81,61 @@ templ HomeContent() {
 
 		<!-- ── Footer ─────────────────────────────────────────────────────── -->
 		@Footer()
+
+		<!-- ── Interactive Grid Script ────────────────────────────────────── -->
+		<script>
+			(function() {
+				const html = document.documentElement;
+				let lastTime = 0;
+				let lastX = window.innerWidth / 2;
+				let lastY = window.innerHeight / 2;
+				let currentGlitch = 0;
+				
+				// Apply mouse movement to CSS variables
+				window.addEventListener('mousemove', (e) => {
+					// 1. Position tracking
+					const x = e.clientX;
+					const y = e.clientY;
+					const xRatio = x / window.innerWidth;
+					const yRatio = y / window.innerHeight;
+					
+					html.style.setProperty('--mouse-x', xRatio);
+					html.style.setProperty('--mouse-y', yRatio);
+					html.style.setProperty('--mouse-x-px', x + 'px');
+					html.style.setProperty('--mouse-y-px', y + 'px');
+					
+					// 2. Velocity/Glitch tracking
+					const now = performance.now();
+					if (lastTime) {
+						const dt = now - lastTime;
+						const dx = x - lastX;
+						const dy = y - lastY;
+						const speed = Math.sqrt(dx*dx + dy*dy) / dt;
+						
+						// Ramp up glitch intensity based on mouse speed
+						currentGlitch = Math.min(1, currentGlitch + speed * 0.5);
+					}
+					html.style.setProperty('--glitch-intensity', currentGlitch);
+					
+					lastTime = now;
+					lastX = x;
+					lastY = y;
+				});
+
+				// Decay the glitch effect when the mouse isn't moving
+				setInterval(() => {
+					if (currentGlitch > 0) {
+						currentGlitch = Math.max(0, currentGlitch - 0.05);
+						html.style.setProperty('--glitch-intensity', currentGlitch);
+					}
+					// Also slowly reset time if no event fired, to avoid speed spikes
+					const now = performance.now();
+					if (now - lastTime > 100) {
+						lastTime = now;
+					}
+				}, 50);
+			})();
+		</script>
 	</div>
 }
 
