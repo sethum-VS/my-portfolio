@@ -45,33 +45,35 @@ templ NavBar() {
 }
 
 // Footer renders the two-column footer with Elsewhere and Contact links.
-// Extracted from the Home Screen HTML as a reusable component.
+// Extracted and redesigned to match the provided layout.
 templ Footer() {
-	<footer class="w-full relative z-20 pt-20 pb-10 bg-transparent text-on-surface-variant">
-		<div class="max-w-7xl mx-auto px-6 md:px-12 flex flex-col md:flex-row gap-12 justify-center items-center text-center">
+	<footer class="w-full relative z-20 pt-32 pb-24 bg-transparent">
+		<div class="max-w-4xl mx-auto px-6 border-t border-white/5 pt-16 flex flex-col md:flex-row justify-between items-start gap-12 md:gap-0">
 			<!-- Copyright -->
-			<div class="font-body text-sm tracking-tight text-on-surface-variant/70">
+			<div class="font-body text-sm tracking-tight text-zinc-400 mt-1 md:mt-0">
 				© 2026 Sethum Methsanda
-				<span class="mx-2 text-[#4f5b66]">•</span>
+				<span class="mx-2 text-zinc-600">•</span>
 				Colophon
 			</div>
 
 			<!-- Link columns -->
-			<div class="flex flex-col md:flex-row gap-16 md:gap-20 items-center md:items-start">
+			<div class="flex flex-row gap-20 md:gap-24">
 				<!-- Elsewhere -->
-				<div class="flex flex-col gap-5 items-center md:items-center">
-					<span class="font-headline text-sm font-bold uppercase tracking-wider text-on-surface">Elsewhere</span>
-					<div class="flex flex-col gap-4">
-						<a class="font-body text-[15px] hover:text-white transition-colors duration-200" href="#">Github</a>
-						<a class="font-body text-[15px] hover:text-white transition-colors duration-200" href="#">CV</a>
-						<a class="font-body text-[15px] hover:text-white transition-colors duration-200" href="#">LinkedIn</a>
+				<div class="flex flex-col gap-6 items-start">
+					<span class="font-body text-sm font-semibold text-emerald-300/90">Elsewhere</span>
+					<div class="flex flex-col gap-5">
+						<a class="font-body text-[14px] text-zinc-300 hover:text-white transition-colors duration-200" href="#">Figma</a>
+						<a class="font-body text-[14px] text-zinc-300 hover:text-white transition-colors duration-200" href="#">Github</a>
+						<a class="font-body text-[14px] text-zinc-300 hover:text-white transition-colors duration-200" href="#">Posts</a>
+						<a class="font-body text-[14px] text-zinc-300 hover:text-white transition-colors duration-200" href="#">CV</a>
+						<a class="font-body text-[14px] text-zinc-300 hover:text-white transition-colors duration-200" href="#">LinkedIn</a>
 					</div>
 				</div>
 				<!-- Contact -->
-				<div class="flex flex-col gap-5 items-center md:items-center">
-					<span class="font-headline text-sm font-bold uppercase tracking-wider text-on-surface">Contact</span>
-					<div class="flex flex-col gap-4">
-						<a class="font-body text-[15px] hover:text-white transition-colors duration-200" href="#">Message</a>
+				<div class="flex flex-col gap-6 items-start">
+					<span class="font-body text-sm font-semibold text-emerald-300/90">Contact</span>
+					<div class="flex flex-col gap-5">
+						<a class="font-body text-[14px] text-zinc-300 hover:text-white transition-colors duration-200" href="#">Message</a>
 					</div>
 				</div>
 			</div>
