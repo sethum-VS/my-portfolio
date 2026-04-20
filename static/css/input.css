@@ -8,37 +8,37 @@
 /* Follows the mouse position via CSS variables and glitches on fast movement */
 .grid-glitch-overlay {
   position: absolute;
-  inset: -100px; /* Slight overshoot to allow for transform sliding */
+  inset: -50px;
   
-  /* The nodes light up based on glitch intensity */
+  /* The nodes light up based on glitch intensity — kept subtle */
   background-image: radial-gradient(
     circle at 1px 1px, 
-    rgba(88, 199, 255, calc(0.2 + var(--glitch-intensity, 0) * 0.8)) 1.5px, 
+    rgba(88, 199, 255, calc(0.1 + var(--glitch-intensity, 0) * 0.4)) 1.5px, 
     transparent 0
   );
   background-size: 40px 40px;
   
-  /* Mask centers the grid glow on the cursor, expanding dynamically */
+  /* Tighter mask radius centered on cursor */
   mask-image: radial-gradient(
     circle at calc(50px + var(--mouse-x, 0.5) * 100vw) calc(50px + var(--mouse-y, 0.5) * 100vh), 
     black 0%, 
-    transparent calc(300px + var(--glitch-intensity, 0) * 400px)
+    transparent calc(120px + var(--glitch-intensity, 0) * 150px)
   );
   mask-repeat: no-repeat;
   
-  /* Glitch offsets driven entirely by mouse movement variables */
+  /* Reduced jitter on fast movement */
   transform: 
     translate(
-      calc(var(--glitch-intensity, 0) * 25px * sin(var(--mouse-x, 0) * 1000)),
-      calc(var(--glitch-intensity, 0) * 25px * cos(var(--mouse-y, 0) * 1000))
+      calc(var(--glitch-intensity, 0) * 8px * sin(var(--mouse-x, 0) * 1000)),
+      calc(var(--glitch-intensity, 0) * 8px * cos(var(--mouse-y, 0) * 1000))
     )
-    scale(calc(1 + var(--glitch-intensity, 0) * 0.05));
+    scale(calc(1 + var(--glitch-intensity, 0) * 0.02));
     
-  filter: drop-shadow(0 0 calc(var(--glitch-intensity, 0) * 4px) rgba(88,199,255,0.8));
+  filter: drop-shadow(0 0 calc(var(--glitch-intensity, 0) * 2px) rgba(88,199,255,0.5));
   
   pointer-events: none;
   z-index: 1;
-  transition: transform 0.1s ease-out, filter 0.1s ease-out;
+  transition: transform 0.15s ease-out, filter 0.15s ease-out;
 }
 
 /* Subtle glitch text effect */
