@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Custom animation keyframes ─────────────────────────────────────────────── */
+
+/* Glitch grid overlay — travels diagonally across the background */
+@keyframes glitch-flicker {
+  0%, 100% { opacity: 0.2; }
+  30%       { opacity: 0.2; }
+  31%       { opacity: 1;   }
+  32%       { opacity: 0.2; }
+  34%       { opacity: 0.6; }
+  35%       { opacity: 0.2; }
+}
+
+@keyframes glitch-travel {
+  0%   { mask-position: -20% -20%; }
+  100% { mask-position: 120% 120%; }
+}
+
+.grid-glitch-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 1px 1px, #58c7ff 1.5px, transparent 0);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(circle at center, black, transparent 80%);
+  mask-size: 300px 300px;
+  mask-repeat: no-repeat;
+  animation: glitch-travel 8s linear infinite, glitch-flicker 4s step-end infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Subtle glitch text effect */
+@keyframes text-glitch-anim {
+  0%, 40%, 80% {
+    text-shadow: 1px 0px 0px rgba(88, 199, 255, 0.8), -1px 0px 0px rgba(255, 166, 136, 0.8);
+    transform: translate(0);
+  }
+  20%, 60%, 100% {
+    text-shadow: -1px 0px 0px rgba(88, 199, 255, 0.8), 1px 0px 0px rgba(255, 166, 136, 0.8);
+    transform: translate(-1px, 0);
+  }
+}
+
+.glitch-text-subtle {
+  animation: text-glitch-anim 0.3s infinite steps(2);
+  display: inline-block;
+}
+
+/* LED status indicator blink */
+@keyframes led-blink {
+  0%, 100% { opacity: 1;   box-shadow: 0 0 4px #4ade80, 0 0 8px #4ade80; }
+  50%       { opacity: 0.4; box-shadow: 0 0 2px #4ade80; }
+}
+
+.led-green {
+  animation: led-blink 2s ease-in-out infinite;
+}
+
+/* ── Organic morphing blob border-radius helpers ─────────────────────────── */
+.organic-blob-1 { border-radius: 41% 59% 45% 55% / 41% 41% 59% 59%; }
+.organic-blob-2 { border-radius: 60% 40% 63% 37% / 46% 56% 44% 54%; }
+
+/* ── Bouncy transition timing ────────────────────────────────────────────── */
+.transition-bouncy {
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── HTMX View Transition: Splash → Home swap ────────────────────────────── */
+/* These target the View Transitions API pseudo-elements for a smooth cross-fade. */
+::view-transition-old(root) {
+  animation: 400ms cubic-bezier(0.4, 0, 1, 1) both fade-out;
+}
+
+::view-transition-new(root) {
+  animation: 400ms cubic-bezier(0, 0, 0.2, 1) 100ms both fade-in;
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Fallback for browsers without View Transitions API */
+.htmx-swapping {
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}

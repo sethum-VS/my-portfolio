@@ -1,0 +1,86 @@
+package views
+
+// HomeContent is the inner content fragment returned to HTMX for the
+// outerHTML swap. It is also composed inside HomePage for direct navigation.
+//
+// The #app-shell ID must match the splash's #app-shell so HTMX replaces it
+// cleanly via outerHTML transition:true.
+templ HomeContent() {
+	<div id="app-shell" class="flex flex-col min-h-screen overflow-x-hidden relative">
+
+		<!-- ── Animated background layer ──────────────────────────────────── -->
+		<div class="fixed inset-0 pointer-events-none z-[-20] bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]">
+			<div class="grid-glitch-overlay"></div>
+		</div>
+		<div class="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-tertiary-container/5 blur-3xl organic-blob-1 -z-10 pointer-events-none"></div>
+		<div class="fixed bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-primary-container/5 blur-3xl organic-blob-2 -z-10 pointer-events-none"></div>
+
+		<!-- ── Navigation ─────────────────────────────────────────────────── -->
+		@NavBar()
+
+		<!-- ── Hero section ───────────────────────────────────────────────── -->
+		<main class="flex-grow flex flex-col justify-center items-center px-6 md:px-12 pt-32 relative z-10 w-full max-w-7xl mx-auto min-h-screen pb-24">
+			<div class="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-8 items-center w-full">
+
+				<!-- Left column: text content -->
+				<div class="lg:col-span-7 flex flex-col gap-8 lg:pr-12">
+
+					<!-- Availability badge -->
+					<div class="inline-flex items-center gap-2.5 bg-zinc-800/60 backdrop-blur-xl px-4 py-2 rounded-full w-max border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] hover:scale-105 transition-transform duration-300">
+						<span class="w-2 h-2 rounded-full bg-green-400 led-green"></span>
+						<span class="font-label text-[10px] tracking-[0.15em] uppercase text-zinc-300 font-bold">Available for new opportunities</span>
+					</div>
+
+					<!-- Headline -->
+					<div class="flex flex-col gap-4">
+						<h1 class="font-headline text-6xl md:text-8xl lg:text-[6.5rem] leading-[0.95] tracking-tighter font-black text-on-surface">
+							Hi, I&#39;m Sethum Methsanda.
+							<br/>
+							<span class="text-primary tracking-tighter font-black">Software Developer.</span>
+						</h1>
+					</div>
+
+					<!-- CTA buttons -->
+					<div class="flex flex-wrap items-center gap-6 mt-8">
+						<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary-fixed font-headline font-semibold px-8 py-4 rounded-full hover:scale-[1.02] transition-bouncy duration-300 shadow-lg shadow-primary-container/20 flex items-center gap-2">
+							View Projects
+							<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+						</button>
+						<button class="group relative px-8 py-4 font-headline font-semibold text-primary hover:text-primary-container transition-colors duration-300 flex items-center gap-2 overflow-hidden rounded-full">
+							<div class="absolute inset-0 bg-surface-container-highest organic-blob-1 opacity-0 group-hover:opacity-20 transition-opacity duration-500 -z-10 scale-50 group-hover:scale-150 transform origin-center"></div>
+							Get in Touch
+						</button>
+					</div>
+				</div>
+
+				<!-- Right column: hero image -->
+				<div class="lg:col-span-5 relative flex justify-center items-center h-[500px] lg:h-[600px] w-full">
+					<div class="relative w-full max-w-md aspect-square">
+						<!-- Image circle with rotation hover -->
+						<div class="absolute inset-0 bg-surface-container-low/70 backdrop-blur-xl rounded-full border border-outline-variant/20 shadow-2xl shadow-black/50 transform rotate-[-6deg] transition-transform duration-700 hover:rotate-0 flex justify-center items-center overflow-hidden">
+							<img
+								alt="Hello World code displayed on a sleek dark device against a grid background."
+								class="w-[85%] h-[85%] object-cover rounded-full mix-blend-luminosity opacity-80 brightness-110 contrast-110"
+								src="/static/images/helo_world_block.png"
+							/>
+							<div class="absolute inset-0 bg-gradient-to-tr from-surface/80 via-transparent to-primary/10 rounded-full"></div>
+						</div>
+						<!-- Ambient glow blobs -->
+						<div class="absolute -top-4 -right-4 w-24 h-24 bg-tertiary-container/20 rounded-full blur-xl animate-pulse"></div>
+						<div class="absolute -bottom-8 -left-8 w-32 h-32 bg-primary-container/20 rounded-full blur-xl"></div>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<!-- ── Footer ─────────────────────────────────────────────────────── -->
+		@Footer()
+	</div>
+}
+
+// HomePage wraps HomeContent in the global Layout for direct browser navigation.
+templ HomePage() {
+	@Layout("DevArtisan | Software Developer") {
+		@HomeContent()
+	}
+}
