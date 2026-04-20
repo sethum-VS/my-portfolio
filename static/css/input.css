@@ -9,33 +9,26 @@
 .grid-glitch-overlay {
   position: absolute;
   inset: -50px;
-  
+
   /* The nodes light up based on glitch intensity — subtly brightened */
-  background-image: radial-gradient(
-    circle at 1px 1px, 
-    rgba(88, 199, 255, calc(0.15 + var(--glitch-intensity, 0) * 0.6)) 1.5px, 
-    transparent 0
-  );
+  background-image: radial-gradient(circle at 1px 1px,
+      rgba(88, 199, 255, calc(0.15 + var(--glitch-intensity, 0) * 1)) 1.5px,
+      transparent 0);
   background-size: 40px 40px;
-  
+
   /* Slightly broader mask radius centered on cursor */
-  mask-image: radial-gradient(
-    circle at calc(50px + var(--mouse-x, 0.5) * 100vw) calc(50px + var(--mouse-y, 0.5) * 100vh), 
-    black 0%, 
-    transparent calc(150px + var(--glitch-intensity, 0) * 200px)
-  );
+  mask-image: radial-gradient(circle at calc(50px + var(--mouse-x, 0.5) * 100vw) calc(50px + var(--mouse-y, 0.5) * 100vh),
+      black 0%,
+      transparent calc(150px + var(--glitch-intensity, 0) * 180px));
   mask-repeat: no-repeat;
-  
+
   /* Reduced jitter on fast movement */
-  transform: 
-    translate(
-      calc(var(--glitch-intensity, 0) * 8px * sin(var(--mouse-x, 0) * 1000)),
-      calc(var(--glitch-intensity, 0) * 8px * cos(var(--mouse-y, 0) * 1000))
-    )
-    scale(calc(1 + var(--glitch-intensity, 0) * 0.02));
-    
-  filter: drop-shadow(0 0 calc(var(--glitch-intensity, 0) * 4px) rgba(88,199,255,0.7));
-  
+  transform:
+    translate(calc(var(--glitch-intensity, 0) * 8px * sin(var(--mouse-x, 0) * 1000)),
+      calc(var(--glitch-intensity, 0) * 8px * cos(var(--mouse-y, 0) * 1000))) scale(calc(1 + var(--glitch-intensity, 0) * 0.02));
+
+  filter: drop-shadow(0 0 calc(var(--glitch-intensity, 0) * 4px) rgba(88, 199, 255, 0.7));
+
   pointer-events: none;
   z-index: 1;
   transition: transform 0.15s ease-out, filter 0.15s ease-out;
@@ -43,11 +36,17 @@
 
 /* Subtle glitch text effect */
 @keyframes text-glitch-anim {
-  0%, 40%, 80% {
+
+  0%,
+  40%,
+  80% {
     text-shadow: 1px 0px 0px rgba(88, 199, 255, 0.8), -1px 0px 0px rgba(255, 166, 136, 0.8);
     transform: translate(0);
   }
-  20%, 60%, 100% {
+
+  20%,
+  60%,
+  100% {
     text-shadow: -1px 0px 0px rgba(88, 199, 255, 0.8), 1px 0px 0px rgba(255, 166, 136, 0.8);
     transform: translate(-1px, 0);
   }
@@ -60,8 +59,17 @@
 
 /* LED status indicator blink */
 @keyframes led-blink {
-  0%, 100% { opacity: 1;   box-shadow: 0 0 4px #4ade80, 0 0 8px #4ade80; }
-  50%       { opacity: 0.4; box-shadow: 0 0 2px #4ade80; }
+
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 4px #4ade80, 0 0 8px #4ade80;
+  }
+
+  50% {
+    opacity: 0.4;
+    box-shadow: 0 0 2px #4ade80;
+  }
 }
 
 .led-green {
@@ -69,8 +77,13 @@
 }
 
 /* ── Organic morphing blob border-radius helpers ─────────────────────────── */
-.organic-blob-1 { border-radius: 41% 59% 45% 55% / 41% 41% 59% 59%; }
-.organic-blob-2 { border-radius: 60% 40% 63% 37% / 46% 56% 44% 54%; }
+.organic-blob-1 {
+  border-radius: 41% 59% 45% 55% / 41% 41% 59% 59%;
+}
+
+.organic-blob-2 {
+  border-radius: 60% 40% 63% 37% / 46% 56% 44% 54%;
+}
 
 /* ── Bouncy transition timing ────────────────────────────────────────────── */
 .transition-bouncy {
@@ -88,13 +101,23 @@
 }
 
 @keyframes fade-out {
-  from { opacity: 1; }
-  to   { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* Fallback for browsers without View Transitions API */
