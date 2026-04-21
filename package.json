@@ -5,11 +5,14 @@
   "scripts": {
     "tailwind": "tailwindcss -i ./static/css/input.css -o ./static/out/output.css",
     "tailwind:watch": "tailwindcss -i ./static/css/input.css -o ./static/out/output.css --watch",
-    "tailwind:build": "tailwindcss -i ./static/css/input.css -o ./static/out/output.css --minify"
+    "tailwind:build": "tailwindcss -i ./static/css/input.css -o ./static/out/output.css --minify",
+    "build:ts": "esbuild frontend/src/main.ts --bundle --outfile=static/out/bundle.js",
+    "watch:ts": "esbuild frontend/src/main.ts --bundle --outfile=static/out/bundle.js --watch=forever"
   },
   "devDependencies": {
-    "tailwindcss": "^3.4.17",
+    "@tailwindcss/container-queries": "^0.1.1",
     "@tailwindcss/forms": "^0.5.7",
-    "@tailwindcss/container-queries": "^0.1.1"
+    "esbuild": "^0.20.0",
+    "tailwindcss": "^3.4.17"
   }
 }

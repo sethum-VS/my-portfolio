@@ -46,6 +46,8 @@ templ Layout(title string) {
 		</head>
 		<body class="bg-surface text-on-surface font-body antialiased selection:bg-primary-container selection:text-on-primary-container">
 			{ children... }
+			<!-- Compiled TypeScript Bundle -->
+			<script src="/static/out/bundle.js" defer></script>
 		</body>
 	</html>
 }

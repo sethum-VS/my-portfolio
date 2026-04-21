@@ -7,6 +7,8 @@ dev: generate
 	@npm run tailwind
 	@echo "→ Starting Tailwind CSS watcher (background)..."
 	@npm run tailwind:watch &
+	@echo "→ Starting JS builder (background)..."
+	@npm run watch:ts &
 	@echo "→ Building Go server..."
 	@mkdir -p ./tmp
 	@go build -o ./tmp/main ./cmd/server
@@ -35,8 +37,11 @@ tailwind:
 tailwind-build:
 	@npm run tailwind:build
 
+ts-build:
+	@npm run build:ts
+
 # ── Production Build ──────────────────────────────────────────────────────────
-build: generate tailwind-build
+build: generate tailwind-build ts-build
 	@mkdir -p ./bin
 	@go build -o ./bin/server ./cmd/server
 	@echo "✓ Binary at ./bin/server"
