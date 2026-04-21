@@ -26853,35 +26853,100 @@ void main() {
             return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453123);
         }
 
+        // Extracts a clean mathematical 4D selector mask avoiding branching
+        vec4 getMask(float state) {
+            return vec4(
+                step(state, 0.5),
+                step(0.5, state) * step(state, 1.5),
+                step(1.5, state) * step(state, 2.5),
+                step(2.5, state)
+            );
+        }
+
         void main() {
             vec2 uv = gl_FragCoord.xy / u_resolution.xy;
             vec2 p = uv * 2.0 - 1.0;
             p.x *= u_resolution.x / u_resolution.y;
 
-            // Strict 1:1 pixel coordinates for absolute minimum physical particle size
+            // 1:1 pixel coordinates
             vec2 noiseUv = gl_FragCoord.xy; 
             float noise = hash(noiseUv + u_time_noise);
             
-            // Lowering the power curve exponentially increases the active amount/density of particles hitting the screen globally
-            noise = pow(noise, 1.25);
+            // Sharpened power curve back to reduce overall bright dust presence 
+            noise = pow(noise, 1.45); 
 
-            // Globe explicitly anchored 
             vec2 center = vec2(-1.2, 0.6);
             float radius = 3.0; 
             
             vec2 localP = p - center;
-            
             float angle = radians(275.0);
             mat2 rot = mat2(cos(angle), -sin(angle), 
                             sin(angle), cos(angle));
             vec2 tiltedP = rot * localP;
 
-            // 2X Speed Increase on edge wave animations
-            float edgeWave = sin(tiltedP.y * 6.0 - u_time_smooth * 3.0) * 0.15;
-            float rawDist = length(tiltedP);
-            float distortedDist = rawDist + edgeWave + (noise * 0.04);
+            // =========================================================
+            // SEAMLESS CONTINUOUS ANIMATION QUEUE 
+            // =========================================================
+            // Decoupled from the light orbit to allow continuous, visible morphing
+            float cycleDuration = 4.0; // 4 seconds per state
+            float timePhase = u_time_smooth / cycleDuration;
+            
+            float numStates = 4.0;
+            float currentState = mod(floor(timePhase), numStates);
+            float nextState = mod(floor(timePhase) + 1.0, numStates);
+            
+            // 50% hold, 50% seamless transition directly on-screen
+            float transition = fract(timePhase);
+            float blend = smoothstep(0.5, 1.0, transition);
 
-            float edgeMask = smoothstep(radius, radius - 0.5, distortedDist);
+            // --- PRESET 0: Classic Calm Water ---
+            // Greatly toned down structure velocities and geometric distortions
+            float edge0 = sin(tiltedP.y * 6.0 - u_time_smooth * 1.5) * 0.05;
+            float surf0 = sin(tiltedP.y * 10.0 - u_time_smooth * 1.2 + tiltedP.x * 4.0) * 0.04;
+            float pulse0 = 0.0;
+            float em0 = pow(hash(noiseUv * 0.5 - u_time_smooth * 5.0), 5.0) * 0.08;
+
+            // --- PRESET 1: Magnetic Fluid Boiling ---
+            float boilPhase = u_time_smooth * 1.2;
+            float edge1 = (sin(length(tiltedP) * 15.0 - boilPhase) * cos(tiltedP.x * 10.0 + boilPhase)) * 0.06; // Scaled down violence
+            float surf1 = sin(tiltedP.y * 15.0 - u_time_smooth * 2.5) * 0.02;
+            float pulse1 = 0.0;
+            float em1 = pow(hash(noiseUv * 0.5 - u_time_smooth * 4.0), 5.0) * 0.08;
+
+            // --- PRESET 2: Gas Giant Atmospheric Banding ---
+            float edge2 = sin(tiltedP.y * 4.0 - u_time_smooth * 1.0) * 0.02; 
+            float surf2 = sin(tiltedP.x * 24.0 + u_time_smooth * 3.0) * 0.06; // Subdued gas streams
+            float pulse2 = 0.0;
+            float em2 = pow(hash(noiseUv * 0.5 - u_time_smooth * 5.0), 5.0) * 0.04; 
+
+            // --- PRESET 3: Chaotic Energy Storm ---
+            float edge3 = sin(tiltedP.x * 20.0 + u_time_smooth * 5.0) * 0.05; 
+            float surf3 = sin(tiltedP.y * 30.0 + tiltedP.x * 30.0 - u_time_smooth * 5.0) * 0.06; 
+            float pulse3 = (sin(u_time_smooth * 4.0) * 0.5 + 0.5) * 0.05; 
+            float em3 = pow(hash(noiseUv * 0.2 - u_time_smooth * 10.0), 4.0) * 0.15; 
+
+            // Extract the active hardware arrays
+            vec4 edgeVector = vec4(edge0, edge1, edge2, edge3);
+            vec4 surfVector = vec4(surf0, surf1, surf2, surf3);
+            vec4 pulseVector = vec4(pulse0, pulse1, pulse2, pulse3);
+            vec4 emVector = vec4(em0, em1, em2, em3);
+
+            // Fetch structural masks
+            vec4 maskCurrent = getMask(currentState);
+            vec4 maskNext = getMask(nextState);
+
+            // Crossfade mathematically (Now visible and seamlessly integrated)
+            float finalEdgeWave = mix(dot(edgeVector, maskCurrent), dot(edgeVector, maskNext), blend);
+            float finalSurfaceWave = mix(dot(surfVector, maskCurrent), dot(surfVector, maskNext), blend);
+            float finalPulse = mix(dot(pulseVector, maskCurrent), dot(pulseVector, maskNext), blend);
+            float finalEmission = mix(dot(emVector, maskCurrent), dot(emVector, maskNext), blend);
+            // =========================================================
+
+            float rawDist = length(tiltedP);
+            float distortedDist = rawDist + finalEdgeWave + (noise * 0.03);
+
+            // FIXED: MacOS compatibility prevents undefined smoothstep bounds. Always process lower-to-upper strictly.
+            float edgeMask = 1.0 - smoothstep(radius - 0.5, radius, distortedDist);
 
             float alpha = 0.0;
             vec3 color = vec3(1.0); 
@@ -26892,33 +26957,30 @@ void main() {
                 float z = sqrt(radius*radius - accurateDist*accurateDist);
                 vec3 normal = normalize(vec3(tiltedP, z));
 
-                // 2X Speed Increase on globe light translation orbit
-                float t = u_time_smooth * 0.5;
+                // Restructured physics loop: The light orbits faster to prevent long periods of black screen
+                float orbitT = u_time_smooth * 0.7;
                 vec3 lightDir = normalize(vec3(
-                    sin(t) * 1.5, 
-                    cos(t * 0.6) * 0.4, 
-                    sin(t * 0.4) * 0.6 + 0.6 
+                    sin(orbitT) * 1.5, 
+                    cos(orbitT * 0.5) * 0.3, 
+                    // Moon-like logic: keeps a tiny crescent illuminated even when mostly on dark side
+                    cos(orbitT) * 0.8 + 0.3
                 ));
 
                 float diffuse = dot(normal, lightDir);
+                float distortedDiffuse = diffuse + finalSurfaceWave;
                 
-                // 2X Speed Increase on interior surface waves
-                float surfaceWave = sin(tiltedP.y * 10.0 - u_time_smooth * 2.4 + tiltedP.x * 4.0) * 0.08;
-                float distortedDiffuse = diffuse + surfaceWave;
-                
-                // 1. The Terminator Band (narrowed and smoothed for less aggression)
+                // Dynamic Terminator Band boundary
                 float terminatorBand = smoothstep(0.0, 0.25, distortedDiffuse) * (1.0 - smoothstep(0.15, 0.7, distortedDiffuse));
                 
-                // 2. Soft illuminated core
-                float coreLight = smoothstep(0.2, 1.0, distortedDiffuse) * 0.04;
+                // Queued Core illuminating pulses
+                float coreLight = smoothstep(0.2, 1.0, distortedDiffuse) * (0.04 + finalPulse);
 
-                // 3. Small sparkling animations actively flashing in the dark side
-                float darkSideSparkle = smoothstep(0.0, -0.4, distortedDiffuse);
-                float darkNoise = hash(noiseUv * 0.5 - u_time_smooth * 10.0);
-                float darkSideEmission = darkSideSparkle * pow(darkNoise, 5.0) * 0.1;
+                // Reversed boundaries
+                float darkSideSparkle = 1.0 - smoothstep(-0.4, 0.0, distortedDiffuse);
+                float darkSideComposite = darkSideSparkle * finalEmission;
 
-                // Particle count doubled organically via noise mapping calculation above
-                float combinedIllumination = (terminatorBand * noise * 0.5) + coreLight + darkSideEmission;
+                // Restrained structural particle density formula mapping to ease the intense brightness levels back down (scaled from 0.75 to 0.45)
+                float combinedIllumination = (terminatorBand * noise * 0.45) + coreLight + darkSideComposite;
                 
                 float globalFade = smoothstep(-0.4, 0.5, lightDir.z);
 
