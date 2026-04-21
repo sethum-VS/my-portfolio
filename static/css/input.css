@@ -57,6 +57,16 @@
   display: inline-block;
 }
 
+/* Typing cursor indicator blink */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: cursor-blink 1s step-end infinite;
+}
+
 /* LED status indicator blink */
 @keyframes led-blink {
 
