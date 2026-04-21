@@ -9,22 +9,13 @@ templ HomeContent() {
 	<div id="app-shell" class="flex flex-col min-h-screen overflow-x-hidden relative">
 
 		<!-- ── Fixed Background Layer ─────────────────────────────────────── -->
-		<!-- Grid mesh stays viewport-fixed; colored lights drift with the mouse -->
+		<!-- Grid mesh stays viewport-fixed -->
 		<div class="fixed inset-0 w-full h-full pointer-events-none z-[-30]">
 			<!-- Grid mesh base layer -->
 			<div class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]">
 				<!-- Interactive glitch overlay -->
 				<div id="glitch-grid" class="grid-glitch-overlay"></div>
 			</div>
-			<!-- Colored glowing lights — follow mouse via CSS vars -->
-			<div
-				class="absolute w-[50vw] h-[50vw] bg-tertiary-container/5 blur-3xl organic-blob-1 -z-10"
-				style="top: -10%; left: -10%; transform: translate(calc(var(--mouse-x, 0.5) * 30vw), calc(var(--mouse-y, 0.5) * 30vh)); transition: transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);"
-			></div>
-			<div
-				class="absolute w-[60vw] h-[60vw] bg-primary-container/5 blur-3xl organic-blob-2 -z-10"
-				style="bottom: -10%; right: -10%; transform: translate(calc(var(--mouse-x, 0.5) * -25vw), calc(var(--mouse-y, 0.5) * -25vh)); transition: transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);"
-			></div>
 		</div>
 
 		<!-- ── Navigation ─────────────────────────────────────────────────── -->
@@ -77,9 +68,6 @@ templ HomeContent() {
 							/>
 							<div class="absolute inset-0 bg-gradient-to-tr from-surface/80 via-transparent to-primary/10 rounded-full"></div>
 						</div>
-						<!-- Ambient glow blobs -->
-						<div class="absolute -top-4 -right-4 w-24 h-24 bg-tertiary-container/20 rounded-full blur-xl animate-pulse"></div>
-						<div class="absolute -bottom-8 -left-8 w-32 h-32 bg-primary-container/20 rounded-full blur-xl"></div>
 					</div>
 				</div>
 			</div>
