@@ -14,8 +14,34 @@ function initCanvas() {
   }
 }
 
+function initCursor() {
+  const cursor = document.getElementById("custom-cursor");
+  if (!cursor) return;
+
+  // Use requestAnimationFrame for lag-free performance matching hardware pointer
+  let targetX = -100;
+  let targetY = -100;
+
+  window.addEventListener("mousemove", (e) => {
+    targetX = e.clientX;
+    targetY = e.clientY;
+    if (cursor.style.opacity !== "1") {
+      cursor.style.opacity = "1";
+    }
+  }, { passive: true });
+
+  function renderCursor() {
+    cursor!.style.transform = `translate(calc(${targetX}px - 50%), calc(${targetY}px - 50%))`;
+    requestAnimationFrame(renderCursor);
+  }
+  requestAnimationFrame(renderCursor);
+}
+
 // Full page load (direct navigation to /home)
-document.addEventListener("DOMContentLoaded", initCanvas);
+document.addEventListener("DOMContentLoaded", () => {
+  initCanvas();
+  initCursor();
+});
 
 // HTMX swap (splash → home transition via outerHTML swap)
 document.addEventListener("htmx:afterSwap", () => {
@@ -23,4 +49,5 @@ document.addEventListener("htmx:afterSwap", () => {
   gridInstances.forEach(g => g.destroy());
   gridInstances = [];
   initCanvas();
+  initCursor();
 });

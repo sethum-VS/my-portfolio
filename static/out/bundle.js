@@ -117,10 +117,33 @@
       gridInstances.push(new MagneticGrid(waveCanvas, 0.9));
     }
   }
-  document.addEventListener("DOMContentLoaded", initCanvas);
+  function initCursor() {
+    const cursor = document.getElementById("custom-cursor");
+    if (!cursor)
+      return;
+    let targetX = -100;
+    let targetY = -100;
+    window.addEventListener("mousemove", (e) => {
+      targetX = e.clientX;
+      targetY = e.clientY;
+      if (cursor.style.opacity !== "1") {
+        cursor.style.opacity = "1";
+      }
+    }, { passive: true });
+    function renderCursor() {
+      cursor.style.transform = `translate(calc(${targetX}px - 50%), calc(${targetY}px - 50%))`;
+      requestAnimationFrame(renderCursor);
+    }
+    requestAnimationFrame(renderCursor);
+  }
+  document.addEventListener("DOMContentLoaded", () => {
+    initCanvas();
+    initCursor();
+  });
   document.addEventListener("htmx:afterSwap", () => {
     gridInstances.forEach((g) => g.destroy());
     gridInstances = [];
     initCanvas();
+    initCursor();
   });
 })();

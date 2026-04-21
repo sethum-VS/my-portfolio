@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Global overrides (outside @layer for max specificity) ──────────────── */
+
+/* Hide fallback system pointer on desktop */
+@media (pointer: fine) {
+  *, *::before, *::after {
+    cursor: none !important;
+  }
+}
+
+@layer base {
+  /* Complete aesthetic removal of OS scroll bars */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html {
+    scrollbar-width: none; /* Firefox */
+  }
+
+  body {
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+}
+
 /* ── Custom animation keyframes ─────────────────────────────────────────────── */
 
 /* ── Interactive grid mesh overlay ─────────────────────────────────────────── */

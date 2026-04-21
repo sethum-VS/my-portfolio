@@ -8,7 +8,7 @@ templ Layout(title string) {
 	<html class="dark" lang="en">
 		<head>
 			<meta charset="UTF-8"/>
-			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 			<title>{ title }</title>
 
 			<!-- Preconnect for FOUT prevention (Apple-grade typography loading) -->
@@ -44,7 +44,10 @@ templ Layout(title string) {
 				}
 			</style>
 		</head>
-		<body class="bg-surface text-on-surface font-body antialiased selection:bg-primary-container selection:text-on-primary-container">
+		<body class="bg-surface text-on-surface font-body antialiased selection:bg-primary-container selection:text-on-primary-container relative">
+			<!-- Custom DOM-based Cursor (Smooth circling white pointer) -->
+			<div id="custom-cursor" class="pointer-events-none fixed top-0 left-0 z-[99999] w-6 h-6 border-[1.5px] border-white rounded-full opacity-0 transition-opacity duration-300 hidden md:block" style="transform: translate(-50%, -50%);"></div>
+
 			{ children... }
 			<!-- Compiled TypeScript Bundle -->
 			<script src="/static/out/bundle.js" defer></script>
