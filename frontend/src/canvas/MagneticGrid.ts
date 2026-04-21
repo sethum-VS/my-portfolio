@@ -107,18 +107,18 @@ export class MagneticGrid {
   private draw() {
     this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     
-    // Draw only nodes (no connecting lines since the requirement focused on node attraction)
-    this.ctx.fillStyle = "#58c7ff"; // primary-container color
-    
     for (const node of this.nodes) {
       this.ctx.beginPath();
-      // Draw standard size dots - increasing radius slightly if pulled
       const displacementX = node.x - node.baseX;
       const displacementY = node.y - node.baseY;
-      const displacement = Math.sqrt(displacementX*displacementX + displacementY*displacementY);
+      const displacement = Math.sqrt(displacementX * displacementX + displacementY * displacementY);
       
+      // Node glows (gets more opaque) and expands as it gets pulled
+      const intensity = Math.min(1.0, displacement * 0.04);
+      const alpha = 0.2 + (intensity * 0.4); // From 0.2 base to moderately bright
       const radius = 1.0 + (displacement * 0.05);
-      
+
+      this.ctx.fillStyle = `rgba(88, 199, 255, ${alpha})`;
       this.ctx.arc(node.x, node.y, Math.min(radius, 3.5), 0, Math.PI * 2);
       this.ctx.fill();
     }

@@ -83,13 +83,15 @@
     }
     draw() {
       this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      this.ctx.fillStyle = "#58c7ff";
       for (const node of this.nodes) {
         this.ctx.beginPath();
         const displacementX = node.x - node.baseX;
         const displacementY = node.y - node.baseY;
         const displacement = Math.sqrt(displacementX * displacementX + displacementY * displacementY);
+        const intensity = Math.min(1, displacement * 0.04);
+        const alpha = 0.2 + intensity * 0.4;
         const radius = 1 + displacement * 0.05;
+        this.ctx.fillStyle = `rgba(88, 199, 255, ${alpha})`;
         this.ctx.arc(node.x, node.y, Math.min(radius, 3.5), 0, Math.PI * 2);
         this.ctx.fill();
       }

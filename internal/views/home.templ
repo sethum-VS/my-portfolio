@@ -9,12 +9,14 @@ templ HomeContent() {
 	<div id="app-shell" class="flex flex-col min-h-screen overflow-x-hidden relative">
 
 		<!-- ── Fixed Background Layer ─────────────────────────────────────── -->
-		<!-- Static CSS grid lines + Canvas magnetic overlay -->
+		<!-- Static CSS grid lines + sweeping wave + Canvas magnetic overlay -->
 		<div class="fixed inset-0 pointer-events-none z-[-30] bg-[#131314]">
 			<!-- Static grid lines (always visible) -->
 			<div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px]"></div>
-			<!-- Canvas for magnetic interaction + wave sweep -->
-			<canvas id="magnetic-canvas" class="grid-wave-overlay"></canvas>
+			<!-- Sweeping grid node glitch animation -->
+			<div class="grid-wave-overlay opacity-80"></div>
+			<!-- Global Canvas for magnetic interaction (always visible) -->
+			<canvas id="magnetic-canvas" class="absolute inset-0 w-full h-full"></canvas>
 		</div>
 
 		<!-- ── Navigation ─────────────────────────────────────────────────── -->
