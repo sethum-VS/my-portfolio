@@ -5,33 +5,21 @@
 /* ── Custom animation keyframes ─────────────────────────────────────────────── */
 
 /* ── Interactive grid mesh overlay ─────────────────────────────────────────── */
-/* Follows the mouse position via CSS variables and glitches on fast movement */
-.grid-glitch-overlay {
+@keyframes wave-mask {
+  0% { mask-position: -50vw 0; }
+  100% { mask-position: 150vw 0; }
+}
+
+.grid-wave-overlay {
   position: absolute;
-  inset: -50px;
-
-  /* The nodes light up based on glitch intensity — subtly brightened */
-  background-image: radial-gradient(circle at 1px 1px,
-      rgba(88, 199, 255, calc(0.15 + var(--glitch-intensity, 0) * 1)) 1.5px,
-      transparent 0);
+  inset: 0;
+  background-image: radial-gradient(circle at 1px 1px, #58c7ff 2px, transparent 0);
   background-size: 40px 40px;
-
-  /* Slightly broader mask radius centered on cursor */
-  mask-image: radial-gradient(circle at calc(50px + var(--mouse-x, 0.5) * 100vw) calc(50px + var(--mouse-y, 0.5) * 100vh),
-      black 0%,
-      transparent calc(150px + var(--glitch-intensity, 0) * 180px));
+  mask-image: linear-gradient(90deg, transparent, rgba(0,0,0,1), transparent);
+  mask-size: 40vw 100vh;
   mask-repeat: no-repeat;
-
-  /* Reduced jitter on fast movement */
-  transform:
-    translate(calc(var(--glitch-intensity, 0) * 8px * sin(var(--mouse-x, 0) * 1000)),
-      calc(var(--glitch-intensity, 0) * 8px * cos(var(--mouse-y, 0) * 1000))) scale(calc(1 + var(--glitch-intensity, 0) * 0.02));
-
-  filter: drop-shadow(0 0 calc(var(--glitch-intensity, 0) * 4px) rgba(88, 199, 255, 0.7));
-
+  animation: wave-mask 6s infinite ease-in-out;
   pointer-events: none;
-  z-index: 1;
-  transition: transform 0.15s ease-out, filter 0.15s ease-out;
 }
 
 /* Subtle glitch text effect */
