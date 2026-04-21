@@ -14,8 +14,10 @@
     // How strong the pull is
     // Animation frame id
     rafId = 0;
-    constructor(canvas) {
+    alpha;
+    constructor(canvas, alpha = 0.25) {
       this.canvas = canvas;
+      this.alpha = alpha;
       const context = canvas.getContext("2d");
       if (!context)
         throw new Error("Could not initialize 2D context");
@@ -88,11 +90,8 @@
         const displacementX = node.x - node.baseX;
         const displacementY = node.y - node.baseY;
         const displacement = Math.sqrt(displacementX * displacementX + displacementY * displacementY);
-        const intensity = Math.min(1, displacement * 0.04);
-        const alpha = 0.2 + intensity * 0.4;
-        const radius = 1 + displacement * 0.05;
-        this.ctx.fillStyle = `rgba(88, 199, 255, ${alpha})`;
-        this.ctx.arc(node.x, node.y, Math.min(radius, 3.5), 0, Math.PI * 2);
+        this.ctx.fillStyle = `rgba(88, 199, 255, ${this.alpha})`;
+        this.ctx.arc(node.x, node.y, 1.5, 0, Math.PI * 2);
         this.ctx.fill();
       }
     }
@@ -107,19 +106,21 @@
   };
 
   // frontend/src/main.ts
-  var gridInstance = null;
+  var gridInstances = [];
   function initCanvas() {
-    const canvas = document.getElementById("magnetic-canvas");
-    if (canvas && !gridInstance) {
-      gridInstance = new MagneticGrid(canvas);
+    const baseCanvas = document.getElementById("magnetic-canvas-base");
+    const waveCanvas = document.getElementById("magnetic-canvas-wave");
+    if (baseCanvas && gridInstances.length === 0) {
+      gridInstances.push(new MagneticGrid(baseCanvas, 0.25));
+    }
+    if (waveCanvas && gridInstances.length === 1) {
+      gridInstances.push(new MagneticGrid(waveCanvas, 0.9));
     }
   }
   document.addEventListener("DOMContentLoaded", initCanvas);
   document.addEventListener("htmx:afterSwap", () => {
-    if (gridInstance) {
-      gridInstance.destroy();
-      gridInstance = null;
-    }
+    gridInstances.forEach((g) => g.destroy());
+    gridInstances = [];
     initCanvas();
   });
 })();

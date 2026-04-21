@@ -12,9 +12,11 @@ export class MagneticGrid {
   
   // Animation frame id
   private rafId: number = 0;
+  private alpha: number;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, alpha: number = 0.25) {
     this.canvas = canvas;
+    this.alpha = alpha;
     const context = canvas.getContext("2d");
     if (!context) throw new Error("Could not initialize 2D context");
     this.ctx = context;
@@ -113,13 +115,9 @@ export class MagneticGrid {
       const displacementY = node.y - node.baseY;
       const displacement = Math.sqrt(displacementX * displacementX + displacementY * displacementY);
       
-      // Node glows (gets more opaque) and expands as it gets pulled
-      const intensity = Math.min(1.0, displacement * 0.04);
-      const alpha = 0.2 + (intensity * 0.4); // From 0.2 base to moderately bright
-      const radius = 1.0 + (displacement * 0.05);
-
-      this.ctx.fillStyle = `rgba(88, 199, 255, ${alpha})`;
-      this.ctx.arc(node.x, node.y, Math.min(radius, 3.5), 0, Math.PI * 2);
+      // Fixed aesthetic, purely positional magnetic displacement
+      this.ctx.fillStyle = `rgba(88, 199, 255, ${this.alpha})`;
+      this.ctx.arc(node.x, node.y, 1.5, 0, Math.PI * 2);
       this.ctx.fill();
     }
   }

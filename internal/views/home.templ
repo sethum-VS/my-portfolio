@@ -13,10 +13,10 @@ templ HomeContent() {
 		<div class="fixed inset-0 pointer-events-none z-[-30] bg-[#131314]">
 			<!-- Static grid lines (always visible) -->
 			<div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px]"></div>
-			<!-- Sweeping grid node glitch animation -->
-			<div class="grid-wave-overlay opacity-80"></div>
-			<!-- Global Canvas for magnetic interaction (always visible) -->
-			<canvas id="magnetic-canvas" class="absolute inset-0 w-full h-full"></canvas>
+			<!-- Global Canvas for magnetic interaction (always visible, subtle) -->
+			<canvas id="magnetic-canvas-base" class="absolute inset-0 w-full h-full"></canvas>
+			<!-- Sweeping grid node glitch animation drawn on a masked Canvas -->
+			<canvas id="magnetic-canvas-wave" class="grid-wave-overlay"></canvas>
 		</div>
 
 		<!-- ── Navigation ─────────────────────────────────────────────────── -->
