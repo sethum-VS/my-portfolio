@@ -8,9 +8,12 @@ package views
 templ HomeContent() {
 	<div id="app-shell" class="flex flex-col min-h-screen overflow-x-hidden relative">
 
+		<!-- Ultra-crisp WebGL pixel noise shader layer (Globally overlaying) -->
+		<canvas id="webgl-noise-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-50"></canvas>
+
 		<!-- ── Fixed Background Layer ─────────────────────────────────────── -->
 		<!-- Static CSS grid lines + sweeping wave + Canvas magnetic overlay -->
-		<div class="fixed inset-0 pointer-events-none z-[-30] bg-[#131314]">
+		<div class="fixed inset-0 pointer-events-none z-[-30] bg-[#131314] overflow-hidden">
 			<!-- Static grid lines (always visible) -->
 			<div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px]"></div>
 			<!-- Global Canvas for magnetic interaction (always visible, subtle) -->

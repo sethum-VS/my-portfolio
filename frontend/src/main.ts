@@ -1,10 +1,13 @@
 import { MagneticGrid } from "./canvas/MagneticGrid";
+import { WebGLNoise } from "./canvas/WebGLNoise";
 
 let gridInstances: MagneticGrid[] = [];
+let noiseInstance: WebGLNoise | null = null;
 
 function initCanvas() {
   const baseCanvas = document.getElementById("magnetic-canvas-base") as HTMLCanvasElement;
   const waveCanvas = document.getElementById("magnetic-canvas-wave") as HTMLCanvasElement;
+  const noiseCanvas = document.getElementById("webgl-noise-canvas") as HTMLCanvasElement;
   
   if (baseCanvas && gridInstances.length === 0) {
     gridInstances.push(new MagneticGrid(baseCanvas, 0.25));
@@ -12,13 +15,15 @@ function initCanvas() {
   if (waveCanvas && gridInstances.length === 1) {
     gridInstances.push(new MagneticGrid(waveCanvas, 0.9));
   }
+  if (noiseCanvas && !noiseInstance) {
+    noiseInstance = new WebGLNoise(noiseCanvas);
+  }
 }
 
 function initCursor() {
   const cursor = document.getElementById("custom-cursor");
   if (!cursor) return;
 
-  // Use requestAnimationFrame for lag-free performance matching hardware pointer
   let targetX = -100;
   let targetY = -100;
 
@@ -37,17 +42,18 @@ function initCursor() {
   requestAnimationFrame(renderCursor);
 }
 
-// Full page load (direct navigation to /home)
 document.addEventListener("DOMContentLoaded", () => {
   initCanvas();
   initCursor();
 });
 
-// HTMX swap (splash → home transition via outerHTML swap)
 document.addEventListener("htmx:afterSwap", () => {
-  // Destroy previous instances if any
   gridInstances.forEach(g => g.destroy());
   gridInstances = [];
+  if (noiseInstance) {
+    noiseInstance.destroy();
+    noiseInstance = null;
+  }
   initCanvas();
   initCursor();
 });
