@@ -140,13 +140,21 @@ export class WebGLNoise {
             float baseSurfaceWave = sin(tiltedP.y * 8.0 - u_time_smooth * 1.5 + tiltedP.x * 3.0) * 0.08;
 
             float rawDist = length(tiltedP);
-            float distortedDist = rawDist + finalEdgeWave + baseEdgeWave + (noise * 0.03);
+
+            float edgeAngle = atan(tiltedP.y, tiltedP.x);
+            float edgeBand = smoothstep(radius - 0.18, radius - 0.04, rawDist) *
+                             (1.0 - smoothstep(radius - 0.04, radius + 0.06, rawDist));
+            float edgeRunner = sin(edgeAngle * 10.0 - u_time_smooth * 3.5);
+            float edgeRunnerWave = edgeRunner * 0.06 * edgeBand;
+
+            float distortedDist = rawDist + finalEdgeWave + baseEdgeWave + edgeRunnerWave + (noise * 0.03);
 
             // FIXED: Sharpened boundary. MacOS compatibility prevents undefined smoothstep bounds. Always process lower-to-upper strictly.
             // A tighter smoothstep makes the physical edge wave much more apparent
             float edgeMask = 1.0 - smoothstep(radius - 0.05, radius, distortedDist);
 
-            float alpha = 0.0;
+            float edgeRunnerGlow = edgeBand * (0.5 + 0.5 * edgeRunner) * 0.08;
+            float alpha = edgeRunnerGlow * edgeMask;
             vec3 color = vec3(1.0); 
 
             if (distortedDist < radius + 0.2) {
@@ -182,7 +190,7 @@ export class WebGLNoise {
                 
                 float globalFade = smoothstep(-0.4, 0.5, lightDir.z);
 
-                alpha = combinedIllumination * globalFade * edgeMask;
+                alpha += combinedIllumination * globalFade * edgeMask;
             }
 
             gl_FragColor = vec4(color, alpha);
