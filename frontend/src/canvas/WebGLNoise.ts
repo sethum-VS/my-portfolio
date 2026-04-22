@@ -131,11 +131,20 @@ export class WebGLNoise {
             float finalEmission = mix(dot(emVector, maskCurrent), dot(emVector, maskNext), blend);
             // =========================================================
 
-            float rawDist = length(tiltedP);
-            float distortedDist = rawDist + finalEdgeWave + (noise * 0.03);
+            // Perpetual ambient base wave to ensure the edges are continuously rippling like fluid independent of queue transitions
+            // Amplified significantly so it's physically distinct
+            float baseEdgeWave = sin(tiltedP.y * 5.0 - u_time_smooth * 2.0) * 0.12 + 
+                                 cos(tiltedP.x * 4.0 + u_time_smooth * 1.5) * 0.08;
+            
+            // Perpetual surface ripple so the internal light shading visibly undulates alongside the edge
+            float baseSurfaceWave = sin(tiltedP.y * 8.0 - u_time_smooth * 1.5 + tiltedP.x * 3.0) * 0.08;
 
-            // FIXED: MacOS compatibility prevents undefined smoothstep bounds. Always process lower-to-upper strictly.
-            float edgeMask = 1.0 - smoothstep(radius - 0.5, radius, distortedDist);
+            float rawDist = length(tiltedP);
+            float distortedDist = rawDist + finalEdgeWave + baseEdgeWave + (noise * 0.03);
+
+            // FIXED: Sharpened boundary. MacOS compatibility prevents undefined smoothstep bounds. Always process lower-to-upper strictly.
+            // A tighter smoothstep makes the physical edge wave much more apparent
+            float edgeMask = 1.0 - smoothstep(radius - 0.05, radius, distortedDist);
 
             float alpha = 0.0;
             vec3 color = vec3(1.0); 
@@ -156,7 +165,7 @@ export class WebGLNoise {
                 ));
 
                 float diffuse = dot(normal, lightDir);
-                float distortedDiffuse = diffuse + finalSurfaceWave;
+                float distortedDiffuse = diffuse + finalSurfaceWave + baseSurfaceWave;
                 
                 // Dynamic Terminator Band boundary
                 float terminatorBand = smoothstep(0.0, 0.25, distortedDiffuse) * (1.0 - smoothstep(0.15, 0.7, distortedDiffuse));
