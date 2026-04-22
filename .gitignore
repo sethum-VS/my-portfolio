@@ -2,7 +2,7 @@
 /bin/
 /tmp/
 *.exe
-
+static/out
 # Node
 /node_modules/
 
