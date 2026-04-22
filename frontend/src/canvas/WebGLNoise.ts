@@ -62,10 +62,10 @@ export class WebGLNoise {
             float noise = hash(noiseUv + u_time_noise);
             
             // Sharpened power curve back to reduce overall bright dust presence 
-            noise = pow(noise, 1.45); 
+            noise = pow(noise, 1.55); 
 
             vec2 center = vec2(-1.2, 0.6);
-            float radius = 3.0; 
+            float radius = 2.65; 
             
             vec2 localP = p - center;
             float angle = radians(275.0);
@@ -142,18 +142,35 @@ export class WebGLNoise {
             float rawDist = length(tiltedP);
 
             float edgeAngle = atan(tiltedP.y, tiltedP.x);
-            float edgeBand = smoothstep(radius - 0.18, radius - 0.04, rawDist) *
-                             (1.0 - smoothstep(radius - 0.04, radius + 0.06, rawDist));
-            float edgeRunner = sin(edgeAngle * 10.0 - u_time_smooth * 3.5);
-            float edgeRunnerWave = edgeRunner * 0.06 * edgeBand;
+            float edgeBand = smoothstep(radius - 0.24, radius - 0.04, rawDist) *
+                             (1.0 - smoothstep(radius - 0.04, radius + 0.10, rawDist));
+
+            // Circular motion around the globe with mild evolving variation.
+            float runnerPhase = edgeAngle * 11.0 - u_time_smooth * 4.1;
+            float runnerA = sin(runnerPhase);
+            float runnerB = sin(edgeAngle * 18.0 + u_time_smooth * 2.2 + sin(u_time_smooth * 0.7) * 0.8);
+            float runnerMix = 0.30 + 0.25 * (sin(u_time_smooth * 0.8) * 0.5 + 0.5);
+            float edgeRunner = mix(runnerA, runnerB, runnerMix);
+
+            float runnerPulse = 0.82 + 0.24 * sin(u_time_smooth * 1.6 + edgeAngle * 2.0);
+
+            // Much denser multi-layer spark field for a stronger, more noticeable edge particle trail.
+            float edgeSparkA = pow(hash(vec2(edgeAngle * 44.0 - u_time_smooth * 6.0, u_time_smooth * 2.9)), 2.8) * 0.030;
+            float edgeSparkB = pow(hash(vec2(edgeAngle * 71.0 + 17.0 - u_time_smooth * 8.3, u_time_smooth * 3.8)), 3.5) * 0.020;
+            float edgeSparkC = pow(hash(vec2(edgeAngle * 103.0 + 29.0 - u_time_smooth * 11.5, u_time_smooth * 5.2)), 4.2) * 0.012;
+            float edgeSpark = edgeSparkA + edgeSparkB + edgeSparkC;
+            float edgeRunnerWave = (edgeRunner * 0.12 * runnerPulse + edgeSpark * 1.1) * edgeBand;
 
             float distortedDist = rawDist + finalEdgeWave + baseEdgeWave + edgeRunnerWave + (noise * 0.03);
 
             // FIXED: Sharpened boundary. MacOS compatibility prevents undefined smoothstep bounds. Always process lower-to-upper strictly.
             // A tighter smoothstep makes the physical edge wave much more apparent
-            float edgeMask = 1.0 - smoothstep(radius - 0.05, radius, distortedDist);
+            float edgeMask = 1.0 - smoothstep(radius - 0.07, radius, distortedDist);
 
-            float edgeRunnerGlow = edgeBand * (0.5 + 0.5 * edgeRunner) * 0.08;
+            float edgeRunnerGlow = edgeBand *
+                                   ((0.55 + 0.65 * abs(edgeRunner)) *
+                                    (0.12 + 0.05 * sin(u_time_smooth * 1.3 + edgeAngle * 3.0)) +
+                                    edgeSpark * 2.8);
             float alpha = edgeRunnerGlow * edgeMask;
             vec3 color = vec3(1.0); 
 
