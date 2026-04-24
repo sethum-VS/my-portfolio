@@ -10,7 +10,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // ── Material You / DevArtisan colour tokens ──────────────────────────
+        // ── Material You / SMWDev colour tokens ──────────────────────────
         'surface-bright':                '#3a393a',
         'surface-container-highest':     '#353436',
         'on-primary-container':          '#005170',

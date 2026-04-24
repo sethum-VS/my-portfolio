@@ -142,8 +142,9 @@ export class WebGLNoise {
             float rawDist = length(tiltedP);
 
             float edgeAngle = atan(tiltedP.y, tiltedP.x);
-            float edgeBand = smoothstep(radius - 0.24, radius - 0.04, rawDist) *
-                             (1.0 - smoothstep(radius - 0.04, radius + 0.10, rawDist));
+            // Extended inner smoothstep bounds so the edge glow beautifully bleeds onto the globe's interior surface
+            float edgeBand = smoothstep(radius - 1.2, radius - 0.02, rawDist) *
+                             (1.0 - smoothstep(radius - 0.02, radius + 0.15, rawDist));
 
             // Circular motion around the globe with mild evolving variation.
             float runnerPhase = edgeAngle * 11.0 - u_time_smooth * 4.1;
@@ -176,9 +177,12 @@ export class WebGLNoise {
 
             if (distortedDist < radius + 0.2) {
                 
-                float accurateDist = clamp(rawDist, 0.0, radius); 
+                // Use distortedDist instead of rawDist to physically deform the 3D normal,
+                // blending the edge wave inward onto the globe's surface.
+                float accurateDist = clamp(distortedDist, 0.0, radius); 
                 float z = sqrt(radius*radius - accurateDist*accurateDist);
-                vec3 normal = normalize(vec3(tiltedP, z));
+                vec2 deformedP = tiltedP * (distortedDist / max(rawDist, 0.001));
+                vec3 normal = normalize(vec3(deformedP, z));
 
                 // Restructured physics loop: The light orbits faster to prevent long periods of black screen
                 float orbitT = u_time_smooth * 0.7;
