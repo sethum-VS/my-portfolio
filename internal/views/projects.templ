@@ -1,0 +1,93 @@
+package views
+
+// ProjectsContent renders the dedicated Projects page body while reusing the
+// shared background layers, navigation, and footer for visual consistency.
+templ ProjectsContent() {
+	<div id="app-shell" class="flex flex-col min-h-screen overflow-x-hidden relative">
+
+		<!-- Ultra-crisp WebGL pixel noise shader layer (Globally overlaying) -->
+		<canvas id="webgl-noise-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-50"></canvas>
+
+		<!-- ── Fixed Background Layer ─────────────────────────────────────── -->
+		<!-- Static CSS grid lines + sweeping wave + Canvas magnetic overlay -->
+		<div class="fixed inset-0 pointer-events-none z-[-30] bg-[#131314] overflow-hidden">
+			<!-- Static grid lines (always visible) -->
+			<div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+			<!-- Global Canvas for magnetic interaction (always visible, subtle) -->
+			<canvas id="magnetic-canvas-base" class="absolute inset-0 w-full h-full"></canvas>
+			<!-- Sweeping grid node glitch animation drawn on a masked Canvas -->
+			<canvas id="magnetic-canvas-wave" class="grid-wave-overlay"></canvas>
+		</div>
+
+		<!-- ── Navigation ─────────────────────────────────────────────────── -->
+		@NavBar("projects")
+
+		<!-- ── Main Content ───────────────────────────────────────────────── -->
+		<main id="main-content" class="flex-grow flex flex-col items-center pt-44 pb-24 px-6 md:px-12 max-w-5xl mx-auto w-full z-10">
+			<div class="w-full flex flex-col gap-14 md:gap-20 items-center text-center">
+
+				<article class="flex flex-col items-center max-w-3xl w-full relative seq-in delay-1">
+					<h2 class="inline-block cursor-pointer whitespace-normal md:whitespace-nowrap font-headline text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-on-surface hover:font-serif hover:text-primary hover:tracking-tighter hover:font-black transition-all duration-500 delay-100 ease-[cubic-bezier(0.22,1,0.36,1)] text-center">
+						Route Optimizer Engine
+					</h2>
+					<div class="mt-4 md:mt-6 font-body text-sm md:text-base text-on-surface-variant/70 uppercase tracking-[0.18em] flex flex-wrap gap-4 justify-center">
+						<span>Go</span>
+						<span class="opacity-30">•</span>
+						<span>HTMX</span>
+						<span class="opacity-30">•</span>
+						<span>PostgreSQL</span>
+					</div>
+				</article>
+
+				<article class="flex flex-col items-center max-w-3xl w-full relative seq-in delay-2">
+					<h2 class="inline-block cursor-pointer whitespace-normal md:whitespace-nowrap font-headline text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-on-surface hover:font-serif hover:text-primary hover:tracking-tighter hover:font-black transition-all duration-500 delay-100 ease-[cubic-bezier(0.22,1,0.36,1)] text-center">
+						Realtime Grid Visualizer
+					</h2>
+					<div class="mt-4 md:mt-6 font-body text-sm md:text-base text-on-surface-variant/70 uppercase tracking-[0.18em] flex flex-wrap gap-4 justify-center">
+						<span>TypeScript</span>
+						<span class="opacity-30">•</span>
+						<span>WebGL</span>
+						<span class="opacity-30">•</span>
+						<span>Tailwind CSS</span>
+					</div>
+				</article>
+
+				<article class="flex flex-col items-center max-w-3xl w-full relative seq-in delay-3">
+					<h2 class="inline-block cursor-pointer whitespace-normal md:whitespace-nowrap font-headline text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-on-surface hover:font-serif hover:text-primary hover:tracking-tighter hover:font-black transition-all duration-500 delay-100 ease-[cubic-bezier(0.22,1,0.36,1)] text-center">
+						Portfolio Control Panel
+					</h2>
+					<div class="mt-4 md:mt-6 font-body text-sm md:text-base text-on-surface-variant/70 uppercase tracking-[0.18em] flex flex-wrap gap-4 justify-center">
+						<span>Go</span>
+						<span class="opacity-30">•</span>
+						<span>Templ</span>
+						<span class="opacity-30">•</span>
+						<span>Docker</span>
+					</div>
+				</article>
+
+				<article class="flex flex-col items-center max-w-3xl w-full relative seq-in delay-4">
+					<h2 class="inline-block cursor-pointer whitespace-normal md:whitespace-nowrap font-headline text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-on-surface hover:font-serif hover:text-primary hover:tracking-tighter hover:font-black transition-all duration-500 delay-100 ease-[cubic-bezier(0.22,1,0.36,1)] text-center">
+						Mobile Banking Companion
+					</h2>
+					<div class="mt-4 md:mt-6 font-body text-sm md:text-base text-on-surface-variant/70 uppercase tracking-[0.18em] flex flex-wrap gap-4 justify-center">
+						<span>SwiftUI</span>
+						<span class="opacity-30">•</span>
+						<span>Core Data</span>
+						<span class="opacity-30">•</span>
+						<span>Firebase</span>
+					</div>
+				</article>
+			</div>
+		</main>
+
+		<!-- ── Footer ─────────────────────────────────────────────────────── -->
+		@Footer()
+	</div>
+}
+
+// ProjectsPage wraps ProjectsContent in the global Layout for direct browser navigation.
+templ ProjectsPage() {
+	@Layout("Projects | SMWDev") {
+		@ProjectsContent()
+	}
+}

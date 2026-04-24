@@ -1,0 +1,20 @@
+package handlers
+
+import (
+	"net/http"
+
+	"github.com/a-h/templ"
+	"github.com/sethum-VS/my-portfolio/internal/views"
+)
+
+// ProjectsHandler serves the Projects page at GET /projects.
+//
+// HTMX-aware: when the request originates from an HTMX swap (HX-Request
+// header is present), only the inner content fragment is returned.
+func ProjectsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("HX-Request") == "true" {
+		templ.Handler(views.ProjectsContent()).ServeHTTP(w, r)
+		return
+	}
+	templ.Handler(views.ProjectsPage()).ServeHTTP(w, r)
+}

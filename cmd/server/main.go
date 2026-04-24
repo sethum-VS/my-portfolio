@@ -18,6 +18,8 @@ func main() {
 	// Go 1.22+ enhanced pattern syntax: "METHOD /path"
 	mux.HandleFunc("GET /", handlers.SplashHandler)
 	mux.HandleFunc("GET /home", handlers.HomeHandler)
+	mux.HandleFunc("GET /about", handlers.AboutHandler)
+	mux.HandleFunc("GET /projects", handlers.ProjectsHandler)
 	mux.HandleFunc("GET /dashboard", handlers.DashboardHandler)
 
 	const addr = ":8080"

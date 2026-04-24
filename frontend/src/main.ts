@@ -42,9 +42,75 @@ function initCursor() {
   requestAnimationFrame(renderCursor);
 }
 
+function initNavBlob() {
+  const blob = document.getElementById("nav-blob");
+  const container = document.getElementById("desktop-nav-links");
+  if (!blob || !container) return;
+
+  function moveBlob(target: HTMLElement) {
+    const targetRect = target.getBoundingClientRect();
+    const containerRect = container!.getBoundingClientRect();
+    blob!.style.width = `${targetRect.width}px`;
+    blob!.style.height = `${targetRect.height}px`;
+    blob!.style.left = `${targetRect.left - containerRect.left}px`;
+    blob!.style.top = `${targetRect.top - containerRect.top}px`;
+  }
+
+  // Initial position
+  const activeLink = container.querySelector('[data-active="true"]') as HTMLElement;
+  if (activeLink) {
+    blob.style.transition = 'none';
+    moveBlob(activeLink);
+    blob.offsetHeight; // force reflow
+    blob.style.transition = '';
+    blob.style.opacity = "1";
+  }
+
+  // Handle clicks for animation and exit transition
+  const links = container.querySelectorAll('.nav-link');
+  links.forEach(link => {
+    link.addEventListener('click', (e) => {
+      links.forEach(l => {
+        l.classList.remove('font-bold', 'text-white');
+        l.classList.add('font-semibold', 'text-zinc-400');
+        l.setAttribute('data-active', 'false');
+      });
+      link.classList.add('font-bold', 'text-white');
+      link.classList.remove('font-semibold', 'text-zinc-400');
+      link.setAttribute('data-active', 'true');
+      
+      moveBlob(link as HTMLElement);
+
+      // Trigger SPA page exit transition on main-content immediately
+      const mainContent = document.getElementById('main-content');
+      if (mainContent) {
+        mainContent.classList.add('page-transition-exit');
+      }
+    });
+  });
+
+  // Handle browser back/forward buttons
+  window.addEventListener('popstate', () => {
+    const path = window.location.pathname;
+    links.forEach(link => {
+      if (link.getAttribute('href') === path) {
+        link.classList.add('font-bold', 'text-white');
+        link.classList.remove('font-semibold', 'text-zinc-400');
+        link.setAttribute('data-active', 'true');
+        moveBlob(link as HTMLElement);
+      } else {
+        link.classList.remove('font-bold', 'text-white');
+        link.classList.add('font-semibold', 'text-zinc-400');
+        link.setAttribute('data-active', 'false');
+      }
+    });
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initCanvas();
   initCursor();
+  initNavBlob();
 });
 
 document.addEventListener("htmx:afterSwap", () => {

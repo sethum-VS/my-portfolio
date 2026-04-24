@@ -10,7 +10,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // ── Material You / DevArtisan colour tokens ──────────────────────────
+        // ── Material You / SMWDev colour tokens ──────────────────────────
         'surface-bright':                '#3a393a',
         'surface-container-highest':     '#353436',
         'on-primary-container':          '#005170',
@@ -69,6 +69,7 @@ module.exports = {
         headline: ['Plus Jakarta Sans', 'sans-serif'],
         body:     ['Manrope', 'sans-serif'],
         label:    ['Manrope', 'sans-serif'],
+        serif:    ['Playfair Display', 'serif'],
       },
     },
   },
