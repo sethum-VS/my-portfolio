@@ -69,6 +69,7 @@ module.exports = {
         headline: ['Plus Jakarta Sans', 'sans-serif'],
         body:     ['Manrope', 'sans-serif'],
         label:    ['Manrope', 'sans-serif'],
+        serif:    ['Playfair Display', 'serif'],
       },
     },
   },

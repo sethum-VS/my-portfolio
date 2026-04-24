@@ -2,7 +2,7 @@ package views
 
 // NavBar renders the fixed floating pill navigation bar.
 // Extracted from the Home Screen HTML as a reusable component.
-templ NavBar() {
+templ NavBar(active string) {
 	<nav class="fixed top-4 left-1/2 -translate-x-1/2 w-[90%] flex justify-between items-center px-8 py-4 z-50 rounded-full mx-auto max-w-5xl bg-zinc-900/80 dark:bg-zinc-900/80 backdrop-blur-2xl border border-zinc-700/40 shadow-2xl shadow-sky-900/20">
 		<!-- Logo -->
 		<div class="flex items-center">
@@ -11,18 +11,35 @@ templ NavBar() {
 
 		<!-- Desktop nav links -->
 		<div class="hidden md:flex items-center gap-8">
-			<!-- Active: Home -->
-			<a
-				class="relative group flex items-center justify-center px-5 py-2 font-headline tracking-tight text-sm uppercase font-bold text-white transition-all duration-300"
-				href="/home"
-			>
-				<div class="absolute inset-0 bg-gradient-to-br from-sky-400/30 to-sky-600/10 rounded-full blur-[2px] border border-white/20 shadow-[inset_0_0_15px_rgba(255,255,255,0.3)] overflow-hidden">
-					<div class="absolute top-[-20%] left-[-20%] w-[140%] h-[140%] bg-[radial-gradient(circle_at_50%_50%,rgba(88,199,255,0.4)_0%,transparent_60%)] animate-pulse"></div>
-					<div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.2)_0%,transparent_50%)]"></div>
-				</div>
-				<span class="relative z-10">Home</span>
-			</a>
-			<a class="font-headline tracking-tight text-sm uppercase font-semibold text-zinc-400 hover:text-sky-200 transition-colors duration-300 transform hover:scale-95" href="#">About</a>
+			if active == "home" {
+				<a
+					class="relative group flex items-center justify-center px-5 py-2 font-headline tracking-tight text-sm uppercase font-bold text-white transition-all duration-300"
+					href="/home"
+				>
+					<div class="absolute inset-0 bg-gradient-to-br from-sky-400/30 to-sky-600/10 rounded-full blur-[2px] border border-white/20 shadow-[inset_0_0_15px_rgba(255,255,255,0.3)] overflow-hidden">
+						<div class="absolute top-[-20%] left-[-20%] w-[140%] h-[140%] bg-[radial-gradient(circle_at_50%_50%,rgba(88,199,255,0.4)_0%,transparent_60%)] animate-pulse"></div>
+						<div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.2)_0%,transparent_50%)]"></div>
+					</div>
+					<span class="relative z-10">Home</span>
+				</a>
+			} else {
+				<a class="font-headline tracking-tight text-sm uppercase font-semibold text-zinc-400 hover:text-sky-200 transition-colors duration-300 transform hover:scale-95" href="/home">Home</a>
+			}
+
+			if active == "about" {
+				<a
+					class="relative group flex items-center justify-center px-5 py-2 font-headline tracking-tight text-sm uppercase font-bold text-white transition-all duration-300"
+					href="/about"
+				>
+					<div class="absolute inset-0 bg-gradient-to-br from-sky-400/30 to-sky-600/10 rounded-full blur-[2px] border border-white/20 shadow-[inset_0_0_15px_rgba(255,255,255,0.3)] overflow-hidden">
+						<div class="absolute top-[-20%] left-[-20%] w-[140%] h-[140%] bg-[radial-gradient(circle_at_50%_50%,rgba(88,199,255,0.4)_0%,transparent_60%)] animate-pulse"></div>
+						<div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.2)_0%,transparent_50%)]"></div>
+					</div>
+					<span class="relative z-10">About</span>
+				</a>
+			} else {
+				<a class="font-headline tracking-tight text-sm uppercase font-semibold text-zinc-400 hover:text-sky-200 transition-colors duration-300 transform hover:scale-95" href="/about">About</a>
+			}
 			<a class="font-headline tracking-tight text-sm uppercase font-semibold text-zinc-400 hover:text-sky-200 transition-colors duration-300 transform hover:scale-95" href="#">Projects</a>
 			<a class="font-headline tracking-tight text-sm uppercase font-semibold text-zinc-400 hover:text-sky-200 transition-colors duration-300 transform hover:scale-95" href="#">Contact</a>
 		</div>
