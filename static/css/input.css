@@ -150,3 +150,24 @@
   opacity: 0;
   transition: opacity 0.3s ease-out;
 }
+/* ── SPA Sequential Component Loading ─────────────────────────────────────── */
+@keyframes seq-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.seq-in {
+    opacity: 0;
+    animation: seq-fade-in 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+.delay-1 { animation-delay: 50ms; }
+.delay-2 { animation-delay: 150ms; }
+.delay-3 { animation-delay: 250ms; }
+.delay-4 { animation-delay: 350ms; }
+.delay-5 { animation-delay: 450ms; }
