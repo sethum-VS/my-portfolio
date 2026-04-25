@@ -1,0 +1,96 @@
+package views
+
+// ContactContent renders the contact page body fragment for HTMX swaps.
+templ ContactContent() {
+	<div id="app-shell" class="flex flex-col min-h-screen overflow-x-hidden relative">
+
+		<!-- Ultra-crisp WebGL pixel noise shader layer (Globally overlaying) -->
+		<canvas id="webgl-noise-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-0"></canvas>
+
+		<!-- ── Fixed Background Layer ─────────────────────────────────────── -->
+		<div class="fixed inset-0 pointer-events-none z-[-30] bg-[#131314] overflow-hidden">
+			<div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+			<canvas id="magnetic-canvas-base" class="absolute inset-0 w-full h-full"></canvas>
+			<canvas id="magnetic-canvas-wave" class="grid-wave-overlay"></canvas>
+		</div>
+
+		<!-- ── Navigation ─────────────────────────────────────────────────── -->
+		@NavBar("contact")
+
+		<!-- ── Main Content ───────────────────────────────────────────────── -->
+		<main id="main-content" class="flex-grow flex flex-col pt-48 pb-20 px-6 md:px-12 lg:px-24 max-w-7xl mx-auto w-full z-10">
+			<div class="max-w-3xl space-y-20">
+
+				<!-- ── Headline ──────────────────────────────────────────── -->
+				<section class="space-y-6 seq-in delay-1">
+					<h1 class="font-headline text-5xl md:text-7xl font-extrabold tracking-[-0.02em] leading-[1.1] text-on-surface">
+						Let&#39;s build something <br/>
+						with <span class="font-serif text-primary tracking-tighter font-black">soul</span>.
+					</h1>
+				</section>
+
+				<!-- ── Narrative ─────────────────────────────────────────── -->
+				<section class="space-y-8 pl-4 border-l-2 border-surface-variant/50 seq-in delay-2">
+					<p class="font-body text-xl md:text-2xl text-on-surface-variant leading-relaxed max-w-2xl font-light">
+						I believe the best software isn&#39;t just engineered; it&#39;s crafted.
+						I partner with visionary teams to bridge the gap between rigorous technical precision
+						and deep human empathy. If you&#39;re looking for a developer who cares about the invisible details
+						as much as the visible product, we should talk.
+					</p>
+				</section>
+
+				<!-- ── Connections List ──────────────────────────────────── -->
+				<section class="flex flex-col gap-8 w-max seq-in delay-3">
+
+					<!-- Email -->
+					<a class="group flex items-center gap-6 font-headline text-4xl md:text-5xl text-on-surface hover:text-primary transition-colors duration-500" href="mailto:methsandasethum@gmail.com">
+						<span class="font-light group-hover:font-semibold group-hover:italic transition-all duration-300 relative">
+							Email
+							<span class="absolute -bottom-2 left-0 w-0 h-1 bg-primary group-hover:w-full transition-all duration-500 ease-out"></span>
+						</span>
+						<span class="material-symbols-outlined opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500 text-3xl">arrow_forward</span>
+					</a>
+
+					<!-- GitHub -->
+					<a class="group flex items-center gap-6 font-headline text-4xl md:text-5xl text-on-surface hover:text-primary transition-colors duration-500" href="https://github.com/sethum-VS" target="_blank" rel="noopener noreferrer">
+						<span class="font-light group-hover:font-semibold group-hover:italic transition-all duration-300 relative">
+							GitHub
+							<span class="absolute -bottom-2 left-0 w-0 h-1 bg-primary group-hover:w-full transition-all duration-500 ease-out"></span>
+						</span>
+						<span class="material-symbols-outlined opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500 text-3xl">arrow_forward</span>
+					</a>
+
+					<!-- LinkedIn -->
+					<a class="group flex items-center gap-6 font-headline text-4xl md:text-5xl text-on-surface hover:text-primary transition-colors duration-500" href="https://linkedin.com/in/sethum-methsanda" target="_blank" rel="noopener noreferrer">
+						<span class="font-light group-hover:font-semibold group-hover:italic transition-all duration-300 relative">
+							LinkedIn
+							<span class="absolute -bottom-2 left-0 w-0 h-1 bg-primary group-hover:w-full transition-all duration-500 ease-out"></span>
+						</span>
+						<span class="material-symbols-outlined opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500 text-3xl">arrow_forward</span>
+					</a>
+
+					<!-- Twitter / X -->
+					<a class="group flex items-center gap-6 font-headline text-4xl md:text-5xl text-on-surface hover:text-primary transition-colors duration-500" href="https://x.com/sethum_vs" target="_blank" rel="noopener noreferrer">
+						<span class="font-light group-hover:font-semibold group-hover:italic transition-all duration-300 relative">
+							Twitter
+							<span class="absolute -bottom-2 left-0 w-0 h-1 bg-primary group-hover:w-full transition-all duration-500 ease-out"></span>
+						</span>
+						<span class="material-symbols-outlined opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500 text-3xl">arrow_forward</span>
+					</a>
+
+				</section>
+			</div>
+		</main>
+
+		<!-- ── Footer ─────────────────────────────────────────────────────── -->
+		@Footer()
+
+	</div>
+}
+
+// ContactPage wraps ContactContent in the global Layout for direct browser navigation.
+templ ContactPage() {
+	@Layout("Contact | SMWDev") {
+		@ContactContent()
+	}
+}

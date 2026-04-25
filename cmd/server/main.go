@@ -21,6 +21,7 @@ func main() {
 	mux.HandleFunc("GET /about", handlers.AboutHandler)
 	mux.HandleFunc("GET /projects", handlers.ProjectsHandler)
 	mux.HandleFunc("GET /projects/{id}", handlers.ProductHandler)
+	mux.HandleFunc("GET /contact", handlers.ContactHandler)
 	mux.HandleFunc("GET /dashboard", handlers.DashboardHandler)
 
 	const addr = ":8080"

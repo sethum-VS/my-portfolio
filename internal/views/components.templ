@@ -35,7 +35,12 @@ templ NavBar(active string) {
 				<a class="nav-link relative z-10 px-5 py-2 font-headline tracking-tight text-sm uppercase transition-colors duration-300 transform font-semibold text-zinc-400 hover:text-sky-200 hover:scale-95" href="/projects" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML swap:400ms" data-active="false">Projects</a>
 			}
 
-			<a class="nav-link relative z-10 px-5 py-2 font-headline tracking-tight text-sm uppercase font-semibold text-zinc-400 hover:text-sky-200 transition-colors duration-300 transform hover:scale-95" href="#" data-active="false">Contact</a>
+	
+		if active == "contact" {
+				<a class="nav-link relative z-10 px-5 py-2 font-headline tracking-tight text-sm uppercase transition-colors duration-300 transform font-bold text-white" href="/contact" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML swap:400ms" data-active="true">Contact</a>
+			} else {
+				<a class="nav-link relative z-10 px-5 py-2 font-headline tracking-tight text-sm uppercase transition-colors duration-300 transform font-semibold text-zinc-400 hover:text-sky-200 hover:scale-95" href="/contact" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML swap:400ms" data-active="false">Contact</a>
+			}
 		</div>
 
 		<!-- Resume CTA -->
