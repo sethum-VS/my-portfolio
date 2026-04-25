@@ -3,7 +3,6 @@ package views
 import (
 	"github.com/sethum-VS/my-portfolio/internal/models"
 	"strconv"
-	"strings"
 )
 
 // ProductContent renders the product detail page body with engineering focus.
@@ -243,7 +242,7 @@ templ ProductContent(product *models.Product) {
 
 // ProductPage wraps ProductContent in the global Layout for direct browser navigation.
 templ ProductPage(product *models.Product) {
-	@Layout(strings.TrimSpace(product.Title + " | SMWDev")) {
+	@Layout("Soul") {
 		@ProductContent(product)
 	}
 }

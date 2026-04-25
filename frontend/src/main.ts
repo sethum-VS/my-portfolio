@@ -122,4 +122,5 @@ document.addEventListener("htmx:afterSwap", () => {
   }
   initCanvas();
   initCursor();
+  initNavBlob();
 });
