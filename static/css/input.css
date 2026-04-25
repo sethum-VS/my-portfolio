@@ -171,3 +171,19 @@
 .delay-3 { animation-delay: 250ms; }
 .delay-4 { animation-delay: 350ms; }
 .delay-5 { animation-delay: 450ms; }
+ 
+/* ── SPA Exit Transitions ────────────────────────────────────────────────── */
+@keyframes seq-fade-out {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
+}
+ 
+.page-transition-exit {
+    animation: seq-fade-out 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
