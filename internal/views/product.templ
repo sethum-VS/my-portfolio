@@ -2,6 +2,7 @@ package views
 
 import (
 	"github.com/sethum-VS/my-portfolio/internal/models"
+	"strconv"
 	"strings"
 )
 
@@ -29,40 +30,49 @@ templ ProductContent(product *models.Product) {
 			<!-- ── Hero Section ─────────────────────────────────────────────── -->
 			<section class="relative pt-48 pb-20 px-6 md:px-12 lg:px-24">
 				<div class="max-w-7xl mx-auto w-full">
-					<div class="max-w-4xl flex flex-col gap-12">
+					<div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+						<div class="flex flex-col gap-12">
+							<!-- Hero title and subtitle -->
+							<div class="flex flex-col gap-6 seq-in delay-2">
+								<h1 class="font-headline text-5xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tighter font-black text-on-surface">
+									{ product.Title }
+								</h1>
+								<p class="text-on-surface-variant/80 text-lg md:text-2xl font-body font-light max-w-3xl">
+									{ product.Subtitle }
+								</p>
+							</div>
 
+							<!-- CTA buttons -->
+							<div class="flex flex-wrap gap-4 pt-6 seq-in delay-4">
+								if product.LiveURL != "" {
+									<a href={ templ.SafeURL(product.LiveURL) } target="_blank" class="bg-gradient-to-br from-primary to-primary-container text-on-primary-fixed font-headline font-semibold px-8 py-4 rounded-full hover:scale-[1.02] transition-transform duration-300 shadow-lg shadow-primary-container/20 flex items-center gap-2">
+										View Live Project
+										<span class="material-symbols-outlined text-[20px]">open_in_new</span>
+									</a>
+								}
+								if product.GitHubURL != "" {
+									<a href={ templ.SafeURL(product.GitHubURL) } target="_blank" class="group relative px-8 py-4 font-headline font-semibold text-primary hover:text-primary-container transition-colors duration-300 flex items-center gap-2 overflow-hidden rounded-full border border-primary/30 hover:border-primary-container/30">
+										<div class="absolute inset-0 bg-surface-container-highest opacity-0 group-hover:opacity-20 transition-opacity duration-500 -z-10"></div>
+										View Source Code
+										<span class="material-symbols-outlined text-[20px]">code</span>
+									</a>
+								}
+							</div>
+						</div>
 
-
-					<!-- Hero title and subtitle -->
-					<div class="flex flex-col gap-6 seq-in delay-2">
-
-						<h1 class="font-headline text-5xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tighter font-black text-on-surface">
-							{ product.Title }
-						</h1>
-						<p class="text-on-surface-variant/80 text-lg md:text-2xl font-body font-light max-w-3xl">
-							{ product.Subtitle }
-						</p>
-					</div>
-
-
-
-					<!-- CTA buttons -->
-					<div class="flex flex-wrap gap-4 pt-6 seq-in delay-4">
-						if product.LiveURL != "" {
-							<a href={ templ.SafeURL(product.LiveURL) } target="_blank" class="bg-gradient-to-br from-primary to-primary-container text-on-primary-fixed font-headline font-semibold px-8 py-4 rounded-full hover:scale-[1.02] transition-transform duration-300 shadow-lg shadow-primary-container/20 flex items-center gap-2">
-								View Live Project
-								<span class="material-symbols-outlined text-[20px]">open_in_new</span>
-							</a>
-						}
-						if product.GitHubURL != "" {
-							<a href={ templ.SafeURL(product.GitHubURL) } target="_blank" class="group relative px-8 py-4 font-headline font-semibold text-primary hover:text-primary-container transition-colors duration-300 flex items-center gap-2 overflow-hidden rounded-full border border-primary/30 hover:border-primary-container/30">
-								<div class="absolute inset-0 bg-surface-container-highest opacity-0 group-hover:opacity-20 transition-opacity duration-500 -z-10"></div>
-								View Source Code
-								<span class="material-symbols-outlined text-[20px]">code</span>
-							</a>
-						}
-					</div>
-
+						<!-- Hero GIF / Demo Image -->
+						<div class="seq-in delay-3">
+							if product.HeroGIF != "" {
+								<div class="relative group rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/50">
+									<img src={ product.HeroGIF } alt={ product.Title + " Demo" } class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700" />
+									<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60"></div>
+								</div>
+							} else {
+								<div class="aspect-video bg-surface-container-high/30 rounded-2xl border border-white/5 flex items-center justify-center">
+									<span class="material-symbols-outlined text-6xl text-on-surface-variant/20">farsight_24</span>
+								</div>
+							}
+						</div>
 					</div>
 				</div>
 			</section>
@@ -73,37 +83,45 @@ templ ProductContent(product *models.Product) {
 					<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
 
 						<!-- Challenge & Solution -->
-						<div class="space-y-8">
+						<div class="space-y-12">
 							<div class="seq-in delay-1">
 								<h2 class="text-sm md:text-base uppercase tracking-[0.18em] text-primary font-headline font-semibold mb-3">The Challenge</h2>
 								<p class="text-on-surface-variant/80 text-base md:text-lg leading-relaxed font-body">{ product.Challenge }</p>
 							</div>
 
 							<div class="seq-in delay-2">
-								<h2 class="text-sm md:text-base uppercase tracking-[0.18em] text-primary font-headline font-semibold mb-3">Our Approach</h2>
+								<h2 class="text-sm md:text-base uppercase tracking-[0.18em] text-primary font-headline font-semibold mb-3">The Solution</h2>
 								<p class="text-on-surface-variant/80 text-base md:text-lg leading-relaxed font-body">{ product.Solution }</p>
 							</div>
+
+							if product.Deployment != "" {
+								<div class="seq-in delay-3 border-t border-outline/10 pt-8">
+									<h2 class="text-sm md:text-base uppercase tracking-[0.18em] text-primary font-headline font-semibold mb-3">Deployment & CI/CD</h2>
+									<p class="text-on-surface-variant/80 text-base md:text-lg leading-relaxed font-body">{ product.Deployment }</p>
+								</div>
+							}
 						</div>
 
 						<!-- Architecture Overview -->
-						<div class="seq-in delay-3">
-							<div class="bg-surface-container-high/50 border border-outline/20 rounded-xl p-8">
+						<div class="seq-in delay-3 h-full">
+							<div class="bg-surface-container-high/50 border border-outline/20 rounded-xl p-8 h-full flex flex-col">
 								<h2 class="text-sm md:text-base uppercase tracking-[0.18em] text-primary font-headline font-semibold mb-6">Architecture Overview</h2>
-								<div class="space-y-4">
-									<div class="flex items-start gap-3">
-										<div class="w-1 h-1 rounded-full bg-primary-container mt-2.5 flex-shrink-0"></div>
-										<div class="flex-1">
-											<p class="text-on-surface font-body text-sm md:text-base leading-relaxed">{ product.Architecture }</p>
+								<p class="text-on-surface font-body text-sm md:text-base leading-relaxed mb-8">{ product.Architecture }</p>
+
+								<!-- Architecture visualization -->
+								if product.ArchDiagram != "" {
+									<div class="mt-auto pt-8 border-t border-outline/10">
+										<pre class="font-mono text-[10px] md:text-xs leading-relaxed text-primary-container/80 bg-black/40 p-6 rounded-lg overflow-x-auto border border-primary/10">
+											{ product.ArchDiagram }
+										</pre>
+									</div>
+								} else {
+									<div class="mt-auto pt-8 border-t border-outline/10">
+										<div class="aspect-video bg-[linear-gradient(135deg,#ffffff08_0%,#ffffff04_100%)] rounded-lg flex items-center justify-center text-on-surface-variant/40 text-sm">
+											<span class="material-symbols-outlined text-4xl opacity-30">architecture</span>
 										</div>
 									</div>
-								</div>
-
-								<!-- Architecture visualization placeholder -->
-								<div class="mt-8 pt-8 border-t border-outline/10">
-									<div class="aspect-video bg-[linear-gradient(135deg,#ffffff08_0%,#ffffff04_100%)] rounded-lg flex items-center justify-center text-on-surface-variant/40 text-sm">
-										<span class="material-symbols-outlined text-4xl opacity-30">architecture</span>
-									</div>
-								</div>
+								}
 							</div>
 						</div>
 
@@ -111,21 +129,25 @@ templ ProductContent(product *models.Product) {
 				</div>
 			</section>
 
-			<!-- ── Key Features Grid ────────────────────────────────────── -->
-			if len(product.KeyFeatures) > 0 {
+			<!-- ── Internal Flow ────────────────────────────────────────── -->
+			if len(product.InternalFlow) > 0 {
 				<section class="relative py-20 px-6 md:px-12 lg:px-24">
 					<div class="max-w-7xl mx-auto">
-						<h2 class="text-4xl md:text-5xl font-headline font-bold text-on-surface mb-16 seq-in delay-1">Key Features</h2>
-
-						<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-							for i, feature := range product.KeyFeatures {
-								<div class="group seq-in bg-surface-container-high/30 border border-outline/10 hover:border-primary/20 rounded-xl p-6 transition-all duration-300 hover:bg-surface-container-high/50">
-									<div class="flex items-start gap-4">
-										<div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary-container/10 flex items-center justify-center flex-shrink-0 group-hover:from-primary/30 group-hover:to-primary-container/20 transition-colors duration-300">
-											<span class="material-symbols-outlined text-primary text-lg">{ featureIcon(i) }</span>
+						<h2 class="text-sm md:text-base uppercase tracking-[0.18em] text-primary font-headline font-semibold mb-12 seq-in delay-1">Internal Data Flow</h2>
+						
+						<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16">
+							for i, step := range product.InternalFlow {
+								<div class="relative seq-in group">
+									<div class="flex items-start gap-6">
+										<div class="flex-shrink-0 w-10 h-10 rounded-full border border-primary/30 flex items-center justify-center text-primary font-headline font-bold text-sm bg-primary/5 group-hover:bg-primary/10 transition-colors duration-300">
+											{ strconv.Itoa(i+1) }
 										</div>
-										<p class="text-on-surface font-body text-sm md:text-base leading-relaxed">{ feature }</p>
+										<p class="text-on-surface-variant/90 font-body text-base leading-relaxed pt-1">{ step }</p>
 									</div>
+									if i < len(product.InternalFlow) - 1 {
+										<!-- Connector line for desktop (to the right) -->
+										<div class="hidden lg:block absolute top-5 -right-6 w-12 h-px bg-gradient-to-r from-primary/30 to-transparent"></div>
+									}
 								</div>
 							}
 						</div>
@@ -133,17 +155,61 @@ templ ProductContent(product *models.Product) {
 				</section>
 			}
 
-			<!-- ── Tech Stack ─────────────────────────────────────────── -->
-			if len(product.TechStack) > 0 {
-				<section class="relative py-20 px-6 md:px-12 lg:px-24 bg-surface-container-lowest/30">
-					<div class="max-w-7xl mx-auto">
-						<h2 class="text-4xl md:text-5xl font-headline font-bold text-on-surface mb-12 seq-in delay-1">Technology Stack</h2>
+			<!-- ── Metrics & Tech Stack ──────────────────────────────────── -->
+			<section class="relative py-20 px-6 md:px-12 lg:px-24 bg-surface-container-lowest/30">
+				<div class="max-w-7xl mx-auto">
+					<div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
+						
+						<!-- Tech Stack -->
+						<div class="lg:col-span-7">
+							<h2 class="text-3xl md:text-4xl font-headline font-bold text-on-surface mb-10 seq-in delay-1">Technology Stack</h2>
+							<div class="flex flex-wrap gap-3 seq-in delay-2">
+								for _, tech := range product.TechStack {
+									<div class="inline-flex items-center gap-2 bg-surface-container-high border border-outline/20 rounded-full px-5 py-2.5 hover:border-primary/40 transition-all duration-300 hover:scale-105">
+										<span class="w-2 h-2 rounded-full bg-primary-container shadow-[0_0_8px_rgba(88,199,255,0.4)]"></span>
+										<span class="text-on-surface font-body text-sm md:text-base font-medium tracking-wide">{ tech }</span>
+									</div>
+								}
+							</div>
+						</div>
 
-						<div class="flex flex-wrap gap-3 seq-in delay-2">
-							for _, tech := range product.TechStack {
-								<div class="inline-flex items-center gap-2 bg-surface-container-high border border-outline/20 rounded-full px-4 py-2 hover:border-primary/40 transition-colors duration-300">
-									<span class="w-2 h-2 rounded-full bg-primary-container"></span>
-									<span class="text-on-surface font-body text-sm md:text-base font-medium">{ tech }</span>
+						<!-- Metrics -->
+						if len(product.Metrics) > 0 {
+							<div class="lg:col-span-5">
+								<h2 class="text-3xl md:text-4xl font-headline font-bold text-on-surface mb-10 seq-in delay-1">Key Metrics</h2>
+								<div class="grid grid-cols-2 gap-4 seq-in delay-2">
+									for label, value := range product.Metrics {
+										<div class="bg-surface-container-high/40 border border-outline/10 rounded-xl p-5 hover:bg-surface-container-high/60 transition-colors duration-300">
+											<p class="text-primary/70 text-[10px] uppercase tracking-widest font-headline font-bold mb-1">{ label }</p>
+											<p class="text-on-surface font-headline text-xl font-black">{ value }</p>
+										</div>
+									}
+								</div>
+							</div>
+						}
+
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Key Features Grid ────────────────────────────────────── -->
+			if len(product.KeyFeatures) > 0 {
+				<section class="relative py-24 px-6 md:px-12 lg:px-24">
+					<div class="max-w-7xl mx-auto">
+						<div class="flex flex-col gap-4 mb-16 seq-in delay-1">
+							<h2 class="text-sm md:text-base uppercase tracking-[0.18em] text-primary font-headline font-semibold">Technical Highlights</h2>
+							<h3 class="text-4xl md:text-5xl lg:text-6xl font-headline font-bold text-on-surface tracking-tight">Core Features</h3>
+						</div>
+
+						<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+							for i, feature := range product.KeyFeatures {
+								<div class="group seq-in bg-surface-container-high/20 border border-outline/5 hover:border-primary/20 rounded-2xl p-8 transition-all duration-500 hover:bg-surface-container-high/40 hover:-translate-y-1">
+									<div class="flex flex-col gap-6">
+										<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary-container/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-500">
+											<span class="material-symbols-outlined text-primary text-2xl">{ featureIcon(i) }</span>
+										</div>
+										<p class="text-on-surface/90 font-body text-base md:text-lg leading-relaxed font-light">{ feature }</p>
+									</div>
 								</div>
 							}
 						</div>
@@ -152,17 +218,16 @@ templ ProductContent(product *models.Product) {
 			}
 
 			<!-- ── Related Projects / Navigation ─────────────────────────── -->
-			<section class="relative py-20 px-6 md:px-12 lg:px-24">
+			<section class="relative py-24 px-6 md:px-12 lg:px-24 border-t border-white/5">
 				<div class="max-w-7xl mx-auto">
-					<div class="flex flex-col md:flex-row items-center justify-between gap-8 seq-in delay-1">
-						<div>
-							<h2 class="text-2xl md:text-3xl font-headline font-bold text-on-surface mb-2">Explore More Projects</h2>
-							<p class="text-on-surface-variant/70 font-body">Check out other projects in my portfolio</p>
+					<div class="flex flex-col md:flex-row items-center justify-between gap-12 seq-in delay-1">
+						<div class="max-w-xl text-center md:text-left">
+							<h2 class="text-3xl md:text-4xl font-headline font-bold text-on-surface mb-4 tracking-tight">Curious about more?</h2>
+							<p class="text-on-surface-variant/70 font-body text-lg leading-relaxed">Explore other engineering challenges and architectural decisions in my project portfolio.</p>
 						</div>
-						<a href="/projects" class="group relative px-8 py-4 font-headline font-semibold text-primary hover:text-primary-container transition-colors duration-300 flex items-center gap-2 overflow-hidden rounded-full border border-primary/30 hover:border-primary-container/30">
-							<div class="absolute inset-0 bg-surface-container-highest opacity-0 group-hover:opacity-20 transition-opacity duration-500 -z-10"></div>
-							Back to Projects
-							<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+						<a href="/projects" class="group relative px-10 py-5 font-headline font-bold text-on-primary-fixed bg-primary rounded-full hover:scale-105 transition-all duration-300 shadow-xl shadow-primary/10 flex items-center gap-3">
+							Browse All Projects
+							<span class="material-symbols-outlined text-[24px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
 						</a>
 					</div>
 				</div>
