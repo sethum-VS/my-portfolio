@@ -67,9 +67,12 @@ templ Footer() {
 		<div class="max-w-4xl mx-auto px-6 border-t border-white/5 pt-16 flex flex-col md:flex-row justify-between items-start gap-12 md:gap-0">
 			<!-- Copyright -->
 			<div class="font-body text-sm tracking-tight text-zinc-400 mt-1 md:mt-0">
-				© 2026 Sethum Methsanda
+				© <span id="copyright-year">2026</span> Sethum Methsanda
 				<span class="mx-2 text-zinc-600">•</span>
 				Colombo
+				<script>
+					document.getElementById('copyright-year').textContent = new Date().getFullYear();
+				</script>
 			</div>
 
 			<!-- Link columns -->
