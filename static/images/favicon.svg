@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 100">
+  <style>
+    text { 
+      fill: #ffffff; 
+      font-family: 'Plus Jakarta Sans', 'Inter', 'Segoe UI', sans-serif; 
+      font-weight: 800;
+      letter-spacing: -0.05em;
+    }
+    @media (prefers-color-scheme: light) {
+      text { fill: #18181b; }
+    }
+  </style>
+  <text x="0" y="80" font-size="80">Dev</text>
+</svg>
