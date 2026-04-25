@@ -2,27 +2,37 @@ package views
 
 // SplashPage is the full-page animated splash screen served at GET /.
 //
-// HTMX transition: the #app-shell div fires hx-get="/home" after a 2.5s delay,
-// using outerHTML swap with the View Transitions API (transition:true) for a
-// seamless, flash-free crossfade into the Home page — no meta-refresh needed.
+// HTMX transition: the #app-shell div swaps to /home via outerHTML once all
+// critical resources (Tailwind CSS + Google Fonts + Material Symbols) are confirmed loaded.
+// The custom "splash:ready" event is fired from the inline <script> below
+// after all assets resolve — ensuring no flash-of-unstyled-content (FOUT/FOIT).
 templ SplashPage() {
-	@Layout("SMWDev | Precision Artisan") {
+	@Layout("Soul") {
 		<div
 			id="app-shell"
 			hx-get="/home"
-			hx-trigger="load delay:2.5s"
+			hx-trigger="splash:ready from:body"
 			hx-swap="outerHTML transition:true"
-			class="min-h-screen overflow-hidden flex items-center justify-center relative"
+			class="min-h-screen overflow-hidden flex items-center justify-center relative bg-surface"
 		>
-			<!-- (Background blobs removed) -->
+			<!-- 
+				Font Pre-warmer: Forces the browser to load specific glyphs 
+				before the splash screen dismisses. Hidden from view but present in DOM.
+			-->
+			<div class="sr-only" aria-hidden="true">
+				<span class="material-symbols-outlined">arrow_forward</span>
+				<span class="material-symbols-outlined">download</span>
+				<span class="font-serif">Software Developer</span>
+				<span class="font-headline">Sethum Methsanda</span>
+			</div>
 
 			<!-- Central splash content -->
 			<main class="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6">
-				<div class="flex flex-col items-center justify-center space-y-12">
+				<div class="flex flex-col items-center justify-center w-full max-w-sm">
 
 					<!-- {_} logotype -->
-					<div class="relative group cursor-default">
-						<div class="absolute -inset-8 bg-surface-container-low/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000 ease-out"></div>
+					<div class="relative group cursor-default mb-16">
+						<div class="absolute -inset-8 bg-primary/10 blur-2xl rounded-full opacity-50 group-hover:opacity-100 transition-opacity duration-1000 ease-out"></div>
 						<div class="flex items-center space-x-2 font-headline text-[6rem] md:text-[8rem] lg:text-[10rem] font-bold tracking-tighter text-on-surface/90 relative z-10 leading-none">
 							<span class="text-tertiary/70 font-light translate-y-2">{ "{" }</span>
 							<span class="text-primary/90 animate-blink">_</span>
@@ -31,15 +41,157 @@ templ SplashPage() {
 					</div>
 
 					<!-- Brand name + status label -->
-					<div class="flex flex-col items-center space-y-4 opacity-80 mix-blend-plus-lighter">
-						<h1 class="font-headline text-2xl md:text-3xl font-semibold tracking-tight text-white">Dev.me</h1>
-						<p class="font-label text-xs tracking-[0.2em] uppercase text-surface-tint/70">Initializing Interface</p>
+					<div class="flex flex-col items-center space-y-8 w-full">
+						<div class="text-center">
+							<h1 class="font-headline text-3xl md:text-4xl font-black tracking-tighter text-white mb-2">Soul.</h1>
+							<p id="splash-status" class="font-label text-[10px] tracking-[0.3em] uppercase text-primary/60 font-bold h-4">Initializing Soul</p>
+						</div>
+
+						<!-- Project Blue Progress Bar -->
+						<div class="w-full h-[2px] bg-white/5 rounded-full overflow-hidden relative">
+							<div id="splash-progress" class="absolute top-0 left-0 h-full bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)] transition-all duration-700 ease-out" style="width: 0%"></div>
+						</div>
 					</div>
 
 					<!-- Decorative gradient rule -->
-					<div class="w-24 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent mt-12"></div>
+					<div class="w-12 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent mt-16"></div>
 				</div>
 			</main>
 		</div>
+
+		<!-- Smart splash loader: fires "splash:ready" on <body> once CSS + fonts are loaded -->
+		<script>
+		(function () {
+			// Minimum display time in ms — prevents flash on very fast connections.
+			var MIN_DISPLAY_MS = 1500;
+			var startedAt = performance.now();
+
+			var statusEl = document.getElementById('splash-status');
+			var progressEl = document.getElementById('splash-progress');
+			
+			var stages = [
+				{ text: 'Awakening Digital Soul', progress: 10 },
+				{ text: 'Synchronizing Creative Pathways', progress: 35 },
+				{ text: 'Materializing Aesthetic Vision', progress: 65 },
+				{ text: 'Verifying Human Essence', progress: 85 },
+				{ text: 'Manifesting Future Interface', progress: 100 }
+			];
+			var stageIndex = 0;
+
+			function updateUI(index) {
+				var stage = stages[index];
+				if (statusEl) {
+					statusEl.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+					statusEl.style.opacity = '0';
+					statusEl.style.transform = 'translateY(5px)';
+					setTimeout(function () {
+						statusEl.textContent = stage.text;
+						statusEl.style.opacity = '1';
+						statusEl.style.transform = 'translateY(0)';
+					}, 200);
+				}
+				if (progressEl) {
+					progressEl.style.width = stage.progress + '%';
+				}
+			}
+
+			function advanceStatus() {
+				stageIndex = Math.min(stageIndex + 1, stages.length - 1);
+				updateUI(stageIndex);
+			}
+
+			// Initial UI state
+			updateUI(0);
+
+			// ── 1. Wait for ALL critical stylesheets to be parsed ───────────────
+			function waitForCSS() {
+				return new Promise(function (resolve) {
+					var links = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
+					var criticalLinks = links.filter(function(l) {
+						return l.href.indexOf('output.css') !== -1 || l.href.indexOf('fonts.googleapis.com') !== -1;
+					});
+
+					if (criticalLinks.length === 0) { resolve(); return; }
+
+					advanceStatus(); // → "Synchronizing Creative Pathways"
+
+					var loadedCount = 0;
+					function checkAll() {
+						loadedCount++;
+						if (loadedCount >= criticalLinks.length) {
+							resolve();
+						}
+					}
+
+					criticalLinks.forEach(function(link) {
+						if (link.sheet) {
+							checkAll();
+						} else {
+							link.addEventListener('load', checkAll);
+							link.addEventListener('error', checkAll); // fail-open
+						}
+					});
+				});
+			}
+
+			// ── 2. Wait for Fonts via FontFaceSet API ────────────────────────────
+			function waitForFonts() {
+				advanceStatus(); // → "Materializing Aesthetic Vision"
+				if (document.fonts && document.fonts.ready) {
+					return document.fonts.ready;
+				}
+				return Promise.resolve();
+			}
+
+			// ── 3. Specific Glyph Verification for Material Symbols ──────────────
+			function verifyGlyphs() {
+				advanceStatus(); // → "Verifying Human Essence"
+				return new Promise(function(resolve) {
+					if (document.fonts && document.fonts.check) {
+						var check = function() {
+							if (document.fonts.check('24px "Material Symbols Outlined"')) {
+								resolve();
+							} else {
+								requestAnimationFrame(check);
+							}
+						};
+						check();
+					} else {
+						setTimeout(resolve, 300); // Fallback
+					}
+				});
+			}
+
+			// ── 4. Fire the HTMX trigger once ready ──────────────────────────────
+			function dispatchReady() {
+				advanceStatus(); // → "Manifesting Future Interface"
+
+				var elapsed = performance.now() - startedAt;
+				var remaining = Math.max(0, MIN_DISPLAY_MS - elapsed);
+
+				setTimeout(function () {
+					if (typeof htmx !== 'undefined') {
+						htmx.trigger(document.body, 'splash:ready');
+					} else {
+						document.body.dispatchEvent(new CustomEvent('splash:ready', { bubbles: true }));
+					}
+				}, remaining);
+			}
+
+			// ── Orchestrate ───────────────────────────────────────────────────────
+			waitForCSS()
+				.then(waitForFonts)
+				.then(verifyGlyphs)
+				.then(dispatchReady)
+				.catch(function (err) {
+					console.error('Splash load error:', err);
+					setTimeout(function () {
+						if (typeof htmx !== 'undefined') {
+							htmx.trigger(document.body, 'splash:ready');
+						}
+					}, 2000);
+				});
+		})();
+		</script>
 	}
 }
