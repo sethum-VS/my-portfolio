@@ -5,6 +5,12 @@ export class MagneticGrid {
   
   private mouse = { x: -1000, y: -1000, active: false };
   
+  // Event handler references for cleanup
+  private handleResize: () => void;
+  private handleMouseMove: (e: MouseEvent) => void;
+  private handleMouseLeave: () => void;
+  private resizeTimeout: any;
+  
   // Configuration
   private readonly gridSize = 40; // 40px blocks
   private readonly magnetRadius = 200; // Pull radius
@@ -21,9 +27,34 @@ export class MagneticGrid {
     if (!context) throw new Error("Could not initialize 2D context");
     this.ctx = context;
 
+    this.handleResize = () => {
+      clearTimeout(this.resizeTimeout);
+      this.resizeTimeout = setTimeout(() => {
+        this.resize();
+        this.draw(); // Ensure it redraws immediately after resize
+      }, 150);
+    };
+
+    this.handleMouseMove = (e: MouseEvent) => {
+      this.mouse.x = e.clientX;
+      this.mouse.y = e.clientY;
+      this.mouse.active = true;
+      if (!this.rafId) {
+        this.rafId = requestAnimationFrame(this.loop);
+      }
+    };
+
+    this.handleMouseLeave = () => {
+      this.mouse.active = false;
+    };
+
     this.init();
     this.bindEvents();
-    this.loop();
+    
+    // Draw initial state
+    this.draw();
+    // Start loop in case nodes need to settle, but it will sleep if inactive
+    this.rafId = requestAnimationFrame(this.loop);
   }
 
   private init() {
@@ -62,22 +93,13 @@ export class MagneticGrid {
   }
 
   private bindEvents() {
-    window.addEventListener("resize", () => {
-      this.resize();
-    });
-
-    window.addEventListener("mousemove", (e) => {
-      this.mouse.x = e.clientX;
-      this.mouse.y = e.clientY;
-      this.mouse.active = true;
-    });
-
-    window.addEventListener("mouseleave", () => {
-      this.mouse.active = false;
-    });
+    window.addEventListener("resize", this.handleResize);
+    window.addEventListener("mousemove", this.handleMouseMove, { passive: true });
+    window.addEventListener("mouseleave", this.handleMouseLeave);
   }
 
-  private update() {
+  private update(): boolean {
+    let needsUpdate = false;
     // Loop through each node to apply spring physics and magnetism
     for (const node of this.nodes) {
       let dx = 0;
@@ -101,9 +123,17 @@ export class MagneticGrid {
       const targetX = node.baseX + dx;
       const targetY = node.baseY + dy;
       
-      node.x += (targetX - node.x) * 0.15; // Smooth spring
-      node.y += (targetY - node.y) * 0.15;
+      const moveX = (targetX - node.x) * 0.15;
+      const moveY = (targetY - node.y) * 0.15;
+      
+      node.x += moveX;
+      node.y += moveY;
+      
+      if (Math.abs(moveX) > 0.01 || Math.abs(moveY) > 0.01) {
+        needsUpdate = true;
+      }
     }
+    return needsUpdate;
   }
 
   private draw() {
@@ -123,12 +153,23 @@ export class MagneticGrid {
   }
 
   private loop = () => {
-    this.update();
+    const needsUpdate = this.update();
     this.draw();
-    this.rafId = requestAnimationFrame(this.loop);
+    
+    if (this.mouse.active || needsUpdate) {
+      this.rafId = requestAnimationFrame(this.loop);
+    } else {
+      this.rafId = 0; // Sleep
+    }
   };
   
   public destroy() {
-    cancelAnimationFrame(this.rafId);
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = 0;
+    }
+    window.removeEventListener("resize", this.handleResize);
+    window.removeEventListener("mousemove", this.handleMouseMove);
+    window.removeEventListener("mouseleave", this.handleMouseLeave);
   }
 }

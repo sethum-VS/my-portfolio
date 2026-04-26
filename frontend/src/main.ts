@@ -30,11 +30,16 @@ function destroyCanvas() {
 }
 
 function initCursor() {
+  // Skip cursor initialization entirely on touch devices
+  if (window.matchMedia("(pointer: coarse)").matches) return;
+
   const cursor = document.getElementById("custom-cursor");
   if (!cursor) return;
 
   let targetX = -100;
   let targetY = -100;
+  let isMoving = false;
+  let cursorRafId: number | null = null;
 
   window.addEventListener("mousemove", (e) => {
     targetX = e.clientX;
@@ -42,13 +47,30 @@ function initCursor() {
     if (cursor.style.opacity !== "1") {
       cursor.style.opacity = "1";
     }
+    
+    if (!isMoving) {
+      isMoving = true;
+      if (cursorRafId === null) {
+        cursorRafId = requestAnimationFrame(renderCursor);
+      }
+    }
+    
+    // reset moving state slightly later to pause rendering when static
+    clearTimeout((window as any).cursorTimeout);
+    (window as any).cursorTimeout = setTimeout(() => {
+      isMoving = false;
+    }, 100);
   }, { passive: true });
 
   function renderCursor() {
     cursor!.style.transform = `translate(calc(${targetX}px - 50%), calc(${targetY}px - 50%))`;
-    requestAnimationFrame(renderCursor);
+    
+    if (isMoving) {
+      cursorRafId = requestAnimationFrame(renderCursor);
+    } else {
+      cursorRafId = null; // stop looping when idle
+    }
   }
-  requestAnimationFrame(renderCursor);
 }
 
 /**

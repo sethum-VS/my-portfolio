@@ -20,10 +20,8 @@ type Product struct {
 	Deployment       string            // Deployment/CI/CD info
 }
 
-// AllProducts returns the catalog of all portfolio projects.
-// Each product should only be accessible via the projects page.
-func AllProducts() []Product {
-	return []Product{
+// allProducts is the catalog of all portfolio projects.
+var allProducts = []Product{
 		{
 			ID:          "deca-node-tsp",
 			Title:       "Deca-Node TSP",
@@ -170,14 +168,23 @@ func AllProducts() []Product {
 			},
 		},
 	}
+
+var productsMap map[string]*Product
+
+func init() {
+	productsMap = make(map[string]*Product, len(allProducts))
+	for i := range allProducts {
+		productsMap[allProducts[i].ID] = &allProducts[i]
+	}
+}
+
+// AllProducts returns the catalog of all portfolio projects.
+// Each product should only be accessible via the projects page.
+func AllProducts() []Product {
+	return allProducts
 }
 
 // GetProductByID finds and returns a product by its ID, or nil if not found.
 func GetProductByID(id string) *Product {
-	for _, p := range AllProducts() {
-		if p.ID == id {
-			return &p
-		}
-	}
-	return nil
+	return productsMap[id]
 }
