@@ -6,7 +6,7 @@
     "tailwind": "tailwindcss -i ./static/css/input.css -o ./static/out/output.css",
     "tailwind:watch": "tailwindcss -i ./static/css/input.css -o ./static/out/output.css --watch",
     "tailwind:build": "tailwindcss -i ./static/css/input.css -o ./static/out/output.css --minify",
-    "build:ts": "esbuild frontend/src/main.ts --bundle --outfile=static/out/bundle.js",
+    "build:ts": "esbuild frontend/src/main.ts --bundle --minify --outfile=static/out/bundle.js",
     "watch:ts": "esbuild frontend/src/main.ts --bundle --outfile=static/out/bundle.js --watch=forever"
   },
   "devDependencies": {

@@ -1,11 +1,20 @@
-import * as THREE from 'three';
+import { 
+  OrthographicCamera, 
+  Scene, 
+  WebGLRenderer, 
+  ShaderMaterial, 
+  PlaneGeometry, 
+  Mesh, 
+  Vector2 
+} from 'three';
 
 export class WebGLNoise {
-  private camera: THREE.OrthographicCamera;
-  private scene: THREE.Scene;
-  private renderer: THREE.WebGLRenderer;
-  private material: THREE.ShaderMaterial;
+  private camera: OrthographicCamera;
+  private scene: Scene;
+  private renderer: WebGLRenderer;
+  private material: ShaderMaterial;
   private rafId: number = 0;
+  private resizeTimeout: any;
 
   // Reverted throttling for film grain to a stable 24fps (faster than 14, prevents lag)
   private lastTime: number = 0;
@@ -13,19 +22,20 @@ export class WebGLNoise {
   private readonly interval: number = 1000 / this.fps;
 
   constructor(canvas: HTMLCanvasElement) {
-    this.renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
+    this.renderer = new WebGLRenderer({ canvas, alpha: true, antialias: false });
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(window.devicePixelRatio);
+    // Cap pixel ratio at 1.0 for performance (Finding #5)
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.0));
 
-    this.scene = new THREE.Scene();
-    this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    this.scene = new Scene();
+    this.camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-    this.material = new THREE.ShaderMaterial({
+    this.material = new ShaderMaterial({
       uniforms: {
         u_time_smooth: { value: 0.0 },
         u_time_noise: { value: 0.0 },
-        u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+        u_resolution: { value: new Vector2(window.innerWidth, window.innerHeight) }
       },
       vertexShader: `
         void main() {
@@ -222,17 +232,21 @@ export class WebGLNoise {
       depthTest: false,
     });
 
-    const geometry = new THREE.PlaneGeometry(2, 2);
-    const plane = new THREE.Mesh(geometry, this.material);
+    const geometry = new PlaneGeometry(2, 2);
+    const plane = new Mesh(geometry, this.material);
     this.scene.add(plane);
 
     window.addEventListener('resize', this.onWindowResize);
     this.rafId = requestAnimationFrame(this.animate);
   }
 
+  // Implement 150ms debounce on resize (Finding #8)
   private onWindowResize = () => {
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.material.uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
+    clearTimeout(this.resizeTimeout);
+    this.resizeTimeout = setTimeout(() => {
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.material.uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
+    }, 150);
   };
 
   private animate = (currentTime: number) => {
@@ -254,6 +268,7 @@ export class WebGLNoise {
   public destroy() {
     cancelAnimationFrame(this.rafId);
     window.removeEventListener('resize', this.onWindowResize);
+    clearTimeout(this.resizeTimeout);
     this.geometryDispose();
     this.material.dispose();
     this.renderer.dispose();
@@ -261,7 +276,7 @@ export class WebGLNoise {
 
   private geometryDispose() {
     this.scene.children.forEach(child => {
-      if (child instanceof THREE.Mesh) {
+      if (child instanceof Mesh) {
         child.geometry.dispose();
       }
     });
