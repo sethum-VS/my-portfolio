@@ -164,17 +164,19 @@ templ ProductContent(product *models.Product) {
 							<div>
 								<h2 class="text-sm md:text-base uppercase tracking-[0.18em] text-primary font-headline font-semibold mb-6 seq-in delay-1">Core Features</h2>
 								<div class="seq-in delay-2">
-									<p class="font-body text-base md:text-lg leading-[2] font-light text-on-surface-variant/90">
+									<div class="flex flex-col gap-y-4 md:flex-row md:flex-wrap md:gap-x-10 md:gap-y-6">
 										for _, feature := range product.KeyFeatures {
-											<span class="text-on-surface group relative cursor-default inline-block mr-5">
-												<span class="inline-block mr-3 text-primary/40 text-xl align-middle">&bull;</span>
-												<span class="relative inline-block">
-													<span class="group-hover:text-primary transition-colors duration-300 ease-out">{ feature }</span>
-													<span class="absolute -bottom-0.5 left-0 w-0 h-px bg-primary/50 transition-all duration-300 group-hover:w-full"></span>
-												</span>
-											</span>
+											<div class="text-on-surface group relative cursor-default flex items-start">
+												<span class="flex-shrink-0 mr-3 text-primary/40 text-2xl leading-none">&bull;</span>
+												<div class="relative">
+													<span class="font-body text-base md:text-lg leading-relaxed font-light text-on-surface-variant/90 group-hover:text-primary transition-colors duration-300 ease-out block">
+														{ feature }
+													</span>
+													<span class="absolute -bottom-1 left-0 w-0 h-px bg-primary/50 transition-all duration-300 group-hover:w-full"></span>
+												</div>
+											</div>
 										}
-									</p>
+									</div>
 								</div>
 							</div>
 						}
