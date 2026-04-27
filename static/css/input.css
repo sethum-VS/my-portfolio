@@ -4,6 +4,17 @@
 
 /* ── Global overrides (outside @layer for max specificity) ──────────────── */
 
+/* Disable selecting/copying visible text globally. */
+html,
+body,
+body * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 /* Hide fallback system pointer on desktop */
 @media (pointer: fine) {
   *, *::before, *::after {
