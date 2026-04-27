@@ -3,6 +3,40 @@ import { WebGLNoise } from "./canvas/WebGLNoise";
 
 let gridInstances: MagneticGrid[] = [];
 let noiseInstance: WebGLNoise | null = null;
+let contentProtectionInitialized = false;
+
+function initContentProtection() {
+  if (contentProtectionInitialized) return;
+  contentProtectionInitialized = true;
+
+  const block = (event: Event) => {
+    event.preventDefault();
+  };
+
+  const blockCopyShortcuts = (event: KeyboardEvent) => {
+    const key = event.key.toLowerCase();
+    const hasModifier = event.ctrlKey || event.metaKey;
+
+    // Block common copy and select-all shortcuts, including Shift+Insert paste-copy pathways.
+    const blockedCombination =
+      (hasModifier && (key === "c" || key === "x" || key === "a" || key === "insert")) ||
+      (event.shiftKey && key === "insert") ||
+      key === "contextmenu" ||
+      (event.shiftKey && key === "f10");
+
+    if (blockedCombination) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+
+  document.addEventListener("contextmenu", block);
+  document.addEventListener("copy", block);
+  document.addEventListener("cut", block);
+  document.addEventListener("selectstart", block);
+  document.addEventListener("dragstart", block);
+  document.addEventListener("keydown", blockCopyShortcuts);
+}
 
 function initCanvas() {
   const baseCanvas = document.getElementById("magnetic-canvas-base") as HTMLCanvasElement;
@@ -208,6 +242,7 @@ function reinitPage() {
 // ── Global Event Listeners ──────────────────────────────────────────────────
 
 document.addEventListener("DOMContentLoaded", () => {
+  initContentProtection();
   initCanvas();
   initCursor();
   initNavBlob();
