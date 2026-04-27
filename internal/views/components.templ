@@ -118,7 +118,7 @@ templ MobileNav(active string) {
 // Extracted and redesigned to match the provided layout.
 templ Footer() {
 	<footer class="w-full relative z-20 pt-32 pb-24 bg-transparent">
-		<div class="max-w-4xl mx-auto px-6 border-t border-white/5 pt-16 flex flex-col md:flex-row justify-between items-start gap-12 md:gap-0">
+		<div class="max-w-4xl mx-auto px-6 md:border-t border-white/5 pt-16 flex flex-col items-center text-center md:flex-row md:justify-between md:items-start md:text-left gap-12 md:gap-0">
 			<!-- Copyright -->
 			<div class="font-body text-sm tracking-tight text-zinc-400 mt-1 md:mt-0">
 				© <span id="copyright-year">2026</span> Sethum Methsanda
@@ -132,7 +132,7 @@ templ Footer() {
 			<!-- Link columns -->
 			<div class="flex flex-row gap-20 md:gap-24">
 				<!-- Someplaces -->
-				<div class="flex flex-col gap-6 items-start">
+				<div class="flex flex-col gap-6 items-center md:items-start">
 					<span class="font-body text-sm font-semibold text-primary">Someplaces</span>
 					<div class="flex flex-col gap-5">
 						<a class="font-body text-[14px] text-zinc-300 hover:text-white transition-colors duration-200" href="https://github.com/sethum-VS/" target="_blank" rel="noopener noreferrer">Github</a>
@@ -141,7 +141,7 @@ templ Footer() {
 					</div>
 				</div>
 				<!-- Contact -->
-				<div class="flex flex-col gap-6 items-start">
+				<div class="flex flex-col gap-6 items-center md:items-start">
 					<span class="font-body text-sm font-semibold text-primary">Contact</span>
 					<div class="flex flex-col gap-5">
 						<a class="font-body text-[14px] text-zinc-300 hover:text-white transition-colors duration-200" href="/contact" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML swap:250ms">Message</a>
