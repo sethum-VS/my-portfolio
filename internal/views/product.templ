@@ -208,7 +208,7 @@ templ ProductContent(product *models.Product) {
 							<h2 class="text-3xl md:text-4xl font-headline font-bold text-on-surface mb-4 tracking-tight">Curious about more?</h2>
 							<p class="text-on-surface-variant/70 font-body text-lg leading-relaxed">Explore other engineering challenges and architectural decisions in my project portfolio.</p>
 						</div>
-						<a href="/projects" class="group relative px-10 py-5 font-headline font-bold text-on-primary-fixed bg-primary rounded-full hover:scale-105 transition-all duration-300 shadow-xl shadow-primary/10 flex items-center gap-3">
+						<a href="/projects" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML swap:250ms" class="group relative px-10 py-5 font-headline font-bold text-on-primary-fixed bg-primary rounded-full hover:scale-105 transition-all duration-300 shadow-xl shadow-primary/10 flex items-center gap-3">
 							Browse All Projects
 							<span class="material-symbols-outlined text-[24px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
 						</a>
