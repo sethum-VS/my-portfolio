@@ -16,5 +16,5 @@ func AboutHandler(w http.ResponseWriter, r *http.Request) {
 		templ.Handler(views.AboutContent()).ServeHTTP(w, r)
 		return
 	}
-	templ.Handler(views.AboutPage()).ServeHTTP(w, r)
+	http.Redirect(w, r, "/", http.StatusFound)
 }
