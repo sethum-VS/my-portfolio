@@ -143,6 +143,31 @@ function updateNavActiveState(animate: boolean = true) {
     }
   }
 
+  // Update mobile nav active states
+  const mobileContainer = document.getElementById("mobile-nav");
+  if (mobileContainer) {
+    const mobileLinks = mobileContainer.querySelectorAll('a[href^="/"]');
+    for (const link of Array.from(mobileLinks)) {
+      const el = link as HTMLElement;
+      const href = el.getAttribute('href');
+      if (!href) continue;
+      
+      const isHome = href === '/' || href === '/home';
+      const isPathHome = path === '/' || path === '/home';
+      
+      const isMatch = (isHome && isPathHome) || 
+                     (!isHome && href !== '/' && path.startsWith(href));
+                     
+      if (isMatch) {
+        el.classList.add('text-[#abdeff]');
+        el.classList.remove('text-[#f0f0f0]', 'opacity-50', 'hover:text-[#ffcdbd]', 'hover:opacity-100');
+      } else {
+        el.classList.remove('text-[#abdeff]');
+        el.classList.add('text-[#f0f0f0]', 'opacity-50', 'hover:text-[#ffcdbd]', 'hover:opacity-100');
+      }
+    }
+  }
+
   if (activeLink) {
     moveBlobTo(activeLink, animate);
   } else {
