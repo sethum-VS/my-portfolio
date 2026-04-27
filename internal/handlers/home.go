@@ -19,6 +19,6 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		templ.Handler(views.HomeContent()).ServeHTTP(w, r)
 		return
 	}
-	// Full-page response for direct navigation
-	templ.Handler(views.HomePage()).ServeHTTP(w, r)
+	// Full-page response for direct navigation: Force redirect to splash
+	http.Redirect(w, r, "/", http.StatusFound)
 }
