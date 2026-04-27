@@ -34,5 +34,5 @@ func ProductHandler(w http.ResponseWriter, r *http.Request) {
 		templ.Handler(views.ProductContent(product)).ServeHTTP(w, r)
 		return
 	}
-	templ.Handler(views.ProductPage(product)).ServeHTTP(w, r)
+	http.Redirect(w, r, "/", http.StatusFound)
 }
