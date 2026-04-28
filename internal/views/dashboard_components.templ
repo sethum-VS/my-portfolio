@@ -1,0 +1,212 @@
+package views
+
+import "github.com/sethum-VS/my-portfolio/internal/models"
+import "strings"
+
+templ DashboardProjectList(products []models.Product, activeID string) {
+	for _, p := range products {
+		<div
+			class={
+				"group flex items-center justify-between p-4 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] relative cursor-pointer border",
+				templ.KV("bg-surface-container border-outline-variant/10 scale-[1.02]", p.ID == activeID),
+				templ.KV("bg-transparent hover:bg-surface-container hover:scale-[1.02] border-transparent hover:border-outline-variant/10", p.ID != activeID),
+			}
+			hx-get={ "/api/projects/" + p.ID }
+			hx-target="#dashboard-project-form-wrapper"
+		>
+			if p.ID == activeID {
+				<div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></div>
+			}
+			<div class={ "flex flex-col gap-1 transition-all", templ.KV("pl-2", p.ID == activeID), templ.KV("pl-3 group-hover:pl-2", p.ID != activeID) }>
+				<span class="text-xs font-label text-outline tracking-widest uppercase">{ p.ID }</span>
+				<span class={ "text-base font-headline font-semibold transition-colors", templ.KV("text-on-surface", p.ID == activeID), templ.KV("text-on-surface-variant group-hover:text-on-surface", p.ID != activeID) }>{ p.Title }</span>
+			</div>
+			<div class="flex items-center gap-4">
+				<button 
+					class={ "transition-colors", templ.KV("text-outline hover:text-error", p.ID == activeID), templ.KV("text-outline/50 group-hover:text-outline hover:!text-error opacity-0 group-hover:opacity-100", p.ID != activeID) }
+					hx-delete={ "/api/projects/" + p.ID }
+					hx-confirm={ "Are you sure you want to delete " + p.ID + "?" }
+				>
+					<span class="material-symbols-outlined text-lg">delete</span>
+				</button>
+			</div>
+		</div>
+	}
+}
+
+templ DashboardProjectForm(product *models.Product) {
+	<!-- Form Header -->
+	<div class="flex items-center justify-between mb-12 relative z-10">
+		<div class="flex flex-col gap-2">
+			if product == nil {
+				<span class="text-tertiary font-label text-xs uppercase tracking-[0.2em] font-semibold">New Artifact</span>
+				<h2 class="text-headline text-4xl font-extrabold text-on-surface tracking-tight">Ingest Project</h2>
+			} else {
+				<span class="text-primary font-label text-xs uppercase tracking-[0.2em] font-semibold">Edit Artifact</span>
+				<h2 class="text-headline text-4xl font-extrabold text-on-surface tracking-tight">Update Project</h2>
+			}
+		</div>
+		<div class="flex gap-2">
+			<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container border border-outline-variant/20 text-on-surface-variant hover:text-error hover:border-error/50 transition-all duration-300 group">
+				<span class="material-symbols-outlined text-sm">logout</span>
+				<span class="text-xs font-label uppercase tracking-wider font-bold">Sign Out</span>
+			</button>
+		</div>
+	</div>
+	<!-- The Form -->
+	<form class="flex flex-col gap-8 flex-grow relative z-10 max-w-4xl" hx-post="/api/projects" hx-target="#dashboard-project-form-wrapper">
+		if product != nil {
+			<input type="hidden" name="is_update" value="true" />
+			<input type="hidden" name="original_id" value={ product.ID } />
+		}
+		
+		<!-- High-End Input Grid -->
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+			<!-- ID Input -->
+			<div class="flex flex-col gap-2 group">
+				<label class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Project ID</label>
+				<input class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-lg font-headline font-medium text-on-surface placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="Project Display Name" required type="text" name="id"
+					if product != nil {
+						value={ product.ID }
+					}
+				/>
+			</div>
+			<!-- Title Input -->
+			<div class="flex flex-col gap-2 group">
+				<label class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Project Title</label>
+				<input class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-lg font-headline font-medium text-on-surface placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="Project Name" required type="text" name="title"
+					if product != nil {
+						value={ product.Title }
+					}
+				/>
+			</div>
+		</div>
+		<!-- Subtitle Input -->
+		<div class="flex flex-col gap-2 group">
+			<label class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Subtitle</label>
+			<input class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="A brief, compelling description." required type="text" name="subtitle"
+				if product != nil {
+					value={ product.Subtitle }
+				}
+			/>
+		</div>
+		<!-- Details Grid -->
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+			<!-- Challenge -->
+			<div class="flex flex-col gap-2 group">
+				<label class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Challenge</label>
+				<textarea class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm resize-y min-h-[140px]" placeholder="Describe the core problem or challenge..." required name="challenge">
+					if product != nil {
+						{ product.Challenge }
+					}
+				</textarea>
+			</div>
+			<!-- Solution -->
+			<div class="flex flex-col gap-2 group">
+				<label class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Solution</label>
+				<textarea class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm resize-y min-h-[140px]" placeholder="Explain the approach to solving the challenge..." required name="solution">
+					if product != nil {
+						{ product.Solution }
+					}
+				</textarea>
+			</div>
+		</div>
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+			<!-- Architecture Overview -->
+			<div class="flex flex-col gap-2 group">
+				<label class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Architecture Overview</label>
+				<textarea class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm resize-y min-h-[140px]" placeholder="High-level architecture details..." required name="architecture">
+					if product != nil {
+						{ product.Architecture }
+					}
+				</textarea>
+			</div>
+			<!-- Core Features -->
+			<div class="flex flex-col gap-2 group">
+				<label class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Core Features</label>
+				<textarea class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm resize-y min-h-[140px]" placeholder="List key features (comma-separated)..." required name="core_features">
+					if product != nil {
+						{ strings.Join(product.KeyFeatures, ", ") }
+					}
+				</textarea>
+			</div>
+		</div>
+		<!-- Technology Stack Input -->
+		<div class="flex flex-col gap-2 group">
+			<label class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Technology Stack</label>
+			<input class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="e.g. React, Node.js, PostgreSQL (comma-separated)" required type="text" name="tech_stack"
+				if product != nil {
+					value={ strings.Join(product.TechStack, ", ") }
+				}
+			/>
+		</div>
+		<!-- Hero Path Input -->
+		<div class="flex flex-col gap-2 group">
+			<label class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1 flex items-center gap-2">Hero Asset Path</label>
+			<div class="relative flex items-center">
+				<span class="absolute left-4 text-outline/50 font-body">/assets/</span>
+				<input class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 pl-[5.5rem] text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="hero-animation.gif" type="text" name="hero_gif"
+					if product != nil {
+						value={ product.HeroGIF }
+					}
+				/>
+			</div>
+		</div>
+		<!-- Markdown Canvas -->
+		<div class="flex flex-col gap-3 group flex-grow mt-4">
+			<label class="font-label text-xs text-primary uppercase tracking-wider flex items-center justify-between ml-1">
+				<span class="flex items-center gap-2">
+					<span class="material-symbols-outlined text-[14px]">code</span>
+					Markdown Canvas (README.md)
+				</span>
+				<span class="text-outline text-[10px] tracking-normal lowercase">Use standard Markdown syntax</span>
+			</label>
+			<!-- Glassmorphic container for textarea -->
+			<div class="relative w-full h-full min-h-[300px] rounded-xl bg-surface-container-lowest/50 backdrop-blur-sm border border-outline-variant/20 focus-within:border-primary/50 transition-colors p-1 flex flex-col">
+				<div class="flex items-center gap-2 px-4 py-2 border-b border-outline-variant/10 bg-surface-container/30 rounded-t-lg">
+					<div class="w-2.5 h-2.5 rounded-full bg-error/80"></div>
+					<div class="w-2.5 h-2.5 rounded-full bg-tertiary/80"></div>
+					<div class="w-2.5 h-2.5 rounded-full bg-primary/80"></div>
+					<span class="ml-4 text-[10px] font-label text-outline uppercase tracking-widest font-mono">editor.md</span>
+				</div>
+				<textarea class="w-full flex-grow bg-transparent border-none p-6 font-mono text-sm text-on-surface-variant focus:outline-none focus:ring-0 resize-none leading-relaxed placeholder:text-outline/20" name="description" placeholder="# Overview&#10;&#10;Describe the engineering and design process behind this artifact...&#10;&#10;## Tech Stack&#10;- Core&#10;- Frontend&#10;- Backend">
+					if product != nil {
+						{ product.Description }
+					}
+				</textarea>
+			</div>
+		</div>
+		<!-- Submission Area -->
+		<div class="mt-8 flex items-center justify-between border-t border-outline-variant/10 pt-8">
+			<div class="text-sm font-body text-primary h-6" id="form-response">
+				// Success messages can be injected here by HTMX
+				if product != nil {
+					<span class="text-primary">Changes saved successfully.</span>
+				}
+			</div>
+			<button class="relative group px-8 py-4 rounded-full overflow-hidden bg-[#58C7FF] border border-[#58C7FF] hover:bg-[#58C7FF]/90 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] scale-98 active:scale-95 flex items-center gap-3 shadow-[0_0_20px_rgba(88,199,255,0.4)] backdrop-blur-sm" type="submit">
+				<span class="font-headline font-bold text-[#00344a] transition-colors relative z-10 text-sm tracking-wide">
+					if product == nil {
+						Generate Product Page
+					} else {
+						Update Product Page
+					}
+				</span>
+				<span class="material-symbols-outlined text-sm text-[#00344a] transition-transform group-hover:translate-x-1 relative z-10">arrow_forward</span>
+			</button>
+		</div>
+	</form>
+}
+
+templ DashboardPlaceholder() {
+	<div class="flex-grow flex flex-col items-center justify-center text-outline/20 gap-6 py-20">
+		<div class="relative">
+			<span class="material-symbols-outlined text-8xl">database</span>
+			<span class="material-symbols-outlined absolute -bottom-2 -right-2 text-4xl text-primary/40">edit_note</span>
+		</div>
+		<div class="flex flex-col items-center gap-1">
+			<p class="font-headline text-xl font-semibold text-on-surface/40">Repository Standby</p>
+			<p class="font-body text-sm text-outline/40">Select an artifact to modify or initiate a new entry.</p>
+		</div>
+	</div>
+}
