@@ -2,7 +2,6 @@ package views
 
 import (
 	"github.com/sethum-VS/my-portfolio/internal/models"
-	"strconv"
 )
 
 // ProductContent renders the product detail page body with engineering focus.
@@ -60,17 +59,11 @@ templ ProductContent(product *models.Product) {
 						</div>
 
 						<!-- Hero GIF / Demo Image -->
+						<!-- Hero GIF / Demo Image -->
 						<div class="seq-in delay-3">
-							if product.HeroGIF != "" {
-								<div class="relative group rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/50">
-									<img src={ product.HeroGIF } alt={ product.Title + " Demo" } class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700" />
-									<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60"></div>
-								</div>
-							} else {
-								<div class="aspect-video bg-surface-container-high/30 rounded-2xl border border-white/5 flex items-center justify-center">
-									<span class="material-symbols-outlined text-6xl text-on-surface-variant/20">farsight_24</span>
-								</div>
-							}
+							<div class="aspect-video bg-surface-container-high/30 rounded-2xl border border-white/5 flex items-center justify-center">
+								<span class="material-symbols-outlined text-6xl text-on-surface-variant/20">farsight_24</span>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -93,34 +86,23 @@ templ ProductContent(product *models.Product) {
 								<p class="text-on-surface-variant/80 text-base md:text-lg leading-relaxed font-body">{ product.Solution }</p>
 							</div>
 
-							if product.Deployment != "" {
-								<div class="seq-in delay-3 border-t border-outline/10 pt-8">
-									<h2 class="text-sm md:text-base uppercase tracking-[0.18em] text-primary font-headline font-semibold mb-3">Deployment & CI/CD</h2>
-									<p class="text-on-surface-variant/80 text-base md:text-lg leading-relaxed font-body">{ product.Deployment }</p>
-								</div>
-							}
 						</div>
+
 
 						<!-- Architecture Overview -->
 						<div class="seq-in delay-3 h-full">
 							<div class="bg-surface-container-high/50 border border-outline/20 rounded-xl p-8 h-full flex flex-col">
 								<h2 class="text-sm md:text-base uppercase tracking-[0.18em] text-primary font-headline font-semibold mb-6">Architecture Overview</h2>
-								<p class="text-on-surface font-body text-sm md:text-base leading-relaxed mb-8">{ product.Architecture }</p>
+								<p class="text-on-surface font-body text-sm md:text-base leading-relaxed mb-8">
+									The system leverages a highly concurrent backend communicating via WebSockets for real-time state synchronization, while the frontend utilizes a heavily optimized rendering pipeline to ensure a consistent frame rate even under heavy data loads.
+								</p>
 
 								<!-- Architecture visualization -->
-								if product.ArchDiagram != "" {
-									<div class="mt-auto pt-8 border-t border-outline/10">
-										<pre class="font-mono text-[10px] md:text-xs leading-relaxed text-primary-container/80 bg-black/40 p-6 rounded-lg overflow-x-auto border border-primary/10">
-											{ product.ArchDiagram }
-										</pre>
+								<div class="mt-auto pt-8 border-t border-outline/10">
+									<div class="aspect-video bg-[linear-gradient(135deg,#ffffff08_0%,#ffffff04_100%)] rounded-lg flex items-center justify-center text-on-surface-variant/40 text-sm">
+										<span class="material-symbols-outlined text-4xl opacity-30">architecture</span>
 									</div>
-								} else {
-									<div class="mt-auto pt-8 border-t border-outline/10">
-										<div class="aspect-video bg-[linear-gradient(135deg,#ffffff08_0%,#ffffff04_100%)] rounded-lg flex items-center justify-center text-on-surface-variant/40 text-sm">
-											<span class="material-symbols-outlined text-4xl opacity-30">architecture</span>
-										</div>
-									</div>
-								}
+								</div>
 							</div>
 						</div>
 
@@ -128,31 +110,6 @@ templ ProductContent(product *models.Product) {
 				</div>
 			</section>
 
-			<!-- ── Internal Flow ────────────────────────────────────────── -->
-			if len(product.InternalFlow) > 0 {
-				<section class="relative py-20 px-6 md:px-12 lg:px-24">
-					<div class="max-w-7xl mx-auto">
-						<h2 class="text-sm md:text-base uppercase tracking-[0.18em] text-primary font-headline font-semibold mb-10 seq-in delay-1">Internal Data Flow</h2>
-						
-						<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16">
-							for i, step := range product.InternalFlow {
-								<div class="relative seq-in group">
-									<div class="flex items-start gap-6">
-										<div class="flex-shrink-0 w-10 h-10 rounded-full border border-primary/30 flex items-center justify-center text-primary font-headline font-bold text-sm bg-primary/5 group-hover:bg-primary/10 transition-colors duration-300">
-											{ strconv.Itoa(i+1) }
-										</div>
-										<p class="text-on-surface-variant/90 font-body text-base leading-relaxed pt-1">{ step }</p>
-									</div>
-									if i < len(product.InternalFlow) - 1 {
-										<!-- Connector line for desktop (to the right) -->
-										<div class="hidden lg:block absolute top-5 -right-6 w-12 h-px bg-gradient-to-r from-primary/30 to-transparent"></div>
-									}
-								</div>
-							}
-						</div>
-					</div>
-				</section>
-			}
 
 			<!-- ── Core Features & Tech Stack ─────────────────────────────── -->
 			<section class="relative pb-20 px-6 md:px-12 lg:px-24 bg-surface-container-lowest/30">
