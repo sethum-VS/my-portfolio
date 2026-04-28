@@ -264,6 +264,32 @@ function reinitPage() {
   }
 }
 
+/**
+ * Toggles the mobile navigation overlay with opening/closing animations.
+ * @param isOpen - true to open, false to close
+ */
+function toggleMobileNav(isOpen: boolean) {
+  const nav = document.getElementById('mobile-nav');
+  if (!nav) return;
+
+  if (isOpen) {
+    nav.classList.remove('hidden', 'closing');
+    nav.classList.add('flex');
+  } else {
+    nav.classList.add('closing');
+    
+    // Duration matches the fade-out animation.
+    setTimeout(() => {
+      if (nav.classList.contains('closing')) {
+        nav.classList.add('hidden');
+        nav.classList.remove('closing', 'flex');
+      }
+    }, 400);
+  }
+}
+
+(window as any).toggleMobileNav = toggleMobileNav;
+
 // ── Global Event Listeners ──────────────────────────────────────────────────
 
 document.addEventListener("DOMContentLoaded", () => {
