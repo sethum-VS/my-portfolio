@@ -2,6 +2,7 @@ package views
 
 import (
 	"github.com/sethum-VS/my-portfolio/internal/models"
+	"strings"
 )
 
 // ProductContent renders the product detail page body with engineering focus.
@@ -60,10 +61,46 @@ templ ProductContent(product *models.Product) {
 
 						<!-- Hero GIF / Demo Image -->
 						<!-- Hero GIF / Demo Image -->
-						<div class="seq-in delay-3">
-							<div class="aspect-video bg-surface-container-high/30 rounded-2xl border border-white/5 flex items-center justify-center">
-								<span class="material-symbols-outlined text-6xl text-on-surface-variant/20">farsight_24</span>
-							</div>
+						<div class="seq-in delay-3 relative z-30 group/hero-reveal">
+							if product.HeroGIF != "" && (strings.HasPrefix(product.HeroGIF, "/") || strings.Contains(product.HeroGIF, "sethum-VS/myGIF")) {
+								<!-- The Container -->
+								<div 
+									onclick="if(window.innerWidth < 768) { setTimeout(() => this.scrollIntoView({behavior: 'smooth', block: 'center'}), 150); }"
+									class="relative rounded-2xl overflow-hidden border border-white/10 bg-surface-container-high/20 shadow-2xl transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] flex flex-col items-center justify-center min-h-[350px] max-h-[350px] group-hover/hero-reveal:max-h-[70vh] md:group-hover/hero-reveal:max-h-[900px] group-hover/hero-reveal:shadow-primary/30 scale-[0.98] group-hover/hero-reveal:scale-100 cursor-zoom-in touch-auto"
+								>
+									
+									<!-- Placeholder Overlay -->
+									<div class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-surface-container-high/30 backdrop-blur-sm z-20 group-hover/hero-reveal:opacity-0 group-hover/hero-reveal:pointer-events-none transition-all duration-700 ease-out">
+										<p class="font-label text-[10px] uppercase tracking-[0.3em] text-primary/40 font-bold hidden md:block">Hover to Reveal Artifact</p>
+										<p class="font-label text-[10px] uppercase tracking-[0.3em] text-primary/40 font-bold block md:hidden">Click to Reveal Artifact</p>
+									</div>
+
+									<!-- GIF Layer (Always playing behind the blur) -->
+									<div class="w-full flex justify-center bg-black/40 relative z-10 overflow-hidden transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] h-full">
+										<img 
+											if strings.HasPrefix(product.HeroGIF, "http") {
+												if strings.Contains(product.HeroGIF, "github.com") && strings.Contains(product.HeroGIF, "/blob/") {
+													src={ strings.Replace(strings.Replace(product.HeroGIF, "github.com", "raw.githubusercontent.com", 1), "/blob/", "/", 1) }
+												} else {
+													src={ product.HeroGIF }
+												}
+											} else if strings.HasPrefix(product.HeroGIF, "/") {
+												src={ product.HeroGIF }
+											} else {
+												src={ "/static/images/" + product.HeroGIF }
+											}
+											alt={ product.Title + " Demo" } 
+											class="w-full h-full object-cover group-hover/hero-reveal:object-contain group-hover/hero-reveal:max-h-[850px] transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)]" 
+										/>
+										<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-40 pointer-events-none"></div>
+									</div>
+
+								</div>
+							} else {
+								<div class="aspect-video bg-surface-container-high/30 rounded-2xl border border-white/5 flex items-center justify-center">
+									<span class="material-symbols-outlined text-6xl text-on-surface-variant/20">farsight_24</span>
+								</div>
+							}
 						</div>
 					</div>
 				</div>
