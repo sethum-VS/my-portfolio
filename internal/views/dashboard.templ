@@ -1,0 +1,213 @@
+package views
+
+import "github.com/sethum-VS/my-portfolio/internal/models"
+
+
+// DashboardPage renders the standalone HTML structure for the admin control panel.
+templ DashboardPage(products []models.Product) {
+	<!DOCTYPE html>
+	<html class="dark" lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+			<title>DASHBOARD</title>
+			<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+			<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+			<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+			<script id="tailwind-config">
+				tailwind.config = {
+					darkMode: "class",
+					theme: {
+						extend: {
+							"colors": {
+								"on-surface-variant": "#bec8d0",
+								"on-secondary-container": "#aeb5c4",
+								"primary-container": "#58c7ff",
+								"primary": "#abdeff",
+								"on-error-container": "#ffdad6",
+								"primary-fixed-dim": "#7dd0ff",
+								"tertiary-fixed-dim": "#ffb59c",
+								"on-primary": "#00344a",
+								"surface-bright": "#3a393a",
+								"tertiary-fixed": "#ffdbd0",
+								"on-tertiary-container": "#7d371d",
+								"on-secondary-fixed": "#151c26",
+								"surface-tint": "#7dd0ff",
+								"inverse-surface": "#e5e2e3",
+								"on-error": "#690005",
+								"outline": "#88929a",
+								"background": "#131314",
+								"outline-variant": "#3e484f",
+								"error": "#ffb4ab",
+								"surface-container-high": "#2a2a2b",
+								"secondary-container": "#404753",
+								"on-primary-container": "#005170",
+								"secondary": "#c0c7d5",
+								"inverse-primary": "#00658b",
+								"on-primary-fixed-variant": "#004c69",
+								"surface-dim": "#131314",
+								"on-primary-fixed": "#001e2c",
+								"tertiary": "#ffcdbd",
+								"tertiary-container": "#ffa688",
+								"surface-container-lowest": "#0e0e0f",
+								"surface-container-low": "#1c1b1c",
+								"surface": "#131314",
+								"primary-fixed": "#c4e7ff",
+								"on-secondary": "#2a313c",
+								"on-tertiary-fixed": "#390c00",
+								"on-tertiary": "#591c05",
+								"secondary-fixed-dim": "#c0c7d5",
+								"on-secondary-fixed-variant": "#404753",
+								"inverse-on-surface": "#313031",
+								"on-tertiary-fixed-variant": "#763219",
+								"on-surface": "#e5e2e3",
+								"surface-container": "#201f20",
+								"surface-container-highest": "#353436",
+								"secondary-fixed": "#dce3f2",
+								"on-background": "#e5e2e3",
+								"surface-variant": "#353436",
+								"error-container": "#93000a"
+							},
+							"borderRadius": {
+								"DEFAULT": "0.25rem",
+								"lg": "0.5rem",
+								"xl": "0.75rem",
+								"full": "9999px"
+							},
+							"spacing": {},
+							"fontFamily": {
+								"headline": ["Plus Jakarta Sans"],
+								"display": ["Plus Jakarta Sans"],
+								"body": ["Manrope"],
+								"label": ["Manrope"]
+							}
+						},
+					},
+				}
+			</script>
+			<style>
+				body {
+					font-family: 'Manrope', sans-serif;
+					background-color: #131314;
+					color: #e5e2e3;
+				}
+				h1, h2, h3, h4, h5, h6, .font-headline, .font-display {
+					font-family: 'Plus Jakarta Sans', sans-serif;
+				}
+				
+				/* Custom Scrollbar for Markdown Canvas */
+				::-webkit-scrollbar {
+					width: 8px;
+					height: 8px;
+				}
+				::-webkit-scrollbar-track {
+					background: #1c1b1c; 
+				}
+				::-webkit-scrollbar-thumb {
+					background: #3e484f; 
+					border-radius: 4px;
+				}
+				::-webkit-scrollbar-thumb:hover {
+					background: #58c7ff; 
+				}
+			</style>
+		</head>
+		<body class="bg-surface text-on-surface flex h-screen overflow-hidden antialiased selection:bg-primary-container selection:text-on-primary-container">
+			<!-- Top App Bar (Mobile Only via hidden md:flex rules, but requested for layout. Integrating TopAppBar json structural commands) -->
+			<div class="md:hidden fixed top-0 w-full z-40 bg-[#131314]/70 backdrop-blur-20px border-b border-[#3e484f]/10 px-8 py-4 flex justify-between items-center transition-all duration-300">
+				<span class="font-['Plus_Jakarta_Sans'] text-sm tracking-wide font-extrabold text-primary">Soul Dashboard</span>
+				<div class="flex gap-4 items-center">
+					<span class="material-symbols-outlined text-zinc-400 hover:text-white transition-opacity cursor-pointer">notifications</span>
+					<span class="material-symbols-outlined text-zinc-400 hover:text-white transition-opacity cursor-pointer">help_outline</span>
+					<img alt="User Avatar" class="w-8 h-8 rounded-full ml-2 object-cover" data-alt="Minimalist abstract portrait or monogram U in electric blue on dark gray background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcMDvAHHHWlwPH6h099Wt42OT72XQf-98Eguul1KfjIWF-6c-z8rqxa1oLUYXUERpjAiHwmqxzPvE1PW1wLnoxFK8U-Q6ydtb2UIgY4abB3NOlQgUqRUcxKMuHMqq6uEwKKlP_UmP9mLHqb9zOOvnpQm34qnCDOsFnz2IOuQLNP8c4Ehu43PFbczrGJbmmy_D8MQQbhFKAPiBwysoOXwY5uqzoxnUePjqyi7zJ0Vtx6avtK0XoGyd9mWBWZ0kgmvWP53g8fD50zChT"/>
+				</div>
+			</div>
+			<!-- Side Navigation Bar -->
+			<nav class="hidden md:flex flex-col h-screen w-64 bg-surface-container-low border-r border-outline-variant/20 p-6 space-y-8 z-30 shrink-0 shadow-none relative">
+				<!-- Brand Header -->
+				<div class="flex items-center gap-3 mb-4">
+					<div class="flex flex-col">
+						<span class="text-xl font-bold tracking-tight text-primary font-headline">SMWsoul Dashboard</span>
+					</div>
+				</div>
+				<!-- Navigation Links -->
+				<div class="flex flex-col gap-2 flex-grow">
+					<!-- Overview -->
+					<!-- Projects (ACTIVE) -->
+					<a 
+						class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary bg-primary/10 font-semibold transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] scale-98 active:scale-95 group font-body relative overflow-hidden" 
+						href="#"
+						hx-get="/api/dashboard/placeholder"
+						hx-target="#dashboard-project-form-wrapper"
+					>
+						<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+						<span class="font-medium relative z-10">Projects</span>
+						<!-- Ambient active background glow -->
+						<div class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none"></div>
+					</a>
+					<!-- Create -->
+					<a 
+						class="flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a2b] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] scale-98 active:scale-95 group font-body" 
+						href="#"
+						hx-get="/api/projects/new"
+						hx-target="#dashboard-project-form-wrapper"
+					>
+						<span class="material-symbols-outlined">add_circle</span>
+						<span class="font-medium">Create</span>
+					</a>
+					<!-- Settings -->
+				</div>
+				<!-- Bottom Settings/Logout Area -->
+				<div class="mt-auto pt-6 border-t border-outline-variant/10">
+					<div class="flex items-center gap-4 text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
+						<span class="material-symbols-outlined text-sm">help_outline</span>
+						<span class="text-xs font-label uppercase tracking-widest">Documentation</span>
+					</div>
+				</div>
+				<!-- Subtle background blob for nav -->
+			</nav>
+			<!-- Main Content Area -->
+			<main class="flex-1 flex flex-col md:flex-row h-screen overflow-y-auto md:overflow-hidden pt-20 md:pt-0 relative bg-surface z-10">
+				<!-- Decorative Ambient Light -->
+				<!-- Section A: Project Inventory List (Left Pane) -->
+				<section class="w-full md:w-5/12 lg:w-1/3 h-full border-r border-outline-variant/10 flex flex-col bg-surface-container-low/30 md:overflow-y-auto relative z-20">
+					<!-- Header Sticky -->
+					<div class="sticky top-0 bg-surface/80 backdrop-blur-md px-8 py-10 z-30 flex flex-col gap-2">
+						<h1 class="text-display font-display font-extrabold text-4xl tracking-tight text-on-surface leading-none">Inventory.</h1>
+						<div class="flex items-center justify-between">
+							<p class="text-body text-on-surface-variant font-medium text-sm">Manage portfolio artifacts.</p>
+							<button 
+								class="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all duration-300 group"
+								hx-get="/api/projects/new"
+								hx-target="#dashboard-project-form-wrapper"
+							>
+								<span class="material-symbols-outlined text-sm">add</span>
+								<span class="text-[10px] font-label uppercase tracking-widest font-bold">Create New</span>
+							</button>
+						</div>
+					</div>
+					<!-- List Container -->
+					<div class="px-6 pb-12 flex flex-col gap-3">
+						<!-- Search Bar -->
+						<div class="relative mb-4 group">
+							<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors text-sm">search</span>
+							<input class="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-full py-3 pl-12 pr-4 text-sm font-body text-on-surface placeholder:text-outline focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="Search projects..." type="text"/>
+						</div>
+						<div id="dashboard-project-list">
+							@DashboardProjectList(products, "")
+						</div>
+					</div>
+				</section>
+				<!-- Section B: Project Ingestion Form (Right Pane) -->
+				<section class="w-full md:flex-1 h-full flex flex-col bg-surface relative overflow-y-auto px-8 md:px-16 py-12" id="project-form-container">
+					<!-- Decorative Blob Right -->
+					<!-- The Form -->
+					<div id="dashboard-project-form-wrapper" class="flex-grow flex flex-col relative z-10 max-w-4xl">
+						@DashboardPlaceholder()
+					</div>
+				</section>
+			</main>
+		</body>
+	</html>
+}
