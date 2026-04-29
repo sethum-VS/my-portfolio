@@ -26,6 +26,8 @@ templ DashboardProjectList(products []models.Product, activeID string) {
 					class={ "transition-colors", templ.KV("text-outline hover:text-error", p.ID == activeID), templ.KV("text-outline/50 group-hover:text-outline hover:!text-error opacity-0 group-hover:opacity-100", p.ID != activeID) }
 					hx-delete={ "/api/projects/" + p.ID }
 					hx-confirm={ "Are you sure you want to delete " + p.ID + "?" }
+					hx-target="#dashboard-project-list"
+					onclick="event.stopPropagation()"
 				>
 					<span class="material-symbols-outlined text-lg">delete</span>
 				</button>
@@ -140,6 +142,15 @@ templ DashboardProjectForm(product *models.Product) {
 				}
 			/>
 		</div>
+		<!-- Display Stack -->
+		<div class="flex flex-col gap-2 group">
+			<label class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Display Stack (Comma separated)</label>
+			<input class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="Go, React, Docker..." type="text" name="display_stack"
+				if product != nil {
+					value={ strings.Join(product.DisplayStack, ", ") }
+				}
+			/>
+		</div>
 		<!-- Hero Path Input -->
 		<div class="flex flex-col gap-2 group">
 			<label class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1 flex items-center gap-2">Hero Asset Path</label>
@@ -208,5 +219,12 @@ templ DashboardPlaceholder() {
 			<p class="font-headline text-xl font-semibold text-on-surface/40">Repository Standby</p>
 			<p class="font-body text-sm text-outline/40">Select an artifact to modify or initiate a new entry.</p>
 		</div>
+	</div>
+}
+
+templ DashboardDeleteResponse(products []models.Product) {
+	@DashboardProjectList(products, "")
+	<div id="dashboard-project-form-wrapper" hx-swap-oob="true" class="flex-grow flex flex-col relative z-10 max-w-4xl">
+		@DashboardPlaceholder()
 	</div>
 }

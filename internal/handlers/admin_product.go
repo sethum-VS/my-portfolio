@@ -49,9 +49,9 @@ func AdminProjectDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	// Re-render the project list
+	// Re-render the project list and reset the right panel via OOB swap
 	products := models.AllProducts()
-	templ.Handler(views.DashboardProjectList(products, "")).ServeHTTP(w, r)
+	templ.Handler(views.DashboardDeleteResponse(products)).ServeHTTP(w, r)
 }
 
 // AdminProjectSaveHandler handles POST /api/projects to create or update.
@@ -80,6 +80,7 @@ func AdminProjectSaveHandler(w http.ResponseWriter, r *http.Request) {
 		Solution:     r.FormValue("solution"),
 		Architecture: r.FormValue("architecture"),
 		TechStack:    parseCommaSeparated(r.FormValue("tech_stack")),
+		DisplayStack: parseCommaSeparated(r.FormValue("display_stack")),
 		KeyFeatures:  parseCommaSeparated(r.FormValue("core_features")),
 		HeroGIF:      r.FormValue("hero_gif"),
 		Description:  r.FormValue("description"),

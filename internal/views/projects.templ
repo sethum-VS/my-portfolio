@@ -36,9 +36,9 @@ templ ProjectsContent(products []models.Product) {
 							</h2>
 						</a>
 						<div class="mt-4 md:mt-6 font-body text-sm md:text-base text-on-surface-variant/70 uppercase tracking-[0.18em] flex flex-wrap gap-4 justify-center">
-							for j, tech := range p.TechStack {
+							for j, tech := range p.DisplayStack {
 								<span>{ tech }</span>
-								if j < len(p.TechStack)-1 {
+								if j < len(p.DisplayStack)-1 {
 									<span class="opacity-30">•</span>
 								}
 							}

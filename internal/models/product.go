@@ -18,6 +18,7 @@ type Product struct {
 	ArchDiagram  string            // ASCII/Text diagram
 	InternalFlow []string          // Step-by-step data flow
 	TechStack    []string          // Technologies used
+	DisplayStack []string          // Simplified tech stack for project list
 	KeyFeatures  []string          // Main features or highlights
 	LiveURL      string            // Link to live project (if applicable)
 	GitHubURL    string            // Link to GitHub repository (if applicable)
