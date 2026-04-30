@@ -11,7 +11,7 @@ templ ProductContent(product *models.Product) {
 	<div id="app-shell" class="flex flex-col min-h-screen overflow-x-hidden relative">
 
 		<!-- Ultra-crisp WebGL pixel noise shader layer (Globally overlaying) -->
-		<canvas id="webgl-noise-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-0"></canvas>
+		<canvas id="webgl-noise-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-[-20]"></canvas>
 
 		<!-- ── Fixed Background Layer ─────────────────────────────────────── -->
 		<div class="fixed inset-0 pointer-events-none z-[-30] bg-[#131314] overflow-hidden">
@@ -24,7 +24,7 @@ templ ProductContent(product *models.Product) {
 		@NavBar("projects")
 
 		<!-- ── Main Content ───────────────────────────────────────────────── -->
-		<main id="main-content" class="flex-grow flex flex-col w-full z-30">
+		<main id="main-content" class="flex-grow flex flex-col w-full">
 
 			<!-- ── Hero Section ─────────────────────────────────────────────── -->
 			<section class="relative pt-48 pb-20 px-6 md:px-12 lg:px-24">
@@ -61,12 +61,15 @@ templ ProductContent(product *models.Product) {
 
 						<!-- Hero GIF / Demo Image -->
 						<!-- Hero GIF / Demo Image -->
-						<div class="seq-in delay-3 relative z-30 group/hero-reveal">
+						<div class="seq-in delay-3 relative z-[60] group/hero-reveal">
 							if product.HeroGIF != "" && (strings.HasPrefix(product.HeroGIF, "/") || strings.Contains(product.HeroGIF, "sethum-VS/myGIF")) {
+								<!-- Dark Backdrop Focus -->
+								<div class="absolute -inset-x-20 -inset-y-10 bg-[#0a0a0b]/80 blur-3xl opacity-0 group-hover/hero-reveal:opacity-100 transition-opacity duration-1000 pointer-events-none"></div>
+
 								<!-- The Container -->
 								<div 
 									onclick="if(window.innerWidth < 768) { setTimeout(() => this.scrollIntoView({behavior: 'smooth', block: 'center'}), 150); }"
-									class="relative rounded-2xl overflow-hidden border border-white/10 bg-surface-container-high/20 shadow-2xl transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] flex flex-col items-center justify-center min-h-[350px] max-h-[350px] group-hover/hero-reveal:max-h-[70vh] md:group-hover/hero-reveal:max-h-[900px] group-hover/hero-reveal:shadow-primary/30 scale-[0.98] group-hover/hero-reveal:scale-100 cursor-zoom-in touch-auto"
+									class="relative rounded-2xl overflow-hidden border border-white/10 bg-[#0a0a0b] shadow-2xl transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] flex flex-col items-center justify-center min-h-[350px] max-h-[350px] group-hover/hero-reveal:max-h-[70vh] md:group-hover/hero-reveal:max-h-[900px] group-hover/hero-reveal:shadow-primary/30 scale-[0.98] group-hover/hero-reveal:scale-100 cursor-zoom-in touch-auto"
 								>
 									
 									<!-- Placeholder Overlay -->
@@ -76,7 +79,7 @@ templ ProductContent(product *models.Product) {
 									</div>
 
 									<!-- GIF Layer (Always playing behind the blur) -->
-									<div class="w-full flex justify-center bg-black/40 relative z-10 overflow-hidden transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] h-full">
+									<div class="w-full flex justify-center bg-[#0a0a0b] relative z-10 overflow-hidden transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] h-full">
 										<img 
 											if strings.HasPrefix(product.HeroGIF, "http") {
 												if strings.Contains(product.HeroGIF, "github.com") && strings.Contains(product.HeroGIF, "/blob/") {
@@ -90,7 +93,7 @@ templ ProductContent(product *models.Product) {
 												src={ "/static/images/" + product.HeroGIF }
 											}
 											alt={ product.Title + " Demo" } 
-											class="w-full h-full object-cover group-hover/hero-reveal:object-contain group-hover/hero-reveal:max-h-[850px] transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)]" 
+											class="w-full h-full object-cover group-hover/hero-reveal:object-contain max-h-full group-hover/hero-reveal:max-h-[70vh] md:group-hover/hero-reveal:max-h-[850px] transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)]" 
 										/>
 										<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-40 pointer-events-none"></div>
 									</div>
@@ -107,7 +110,7 @@ templ ProductContent(product *models.Product) {
 			</section>
 
 			<!-- ── Technical Overview ────────────────────────────────────── -->
-			<section class="relative py-20 px-6 md:px-12 lg:px-24 bg-surface-container-lowest/30">
+			<section class="relative pb-20 pt-0 md:py-20 px-6 md:px-12 lg:px-24 bg-surface-container-lowest/30">
 				<div class="max-w-7xl mx-auto">
 					<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
 
