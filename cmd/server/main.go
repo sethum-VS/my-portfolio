@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/joho/godotenv"
+
 	"github.com/sethum-VS/my-portfolio/internal/handlers"
 )
 
@@ -34,6 +36,11 @@ func cacheControlMiddleware(next http.Handler) http.Handler {
 }
 
 func main() {
+	// Load environment variables from .env file
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Warning: .env file not found or could not be loaded: %v", err)
+	}
+
 	mux := http.NewServeMux()
 
 	// ── Static file server ──────────────────────────────────────────────────
@@ -56,6 +63,7 @@ func main() {
 	mux.HandleFunc("GET /api/projects/{id}", handlers.AdminProjectFormHandler)
 	mux.HandleFunc("POST /api/projects", handlers.AdminProjectSaveHandler)
 	mux.HandleFunc("DELETE /api/projects/{id}", handlers.AdminProjectDeleteHandler)
+	mux.HandleFunc("POST /api/ai/parse-readme", handlers.HandleAIParseReadme)
 
 	secureMux := securityHeadersMiddleware(mux)
 
