@@ -66,6 +66,7 @@ jobs:
             GOOGLE_GENAI_USE_VERTEXAI=True
             GOOGLE_CLOUD_PROJECT=${{ secrets.GCP_PROJECT_ID }}
             GOOGLE_CLOUD_LOCATION=global
+            ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
 
       # Output the live URL
       - name: Show Deployment URL
