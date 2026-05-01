@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/sethum-VS/my-portfolio/internal/models"
 	"google.golang.org/genai"
@@ -13,8 +14,6 @@ import (
 // structured project information into a models.Product struct.
 func ParseReadmeToProductContext(ctx context.Context, readme string) (*models.Product, error) {
 	// Initialize the Google GenAI client
-	// The client uses Application Default Credentials (ADC) by default.
-	// Environment variables like GOOGLE_CLOUD_PROJECT are expected to be set.
 	client, err := genai.NewClient(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create genai client: %w", err)
@@ -22,15 +21,24 @@ func ParseReadmeToProductContext(ctx context.Context, readme string) (*models.Pr
 
 	model := "gemini-2.5-flash"
 
-	// Define the system instructions for the AI
+	// Define the master system instruction for the AI
+	systemInstructionText := "You are an expert Technical Writer and Data Extractor. Your job is to analyze the provided raw README.md file and extract its contents into a strict JSON object. Follow these exact rules for each field:\n\n" +
+		"Project ID: Extract a marketing-friendly display name that sounds cool but remains aligned with the technical name.\n\n" +
+		"Project Title: Extract the straightforward technical name or the repository name.\n\n" +
+		"Subtitle: Write a punchy, compelling one-liner description.\n\n" +
+		"Challenge: Describe the core problem or challenge the project aims to solve. Limit to one concise paragraph.\n\n" +
+		"Solution: Explain the approach to solving the challenge. Limit to one concise paragraph.\n\n" +
+		"Architecture Overview: Provide high-level architecture details. Specifically, describe what is happening in the Mermaid.js script to explain the data flow.\n\n" +
+		"Core Features: List the key features as a single comma-separated string.\n\n" +
+		"Markdown architecture: Find the exact Mermaid.js script block that shows the project architecture. Return ONLY the raw Mermaid script without any surrounding text or backticks.\n\n" +
+		"Technology Stack: Extract only the most impactful technology names (e.g., React, Node.js, PostgreSQL). Ignore minor libraries or versions. Return as a comma-separated string.\n\n" +
+		"Display Stack: From the Technology Stack, select the top 3 or 4 absolute strongest, most highlighting technologies. Return as a comma-separated string (e.g., Go, React, Docker).\n\n" +
+		"Hero Asset Path: Find the image or GIF link in the readme (typically ending in .gif or .webp) and return the raw URL."
+
 	systemInstruction := &genai.Content{
 		Parts: []*genai.Part{
 			{
-				Text: "You are a world-class Technical Writer and Software Architect. " +
-					"Your task is to analyze the provided README.md content and extract core project concepts into a structured JSON format. " +
-					"Focus on identifying the engineering challenges, architectural decisions, and the technical solution. " +
-					"If you find Mermaid.js diagrams or complex architectural ASCII art, extract them into the ArchDiagram field. " +
-					"The output MUST be valid JSON matching the requested schema.",
+				Text: systemInstructionText,
 			},
 		},
 	}
@@ -42,26 +50,19 @@ func ParseReadmeToProductContext(ctx context.Context, readme string) (*models.Pr
 		ResponseSchema: &genai.Schema{
 			Type: genai.TypeObject,
 			Properties: map[string]*genai.Schema{
-				"Title":        {Type: genai.TypeString, Description: "The main title of the project"},
-				"Subtitle":     {Type: genai.TypeString, Description: "A punchy, one-sentence subtitle describing the project"},
-				"Description":  {Type: genai.TypeString, Description: "A detailed overview of what the project does and why it matters"},
-				"Challenge":    {Type: genai.TypeString, Description: "The specific technical problem or hurdle that needed to be overcome"},
-				"Solution":     {Type: genai.TypeString, Description: "The technical approach and implementation used to solve the challenge"},
-				"Architecture": {Type: genai.TypeString, Description: "A high-level description of the system's architecture and design patterns"},
-				"ArchDiagram":  {Type: genai.TypeString, Description: "Mermaid.js code blocks or ASCII art representing the architecture. Include the mermaid code block markers if applicable."},
-				"TechStack": {
-					Type:        genai.TypeArray,
-					Items:       &genai.Schema{Type: genai.TypeString},
-					Description: "A list of core technologies, frameworks, and languages used",
-				},
-				"KeyFeatures": {
-					Type:        genai.TypeArray,
-					Items:       &genai.Schema{Type: genai.TypeString},
-					Description: "A list of the most important technical features or highlights",
-				},
-				"GitHubURL": {Type: genai.TypeString, Description: "The URL to the GitHub repository if found"},
+				"id":                    {Type: genai.TypeString, Description: "Project ID"},
+				"title":                 {Type: genai.TypeString, Description: "Project Title"},
+				"subtitle":              {Type: genai.TypeString},
+				"challenge":             {Type: genai.TypeString},
+				"solution":              {Type: genai.TypeString},
+				"architecture_overview": {Type: genai.TypeString},
+				"core_features":         {Type: genai.TypeString},
+				"markdown_architecture": {Type: genai.TypeString},
+				"technology_stack":      {Type: genai.TypeString},
+				"display_stack":         {Type: genai.TypeString},
+				"hero_asset_path":       {Type: genai.TypeString},
 			},
-			Required: []string{"Title", "Subtitle", "Challenge", "Solution", "Architecture", "TechStack"},
+			Required: []string{"id", "title", "subtitle", "challenge", "solution", "architecture_overview", "technology_stack", "display_stack"},
 		},
 	}
 
@@ -81,11 +82,56 @@ func ParseReadmeToProductContext(ctx context.Context, readme string) (*models.Pr
 	// Extract the JSON text from the response
 	responseText := resp.Candidates[0].Content.Parts[0].Text
 
-	// Unmarshal into a temporary Product struct
-	var product models.Product
-	if err := json.Unmarshal([]byte(responseText), &product); err != nil {
+	// Define a temporary struct to hold the AI's specific flat JSON output
+	type aiResponse struct {
+		ID                   string `json:"id"`
+		Title                string `json:"title"`
+		Subtitle             string `json:"subtitle"`
+		Challenge            string `json:"challenge"`
+		Solution             string `json:"solution"`
+		ArchitectureOverview string `json:"architecture_overview"`
+		CoreFeatures         string `json:"core_features"`
+		MarkdownArchitecture string `json:"markdown_architecture"`
+		TechnologyStack      string `json:"technology_stack"`
+		DisplayStack         string `json:"display_stack"`
+		HeroAssetPath        string `json:"hero_asset_path"`
+	}
+
+	var raw aiResponse
+	if err := json.Unmarshal([]byte(responseText), &raw); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal AI response: %w. Response text: %s", err, responseText)
 	}
 
-	return &product, nil
+	// Map the AI response back to our models.Product struct, handling string-to-slice conversions
+	product := &models.Product{
+		ID:           raw.ID,
+		Title:        raw.Title,
+		Subtitle:     raw.Subtitle,
+		Challenge:    raw.Challenge,
+		Solution:     raw.Solution,
+		Architecture: raw.ArchitectureOverview,
+		ArchDiagram:  raw.MarkdownArchitecture,
+		HeroGIF:      raw.HeroAssetPath,
+		TechStack:    splitAndTrim(raw.TechnologyStack),
+		DisplayStack: splitAndTrim(raw.DisplayStack),
+		KeyFeatures:  splitAndTrim(raw.CoreFeatures),
+	}
+
+	return product, nil
+}
+
+// splitAndTrim helper to convert comma-separated strings to cleaned slices
+func splitAndTrim(s string) []string {
+	if s == "" {
+		return []string{}
+	}
+	parts := strings.Split(s, ",")
+	var result []string
+	for _, p := range parts {
+		trimmed := strings.TrimSpace(p)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
 }
