@@ -84,6 +84,7 @@ func AdminProjectSaveHandler(w http.ResponseWriter, r *http.Request) {
 		KeyFeatures:  parseCommaSeparated(r.FormValue("core_features")),
 		HeroGIF:      r.FormValue("hero_gif"),
 		Description:  r.FormValue("description"),
+		ArchDiagram:  r.FormValue("markdown_architecture"),
 	}
 
 	if isUpdate && originalID != "" {

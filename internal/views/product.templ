@@ -138,10 +138,99 @@ templ ProductContent(product *models.Product) {
 								</p>
 
 								<!-- Architecture visualization -->
-								<div class="mt-auto pt-8 border-t border-outline/10">
-									<div class="aspect-video bg-[linear-gradient(135deg,#ffffff08_0%,#ffffff04_100%)] rounded-lg flex items-center justify-center text-on-surface-variant/40 text-sm">
-										<span class="material-symbols-outlined text-4xl opacity-30">architecture</span>
-									</div>
+								<div class="mt-auto pt-8 border-t border-outline/10 w-full overflow-hidden">
+									if product.ArchDiagram != "" {
+										<div class="min-h-[500px] w-full bg-[#0a0a0b] rounded-lg flex items-center justify-center text-on-surface-variant/40 text-sm border border-white/5 shadow-inner relative overflow-hidden group">
+											<div class="absolute inset-0 bg-[linear-gradient(135deg,#ffffff04_0%,transparent_100%)] z-0 pointer-events-none"></div>
+											<!-- Mermaid Container -->
+											<div id="architecture-graph-container" class="w-full h-full p-4 relative z-10 flex items-center justify-center overflow-auto scrollbar-hide">
+												<!-- Loading State -->
+												<div class="animate-pulse flex items-center gap-2">
+													<span class="material-symbols-outlined animate-spin text-primary/40">sync</span>
+													<span class="text-xs text-primary/40 uppercase tracking-widest font-label">Rendering Architecture...</span>
+												</div>
+											</div>
+										</div>
+
+										<!-- JSON Data Bridge -->
+										@templ.JSONScript("product-graph-data", product.ArchDiagram)
+
+										<!-- Mermaid JS Initialization -->
+										<script type="module">
+											import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+											
+											const renderMermaid = async () => {
+												const container = document.getElementById('architecture-graph-container');
+												const dataScript = document.getElementById('product-graph-data');
+												
+												if (container && dataScript) {
+													const showError = () => {
+														container.innerHTML = '<div class="text-error/70 text-xs flex flex-col items-center gap-2"><span class="material-symbols-outlined text-2xl">error</span><span>Syntax error in architecture diagram</span></div>';
+													};
+
+													try {
+														let graphDefinition = JSON.parse(dataScript.textContent);
+														if (!graphDefinition) return;
+
+														if (graphDefinition.trim().startsWith('```')) {
+															graphDefinition = graphDefinition.trim()
+																.replace(/^```mermaid\n?/, '')
+																.replace(/^```\n?/, '')
+																.replace(/```$/, '')
+																.trim();
+														}
+
+														mermaid.initialize({
+															startOnLoad: false,
+															theme: 'dark',
+															themeVariables: {
+																background: 'transparent',
+																primaryColor: '#58C7FF',
+																primaryTextColor: '#E2E2E6',
+																primaryBorderColor: '#173646',
+																lineColor: '#8C9199',
+																secondaryColor: '#1E2022',
+																tertiaryColor: '#131314'
+															},
+															fontFamily: 'Outfit, sans-serif',
+															securityLevel: 'loose'
+														});
+
+														// Validate syntax first
+														await mermaid.parse(graphDefinition);
+														
+														const graphId = 'mermaid-graph-' + Math.random().toString(36).substr(2, 9);
+														const { svg } = await mermaid.render(graphId, graphDefinition);
+														
+														// Extra check for error SVGs returned by some Mermaid versions
+														if (svg.includes('aria-roledescription="error"') || svg.includes('Syntax error')) {
+															showError();
+															return;
+														}
+
+														container.innerHTML = svg;
+														const svgElement = container.querySelector('svg');
+														if (svgElement) {
+															svgElement.style.maxWidth = '100%';
+															svgElement.style.height = 'auto';
+															svgElement.style.display = 'block';
+															svgElement.style.opacity = '0';
+															svgElement.style.transition = 'opacity 0.8s ease-in-out';
+															setTimeout(() => { svgElement.style.opacity = '1'; }, 50);
+														}
+													} catch (e) {
+														showError();
+													}
+												}
+											};
+											
+											renderMermaid();
+										</script>
+									} else {
+										<div class="aspect-video bg-[linear-gradient(135deg,#ffffff08_0%,#ffffff04_100%)] rounded-lg flex items-center justify-center text-on-surface-variant/40 text-sm">
+											<span class="material-symbols-outlined text-4xl opacity-30">architecture</span>
+										</div>
+									}
 								</div>
 							</div>
 						</div>
