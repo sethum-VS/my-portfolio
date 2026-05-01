@@ -137,7 +137,7 @@ templ ProductContent(product *models.Product) {
 							<div class="bg-surface-container-high/50 border border-outline/20 rounded-xl p-8 h-full flex flex-col relative z-10 transition-all duration-700 group-hover/arch-reveal-focus:bg-[#0a0a0b] group-hover/arch-reveal-focus:border-white/10 group-hover/arch-reveal-focus:shadow-2xl">
 								<h2 class="text-sm md:text-base uppercase tracking-[0.18em] text-primary font-headline font-semibold mb-6">Architecture Overview</h2>
 								<p class="text-on-surface font-body text-sm md:text-base leading-relaxed mb-8">
-									The system leverages a highly concurrent backend communicating via WebSockets for real-time state synchronization, while the frontend utilizes a heavily optimized rendering pipeline to ensure a consistent frame rate even under heavy data loads.
+									{ product.Architecture }
 								</p>
 
 								<!-- Architecture visualization -->

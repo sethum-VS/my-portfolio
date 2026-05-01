@@ -72,14 +72,21 @@ templ DashboardProjectForm(product *models.Product) {
 			<button 
 				id="ai-autofill-btn"
 				type="button"
-				class="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-on-primary hover:opacity-90 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+				class="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-on-primary hover:opacity-90 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed htmx-indicator-btn"
 				hx-post="/api/ai/parse-readme"
 				hx-include="[name='readme_content']"
 				hx-target="#dashboard-form-fields-container"
+				hx-indicator="#ai-autofill-btn"
 				disabled
 			>
-				<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
-				<span class="text-[10px] font-bold uppercase tracking-wider">Auto-Fill</span>
+				<span class="htmx-indicator flex items-center gap-2">
+					<span class="animate-spin material-symbols-outlined text-[14px]">sync</span>
+					<span class="text-[10px] font-bold uppercase tracking-wider">Analyzing...</span>
+				</span>
+				<span class="htmx-dis-indicator flex items-center gap-2">
+					<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+					<span class="text-[10px] font-bold uppercase tracking-wider">Auto-Fill</span>
+				</span>
 			</button>
 		</div>
 
@@ -98,6 +105,11 @@ templ DashboardProjectForm(product *models.Product) {
 
 	<!-- The Form -->
 	<form class="flex flex-col gap-8 flex-grow relative z-10 max-w-4xl" hx-post="/api/projects" hx-target="#dashboard-project-form-wrapper">
+		if product != nil {
+			<input type="hidden" name="is_update" value="true" />
+			<input type="hidden" name="original_id" value={ product.ID } />
+		}
+		
 		<div id="dashboard-form-fields-container" class="flex flex-col gap-8">
 			@DashboardFormFields(product)
 		</div>
@@ -125,11 +137,6 @@ templ DashboardProjectForm(product *models.Product) {
 }
 
 templ DashboardFormFields(product *models.Product) {
-	if product != nil {
-		<input type="hidden" name="is_update" value="true" />
-		<input type="hidden" name="original_id" value={ product.ID } />
-	}
-	
 	<!-- High-End Input Grid -->
 	<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 		<!-- ID Input -->
