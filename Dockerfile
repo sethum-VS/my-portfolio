@@ -1,5 +1,5 @@
 # ── Builder Stage ────────────────────────────────────────────────────────────
-FROM golang:1.23-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 # Install Node.js, npm, and make (often needed for native node modules or esbuild)
 RUN apk add --no-cache nodejs npm make git
