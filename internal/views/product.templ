@@ -130,18 +130,225 @@ templ ProductContent(product *models.Product) {
 
 
 						<!-- Architecture Overview -->
-						<div class="seq-in delay-3 h-full">
-							<div class="bg-surface-container-high/50 border border-outline/20 rounded-xl p-8 h-full flex flex-col">
+						<div class="seq-in delay-3 h-full relative z-[60] group/arch-reveal-focus">
+							<!-- Dark Backdrop Focus (Matches Hero isolation) -->
+							<div class="absolute -inset-x-20 -inset-y-10 bg-[#0a0a0b]/80 blur-3xl opacity-0 group-hover/arch-reveal-focus:opacity-100 transition-opacity duration-1000 pointer-events-none"></div>
+
+							<div class="bg-surface-container-high/50 border border-outline/20 rounded-xl p-8 h-full flex flex-col relative z-10 transition-all duration-700 group-hover/arch-reveal-focus:bg-[#0a0a0b] group-hover/arch-reveal-focus:border-white/10 group-hover/arch-reveal-focus:shadow-2xl">
 								<h2 class="text-sm md:text-base uppercase tracking-[0.18em] text-primary font-headline font-semibold mb-6">Architecture Overview</h2>
 								<p class="text-on-surface font-body text-sm md:text-base leading-relaxed mb-8">
 									The system leverages a highly concurrent backend communicating via WebSockets for real-time state synchronization, while the frontend utilizes a heavily optimized rendering pipeline to ensure a consistent frame rate even under heavy data loads.
 								</p>
 
 								<!-- Architecture visualization -->
-								<div class="mt-auto pt-8 border-t border-outline/10">
-									<div class="aspect-video bg-[linear-gradient(135deg,#ffffff08_0%,#ffffff04_100%)] rounded-lg flex items-center justify-center text-on-surface-variant/40 text-sm">
-										<span class="material-symbols-outlined text-4xl opacity-30">architecture</span>
-									</div>
+								<div class="mt-auto pt-8 border-t border-outline/10 w-full overflow-hidden">
+									if product.ArchDiagram != "" {
+										<div 
+											class="aspect-video w-full bg-[#0a0a0b] rounded-lg flex items-center justify-center text-on-surface-variant/40 text-sm border border-white/5 shadow-inner relative overflow-hidden group/arch-reveal"
+											onmouseenter="openArchModal()"
+										>
+											<div class="absolute inset-0 bg-[linear-gradient(135deg,#ffffff04_0%,transparent_100%)] z-0 pointer-events-none"></div>
+											
+											<!-- Reveal Overlay (Matches Hero Aesthetic) -->
+											<div class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-surface-container-high/30 backdrop-blur-sm z-20 group-hover/arch-reveal:opacity-0 group-hover/arch-reveal:pointer-events-none transition-all duration-700 ease-out">
+												<p class="font-label text-[10px] uppercase tracking-[0.3em] text-primary/60 font-bold hidden md:block">Hover to Expand Architecture</p>
+												<p class="font-label text-[10px] uppercase tracking-[0.3em] text-primary/60 font-bold block md:hidden">Click to Expand Architecture</p>
+											</div>
+
+											<!-- Mermaid Container -->
+											<div id="architecture-graph-container" class="w-full h-full p-4 relative z-10 flex items-center justify-center overflow-auto scrollbar-hide">
+												<!-- Loading State -->
+												<div class="animate-pulse flex items-center gap-2">
+													<span class="material-symbols-outlined animate-spin text-primary/40">sync</span>
+													<span class="text-xs text-primary/40 uppercase tracking-widest font-label">Rendering Architecture...</span>
+												</div>
+											</div>
+										</div>
+
+										<!-- Fullscreen Focused View -->
+										<div 
+											id="arch-modal" 
+											class="fixed inset-0 z-[200] bg-black/60 backdrop-blur-xl hidden opacity-0 transition-all duration-700 items-center justify-center p-4 md:p-8 overflow-hidden"
+											onmouseleave="closeArchModal()"
+										>
+											<!-- The Floating Card -->
+											<div class="relative w-full h-full bg-[#0a0a0b] rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col items-center justify-center">
+												<div class="absolute inset-0 bg-[linear-gradient(135deg,#ffffff04_0%,transparent_100%)] pointer-events-none"></div>
+												
+												<div id="arch-modal-content" class="w-full h-full flex items-center justify-center overflow-auto scrollbar-hide p-8 cursor-grab active:cursor-grabbing">
+													<!-- SVG will be injected here -->
+												</div>
+
+												<div class="absolute bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-md flex items-center gap-4 text-[10px] text-white/60 uppercase tracking-widest font-label pointer-events-none z-30">
+													<span>Focused Architecture View</span>
+													<div class="w-px h-3 bg-white/20"></div>
+													<span>Scroll to Zoom • Drag to Pan</span>
+												</div>
+											</div>
+										</div>
+
+										<!-- JSON Data Bridge -->
+										@templ.JSONScript("product-graph-data", product.ArchDiagram)
+
+										<!-- Mermaid JS Initialization & Interactive Logic -->
+										<script type="module">
+											import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+											
+											let modalOpen = false;
+											let currentScale = 1;
+											let isDragging = false;
+											let startX, startY;
+											let translateX = 0, translateY = 0;
+
+											window.openArchModal = () => {
+												if (modalOpen) return;
+												const modal = document.getElementById('arch-modal');
+												const modalContent = document.getElementById('arch-modal-content');
+												const sourceContainer = document.getElementById('architecture-graph-container');
+												
+												if (modal && modalContent && sourceContainer) {
+													const svg = sourceContainer.querySelector('svg');
+													if (svg) {
+														modalOpen = true;
+														currentScale = 1;
+														translateX = 0;
+														translateY = 0;
+														const clonedSvg = svg.cloneNode(true);
+														
+														clonedSvg.style.maxWidth = '95vw';
+														clonedSvg.style.maxHeight = '85vh';
+														clonedSvg.style.width = 'auto';
+														clonedSvg.style.height = 'auto';
+														clonedSvg.style.opacity = '1';
+														clonedSvg.style.transition = 'transform 0.2s cubic-bezier(0.2, 0, 0.2, 1)';
+														clonedSvg.style.transformOrigin = 'center center';
+														
+														modalContent.innerHTML = '';
+														modalContent.appendChild(clonedSvg);
+														
+														modal.classList.remove('hidden');
+														modal.classList.add('flex');
+														setTimeout(() => { modal.classList.add('opacity-100'); }, 10);
+														
+														const updateTransform = (withTransition = true) => {
+															clonedSvg.style.transition = withTransition ? 'transform 0.2s cubic-bezier(0.2, 0, 0.2, 1)' : 'none';
+															clonedSvg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale})`;
+														};
+
+														modalContent.onwheel = (e) => {
+															if (!modalOpen) return;
+															e.preventDefault();
+															const delta = e.deltaY > 0 ? -0.1 : 0.1;
+															currentScale = Math.min(Math.max(0.5, currentScale + delta), 4);
+															updateTransform(true);
+														};
+
+														modalContent.onmousedown = (e) => {
+															if (!modalOpen) return;
+															isDragging = true;
+															startX = e.clientX - translateX;
+															startY = e.clientY - translateY;
+															modalContent.style.cursor = 'grabbing';
+														};
+
+														window.onmousemove = (e) => {
+															if (!isDragging || !modalOpen) return;
+															translateX = e.clientX - startX;
+															translateY = e.clientY - startY;
+															updateTransform(false); // No transition during drag for responsiveness
+														};
+
+														window.onmouseup = () => {
+															isDragging = false;
+															modalContent.style.cursor = 'grab';
+														};
+													}
+												}
+											};
+
+											window.closeArchModal = () => {
+												const modal = document.getElementById('arch-modal');
+												if (modal && modalOpen) {
+													modal.classList.remove('opacity-100');
+													isDragging = false;
+													setTimeout(() => {
+														modal.classList.add('hidden');
+														modal.classList.remove('flex');
+														modalOpen = false;
+													}, 700);
+												}
+											};
+
+											const renderMermaid = async () => {
+												const container = document.getElementById('architecture-graph-container');
+												const dataScript = document.getElementById('product-graph-data');
+												
+												if (container && dataScript) {
+													const showError = () => {
+														container.innerHTML = '<div class="text-error/70 text-xs flex flex-col items-center gap-2"><span class="material-symbols-outlined text-2xl">error</span><span>Syntax error in architecture diagram</span></div>';
+													};
+
+													try {
+														let graphDefinition = JSON.parse(dataScript.textContent);
+														if (!graphDefinition) return;
+
+														if (graphDefinition.trim().startsWith('```')) {
+															graphDefinition = graphDefinition.trim()
+																.replace(/^```mermaid\n?/, '')
+																.replace(/^```\n?/, '')
+																.replace(/```$/, '')
+																.trim();
+														}
+
+														mermaid.initialize({
+															startOnLoad: false,
+															theme: 'dark',
+															themeVariables: {
+																background: 'transparent',
+																primaryColor: '#58C7FF',
+																primaryTextColor: '#E2E2E6',
+																primaryBorderColor: '#173646',
+																lineColor: '#8C9199',
+																secondaryColor: '#1E2022',
+																tertiaryColor: '#131314'
+															},
+															fontFamily: 'Outfit, sans-serif',
+															securityLevel: 'loose'
+														});
+
+														await mermaid.parse(graphDefinition);
+														
+														const graphId = 'mermaid-graph-' + Math.random().toString(36).substr(2, 9);
+														const { svg } = await mermaid.render(graphId, graphDefinition);
+														
+														if (svg.includes('aria-roledescription="error"') || svg.includes('Syntax error')) {
+															showError();
+															return;
+														}
+
+														container.innerHTML = svg;
+														const svgElement = container.querySelector('svg');
+														if (svgElement) {
+															svgElement.style.maxWidth = '100%';
+															svgElement.style.height = 'auto';
+															svgElement.style.display = 'block';
+															svgElement.style.opacity = '0';
+															svgElement.style.transition = 'opacity 0.8s ease-in-out';
+															setTimeout(() => { svgElement.style.opacity = '1'; }, 50);
+														}
+													} catch (e) {
+														showError();
+													}
+												}
+											};
+											
+											renderMermaid();
+										</script>
+									} else {
+										<div class="aspect-video bg-[linear-gradient(135deg,#ffffff08_0%,#ffffff04_100%)] rounded-lg flex items-center justify-center text-on-surface-variant/40 text-sm">
+											<span class="material-symbols-outlined text-4xl opacity-30">architecture</span>
+										</div>
+									}
 								</div>
 							</div>
 						</div>
