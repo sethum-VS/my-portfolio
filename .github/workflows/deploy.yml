@@ -1,0 +1,72 @@
+name: Deploy to Google Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+# Required for Workload Identity Federation (WIF)
+# This grants GitHub Actions the ability to request an OpenID Connect (OIDC) JWT token,
+# which GCP will verify to grant access without needing long-lived service account keys.
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  # Base image name in Artifact Registry
+  IMAGE_NAME: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/portfolio-repo/portfolio-app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # ── Google Cloud Authentication (WIF) ───────────────────────────────
+      # Authenticates with Google Cloud using the OIDC token mechanism.
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      # ── Cloud SDK Setup ─────────────────────────────────────────────────
+      # Configures the gcloud CLI environment.
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # ── Docker Authentication ───────────────────────────────────────────
+      # Authorizes Docker to push images to Google Artifact Registry.
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev --quiet
+
+      # ── Build & Push Docker Image ───────────────────────────────────────
+      - name: Build Docker Image
+        run: |
+          docker build -t $IMAGE_NAME:${{ github.sha }} .
+
+      - name: Push Docker Image
+        run: |
+          docker push $IMAGE_NAME:${{ github.sha }}
+
+      # ── Deploy to Cloud Run ─────────────────────────────────────────────
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: portfolio-dashboard
+          region: ${{ secrets.GCP_REGION }}
+          image: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          flags: --allow-unauthenticated
+          env_vars: |
+            GOOGLE_GENAI_USE_VERTEXAI=True
+            GOOGLE_CLOUD_PROJECT=${{ secrets.GCP_PROJECT_ID }}
+            GOOGLE_CLOUD_LOCATION=global
+
+      # Output the live URL
+      - name: Show Deployment URL
+        run: echo "Deployed successfully to ${{ steps.deploy.outputs.url }}"
