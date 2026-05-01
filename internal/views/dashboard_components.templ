@@ -55,147 +55,53 @@ templ DashboardProjectForm(product *models.Product) {
 			</button>
 		</div>
 	</div>
+
+	<!-- AI Ingestion Section (README.md) -->
+	<div class="mb-12 relative z-10 max-w-4xl p-6 rounded-2xl bg-primary/5 border border-primary/20 backdrop-blur-sm shadow-inner group/ai-box transition-all hover:bg-primary/10">
+		<div class="flex items-center justify-between mb-4">
+			<div class="flex items-center gap-3">
+				<div class="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+					<span class="material-symbols-outlined text-lg">auto_awesome</span>
+				</div>
+				<div class="flex flex-col">
+					<h3 class="text-sm font-headline font-bold text-on-surface tracking-tight">AI README Ingestion</h3>
+					<span class="text-[10px] font-label text-outline uppercase tracking-widest">Powered by Gemini 2.0 Flash</span>
+				</div>
+			</div>
+			
+			<button 
+				id="ai-autofill-btn"
+				type="button"
+				class="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-on-primary hover:opacity-90 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+				hx-post="/api/ai/parse-readme"
+				hx-include="[name='readme_content']"
+				hx-target="#dashboard-form-fields-container"
+				disabled
+			>
+				<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+				<span class="text-[10px] font-bold uppercase tracking-wider">Auto-Fill</span>
+			</button>
+		</div>
+
+		<div class="relative">
+			<textarea 
+				name="readme_content" 
+				class="w-full bg-surface-container-lowest/50 border border-outline-variant/10 rounded-xl p-4 text-sm font-mono text-on-surface-variant placeholder:text-outline/30 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/40 transition-all min-h-[120px] resize-y" 
+				placeholder="Paste your raw README.md content here to auto-populate the form fields below..."
+				oninput="document.getElementById('ai-autofill-btn').disabled = this.value.trim() === ''"
+			></textarea>
+			<div class="absolute bottom-3 right-4 flex items-center gap-2 pointer-events-none">
+				<span class="text-[9px] font-label text-outline/40 uppercase tracking-widest">Markdown Format</span>
+			</div>
+		</div>
+	</div>
+
 	<!-- The Form -->
 	<form class="flex flex-col gap-8 flex-grow relative z-10 max-w-4xl" hx-post="/api/projects" hx-target="#dashboard-project-form-wrapper">
-		if product != nil {
-			<input type="hidden" name="is_update" value="true" />
-			<input type="hidden" name="original_id" value={ product.ID } />
-		}
-		
-		<!-- High-End Input Grid -->
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-			<!-- ID Input -->
-			<div class="flex flex-col gap-2 group">
-				<label for="project-id" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Project ID</label>
-				<input id="project-id" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-lg font-headline font-medium text-on-surface placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="Project Display Name" required type="text" name="id"
-					if product != nil {
-						value={ product.ID }
-					}
-				/>
-			</div>
-			<!-- Title Input -->
-			<div class="flex flex-col gap-2 group">
-				<label for="project-title" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Project Title</label>
-				<input id="project-title" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-lg font-headline font-medium text-on-surface placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="Project Name" required type="text" name="title"
-					if product != nil {
-						value={ product.Title }
-					}
-				/>
-			</div>
+		<div id="dashboard-form-fields-container" class="flex flex-col gap-8">
+			@DashboardFormFields(product)
 		</div>
-		<!-- Subtitle Input -->
-		<div class="flex flex-col gap-2 group">
-			<label for="project-subtitle" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Subtitle</label>
-			<input id="project-subtitle" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="A brief, compelling description." required type="text" name="subtitle"
-				if product != nil {
-					value={ product.Subtitle }
-				}
-			/>
-		</div>
-		<!-- Details Grid -->
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-			<!-- Challenge -->
-			<div class="flex flex-col gap-2 group">
-				<label for="project-challenge" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Challenge</label>
-				<textarea id="project-challenge" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm resize-y min-h-[140px]" placeholder="Describe the core problem or challenge..." required name="challenge">
-					if product != nil {
-						{ product.Challenge }
-					}
-				</textarea>
-			</div>
-			<!-- Solution -->
-			<div class="flex flex-col gap-2 group">
-				<label for="project-solution" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Solution</label>
-				<textarea id="project-solution" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm resize-y min-h-[140px]" placeholder="Explain the approach to solving the challenge..." required name="solution">
-					if product != nil {
-						{ product.Solution }
-					}
-				</textarea>
-			</div>
-		</div>
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-			<!-- Architecture Overview -->
-			<div class="flex flex-col gap-2 group">
-				<label for="project-architecture" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Architecture Overview</label>
-				<textarea id="project-architecture" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm resize-y min-h-[140px]" placeholder="High-level architecture details..." required name="architecture">
-					if product != nil {
-						{ product.Architecture }
-					}
-				</textarea>
-			</div>
-			<!-- Core Features -->
-			<div class="flex flex-col gap-2 group">
-				<label for="project-core-features" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Core Features</label>
-				<textarea id="project-core-features" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm resize-y min-h-[140px]" placeholder="List key features (comma-separated)..." required name="core_features">
-					if product != nil {
-						{ strings.Join(product.KeyFeatures, ", ") }
-					}
-				</textarea>
-			</div>
-		</div>
-		<!-- Markdown architecture -->
-		<div class="flex flex-col gap-2 group">
-			<label for="project-markdown-architecture" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Markdown architecture</label>
-			<textarea id="project-markdown-architecture" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm resize-y min-h-[200px]" placeholder="Detailed technical architecture in Markdown format..." name="markdown_architecture">
-				if product != nil {
-					{ product.ArchDiagram }
-				}
-			</textarea>
-		</div>
-		<!-- Technology Stack Input -->
-		<div class="flex flex-col gap-2 group">
-			<label for="project-tech-stack" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Technology Stack</label>
-			<input id="project-tech-stack" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="e.g. React, Node.js, PostgreSQL (comma-separated)" required type="text" name="tech_stack"
-				if product != nil {
-					value={ strings.Join(product.TechStack, ", ") }
-				}
-			/>
-		</div>
-		<!-- Display Stack -->
-		<div class="flex flex-col gap-2 group">
-			<label for="project-display-stack" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Display Stack (Comma separated)</label>
-			<input id="project-display-stack" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="Go, React, Docker..." type="text" name="display_stack"
-				if product != nil {
-					value={ strings.Join(product.DisplayStack, ", ") }
-				}
-			/>
-		</div>
-		<!-- Hero Path Input -->
-		<div class="flex flex-col gap-2 group">
-			<label for="project-hero-gif" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1 flex items-center gap-2">Hero Asset Path</label>
-			<div class="relative flex items-center">
-				<span class="absolute left-4 text-outline/50 font-body">/static/images/</span>
-				<input id="project-hero-gif" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 pl-[8.5rem] text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="hero-animation.gif" type="text" name="hero_gif"
-					if product != nil {
-						value={ product.HeroGIF }
-					}
-				/>
-			</div>
-		</div>
-		<!-- Markdown Canvas -->
-		<div class="flex flex-col gap-3 group flex-grow mt-4">
-			<label for="project-description" class="font-label text-xs text-primary uppercase tracking-wider flex items-center justify-between ml-1">
-				<span class="flex items-center gap-2">
-					<span class="material-symbols-outlined text-[14px]">code</span>
-					Markdown Canvas (README.md)
-				</span>
-				<span class="text-outline text-[10px] tracking-normal lowercase">Use standard Markdown syntax</span>
-			</label>
-			<!-- Glassmorphic container for textarea -->
-			<div class="relative w-full h-full min-h-[300px] rounded-xl bg-surface-container-lowest/50 backdrop-blur-sm border border-outline-variant/20 focus-within:border-primary/50 transition-colors p-1 flex flex-col">
-				<div class="flex items-center gap-2 px-4 py-2 border-b border-outline-variant/10 bg-surface-container/30 rounded-t-lg">
-					<div class="w-2.5 h-2.5 rounded-full bg-error/80"></div>
-					<div class="w-2.5 h-2.5 rounded-full bg-tertiary/80"></div>
-					<div class="w-2.5 h-2.5 rounded-full bg-primary/80"></div>
-					<span class="ml-4 text-[10px] font-label text-outline uppercase tracking-widest font-mono">editor.md</span>
-				</div>
-				<textarea id="project-description" class="w-full flex-grow bg-transparent border-none p-6 font-mono text-sm text-on-surface-variant focus:outline-none focus:ring-0 resize-none leading-relaxed placeholder:text-outline/20" name="description" placeholder="# Overview&#10;&#10;Describe the engineering and design process behind this artifact...&#10;&#10;## Tech Stack&#10;- Core&#10;- Frontend&#10;- Backend">
-					if product != nil {
-						{ product.Description }
-					}
-				</textarea>
-			</div>
-		</div>
+
 		<!-- Submission Area -->
 		<div class="mt-8 flex items-center justify-between border-t border-outline-variant/10 pt-8">
 			<div class="text-sm font-body text-primary h-6" id="form-response">
@@ -217,6 +123,125 @@ templ DashboardProjectForm(product *models.Product) {
 		</div>
 	</form>
 }
+
+templ DashboardFormFields(product *models.Product) {
+	if product != nil {
+		<input type="hidden" name="is_update" value="true" />
+		<input type="hidden" name="original_id" value={ product.ID } />
+	}
+	
+	<!-- High-End Input Grid -->
+	<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+		<!-- ID Input -->
+		<div class="flex flex-col gap-2 group">
+			<label for="project-id" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Project ID</label>
+			<input id="project-id" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-lg font-headline font-medium text-on-surface placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="Project Display Name" required type="text" name="id"
+				if product != nil {
+					value={ product.ID }
+				}
+			/>
+		</div>
+		<!-- Title Input -->
+		<div class="flex flex-col gap-2 group">
+			<label for="project-title" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Project Title</label>
+			<input id="project-title" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-lg font-headline font-medium text-on-surface placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="Project Name" required type="text" name="title"
+				if product != nil {
+					value={ product.Title }
+				}
+			/>
+		</div>
+	</div>
+	<!-- Subtitle Input -->
+	<div class="flex flex-col gap-2 group">
+		<label for="project-subtitle" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Subtitle</label>
+		<input id="project-subtitle" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="A brief, compelling description." required type="text" name="subtitle"
+			if product != nil {
+				value={ product.Subtitle }
+			}
+		/>
+	</div>
+	<!-- Details Grid -->
+	<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+		<!-- Challenge -->
+		<div class="flex flex-col gap-2 group">
+			<label for="project-challenge" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Challenge</label>
+			<textarea id="project-challenge" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm resize-y min-h-[140px]" placeholder="Describe the core problem or challenge..." required name="challenge">
+				if product != nil {
+					{ product.Challenge }
+				}
+			</textarea>
+		</div>
+		<!-- Solution -->
+		<div class="flex flex-col gap-2 group">
+			<label for="project-solution" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Solution</label>
+			<textarea id="project-solution" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm resize-y min-h-[140px]" placeholder="Explain the approach to solving the challenge..." required name="solution">
+				if product != nil {
+					{ product.Solution }
+				}
+			</textarea>
+		</div>
+	</div>
+	<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+		<!-- Architecture Overview -->
+		<div class="flex flex-col gap-2 group">
+			<label for="project-architecture" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Architecture Overview</label>
+			<textarea id="project-architecture" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm resize-y min-h-[140px]" placeholder="High-level architecture details..." required name="architecture">
+				if product != nil {
+					{ product.Architecture }
+				}
+			</textarea>
+		</div>
+		<!-- Core Features -->
+		<div class="flex flex-col gap-2 group">
+			<label for="project-core-features" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Core Features</label>
+			<textarea id="project-core-features" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm resize-y min-h-[140px]" placeholder="List key features (comma-separated)..." required name="core_features">
+				if product != nil {
+					{ strings.Join(product.KeyFeatures, ", ") }
+				}
+			</textarea>
+		</div>
+	</div>
+	<!-- Markdown architecture -->
+	<div class="flex flex-col gap-2 group">
+		<label for="project-markdown-architecture" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Markdown architecture</label>
+		<textarea id="project-markdown-architecture" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm resize-y min-h-[200px]" placeholder="Detailed technical architecture in Markdown format..." name="markdown_architecture">
+			if product != nil {
+				{ product.ArchDiagram }
+			}
+		</textarea>
+	</div>
+	<!-- Technology Stack Input -->
+	<div class="flex flex-col gap-2 group">
+		<label for="project-tech-stack" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Technology Stack</label>
+		<input id="project-tech-stack" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="e.g. React, Node.js, PostgreSQL (comma-separated)" required type="text" name="tech_stack"
+			if product != nil {
+				value={ strings.Join(product.TechStack, ", ") }
+			}
+		/>
+	</div>
+	<!-- Display Stack -->
+	<div class="flex flex-col gap-2 group">
+		<label for="project-display-stack" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Display Stack (Comma separated)</label>
+		<input id="project-display-stack" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="Go, React, Docker..." type="text" name="display_stack"
+			if product != nil {
+				value={ strings.Join(product.DisplayStack, ", ") }
+			}
+		/>
+	</div>
+	<!-- Hero Path Input -->
+	<div class="flex flex-col gap-2 group">
+		<label for="project-hero-gif" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1 flex items-center gap-2">Hero Asset Path</label>
+		<div class="relative flex items-center">
+			<span class="absolute left-4 text-outline/50 font-body">/static/images/</span>
+			<input id="project-hero-gif" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 pl-[8.5rem] text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="hero-animation.gif" type="text" name="hero_gif"
+				if product != nil {
+					value={ product.HeroGIF }
+				}
+			/>
+		</div>
+	</div>
+}
+
 
 templ DashboardPlaceholder() {
 	<div class="flex-grow flex flex-col items-center justify-center text-outline/20 gap-6 py-20">
