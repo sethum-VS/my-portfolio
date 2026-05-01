@@ -191,8 +191,9 @@ templ DashboardPage(products []models.Product) {
 					<div class="px-6 pb-12 flex flex-col gap-3">
 						<!-- Search Bar -->
 						<div class="relative mb-4 group">
+							<label for="project-search" class="sr-only">Search projects</label>
 							<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors text-sm">search</span>
-							<input class="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-full py-3 pl-12 pr-4 text-sm font-body text-on-surface placeholder:text-outline focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="Search projects..." type="text"/>
+							<input id="project-search" name="search" class="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-full py-3 pl-12 pr-4 text-sm font-body text-on-surface placeholder:text-outline focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="Search projects..." type="text"/>
 						</div>
 						<div id="dashboard-project-list">
 							@DashboardProjectList(products, "")
