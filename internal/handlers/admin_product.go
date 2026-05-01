@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -94,6 +95,7 @@ func AdminProjectSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	if err != nil {
+		log.Printf("Save Error: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "<div id=\"form-response\" class=\"text-error\">Error: %s</div>", err.Error())
 		return
