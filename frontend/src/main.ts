@@ -70,6 +70,12 @@ function initCursor() {
   const cursor = document.getElementById("custom-cursor");
   if (!cursor) return;
 
+  // Disable custom cursor if in dashboard/admin mode
+  if (document.body.classList.contains('dashboard-ui')) {
+    cursor.style.display = 'none';
+    return;
+  }
+
   let targetX = -100;
   let targetY = -100;
   let isMoving = false;
