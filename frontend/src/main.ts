@@ -33,9 +33,14 @@ function initContentProtection() {
   document.addEventListener("contextmenu", block);
   document.addEventListener("copy", block);
   document.addEventListener("cut", block);
-  document.addEventListener("selectstart", block);
-  document.addEventListener("dragstart", block);
   document.addEventListener("keydown", blockCopyShortcuts);
+
+  // Re-enable selection/drag blocking ONLY for desktop (fine pointers)
+  // This prevents interfering with mobile scroll/swipe gestures.
+  if (!window.matchMedia("(pointer: coarse)").matches) {
+    document.addEventListener("selectstart", block);
+    document.addEventListener("dragstart", block);
+  }
 }
 
 function initCanvas() {

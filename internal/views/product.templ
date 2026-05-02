@@ -148,32 +148,37 @@ templ ProductContent(product *models.Product) {
 												<p class="font-label text-[10px] uppercase tracking-[0.3em] text-primary/60 font-bold block md:hidden">Click to Expand Architecture</p>
 											</div>
 
-											<!-- Mermaid Container -->
-											<div id="architecture-graph-container" class="w-full h-full p-4 relative z-10 flex items-center justify-center overflow-auto scrollbar-hide">
-												<!-- Loading State -->
-												<div class="animate-pulse flex items-center gap-2">
-													@Icon("sync", "animate-spin text-primary/40 w-6 h-6")
-													<span class="text-xs text-primary/40 uppercase tracking-widest font-label">Rendering Architecture...</span>
+											<!-- Standardized Preview Container (Standard smaller rectangle) -->
+											<div id="architecture-graph-container" class="w-full h-full p-4 relative z-10 flex items-center justify-center overflow-hidden">
+												<!-- Static Placeholder -->
+												<div class="flex flex-col items-center gap-2 opacity-40">
+													@Icon("architecture", "w-12 h-12 text-primary")
+													<span class="text-[10px] uppercase tracking-widest font-label">View System Architecture</span>
 												</div>
 											</div>
 										</div>
 
-										<!-- Fullscreen Focused View (Redesigned for Mobile) -->
+										<!-- Fullscreen Focused View (Redesigned for Mobile with Snap-to-View) -->
 										<div 
 											id="arch-modal" 
-											class="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md hidden opacity-0 transition-all duration-500 items-center justify-center p-4 md:p-12 overflow-hidden"
+											class="fixed inset-0 z-[200] bg-black/90 backdrop-blur-xl hidden opacity-0 transition-opacity duration-500 items-end md:items-center justify-center p-0 md:p-12 overflow-hidden"
 											onmouseleave="closeArchModal()"
 										>
-											<!-- The Floating Card (Responsive sizing) -->
-											<div class="relative w-full h-[70vh] md:h-full max-w-6xl bg-[#0a0a0b] rounded-3xl md:rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col items-center justify-center">
+											<!-- The Floating Card (Responsive sizing with snap animation) -->
+											<div 
+												id="arch-modal-card"
+												class="relative w-full h-[96vh] md:h-full max-w-6xl bg-[#0a0a0b] rounded-t-[2.5rem] md:rounded-[2rem] border-t md:border border-white/10 shadow-2xl overflow-hidden flex flex-col items-center justify-center transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] translate-y-full md:translate-y-0"
+											>
 												<div class="absolute inset-0 bg-[linear-gradient(135deg,#ffffff04_0%,transparent_100%)] pointer-events-none"></div>
 												
+												<!-- UI Cleanup: Removed Mobile Snap Handle -->
+
 												<!-- Close Button (Mobile Primary) -->
 												<button 
 													onclick="closeArchModal()" 
-													class="absolute top-6 right-6 z-40 p-2 rounded-full bg-white/5 border border-white/10 text-white/40 hover:text-white transition-colors"
+													class="absolute top-10 right-10 z-[100] p-3 rounded-full bg-white/10 border border-white/20 text-white/70 hover:text-white backdrop-blur-md transition-all active:scale-90"
 												>
-													@Icon("close", "w-5 h-5")
+													@Icon("close", "w-6 h-6")
 												</button>
 
 												<div id="arch-modal-content" class="w-full h-full flex items-center justify-center overflow-auto scrollbar-hide p-6 md:p-12 cursor-grab active:cursor-grabbing">
@@ -193,150 +198,57 @@ templ ProductContent(product *models.Product) {
 										<!-- JSON Data Bridge -->
 										@templ.JSONScript("product-graph-data", product.ArchDiagram)
 
-										<!-- Mermaid JS Initialization & Interactive Logic -->
 										<script type="module">
-											import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-											
 											let modalOpen = false;
+											let mermaidLoaded = false;
 											let currentScale = 1;
 											let isDragging = false;
 											let startX, startY;
 											let translateX = 0, translateY = 0;
 
-											window.openArchModal = () => {
+											window.openArchModal = async () => {
 												if (modalOpen) return;
 												const modal = document.getElementById('arch-modal');
+												const card = document.getElementById('arch-modal-card');
 												const modalContent = document.getElementById('arch-modal-content');
-												const sourceContainer = document.getElementById('architecture-graph-container');
-												
-												if (modal && modalContent && sourceContainer) {
-													const svg = sourceContainer.querySelector('svg');
-													if (svg) {
-														modalOpen = true;
-														currentScale = 1;
-														translateX = 0;
-														translateY = 0;
-														const clonedSvg = svg.cloneNode(true);
-														
-														clonedSvg.style.maxWidth = '95vw';
-														clonedSvg.style.maxHeight = '85vh';
-														clonedSvg.style.width = 'auto';
-														clonedSvg.style.height = 'auto';
-														clonedSvg.style.opacity = '1';
-														clonedSvg.style.transition = 'transform 0.2s cubic-bezier(0.2, 0, 0.2, 1)';
-														clonedSvg.style.transformOrigin = 'center center';
-														
-														modalContent.innerHTML = '';
-														modalContent.appendChild(clonedSvg);
-														
-														modal.classList.remove('hidden');
-														modal.classList.add('flex');
-														setTimeout(() => { modal.classList.add('opacity-100'); }, 10);
-														
-														const updateTransform = (withTransition = true) => {
-															clonedSvg.style.transition = withTransition ? 'transform 0.2s cubic-bezier(0.2, 0, 0.2, 1)' : 'none';
-															clonedSvg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale})`;
-														};
-
-														// Mouse Pan/Zoom
-														modalContent.onwheel = (e) => {
-															if (!modalOpen) return;
-															e.preventDefault();
-															const delta = e.deltaY > 0 ? -0.1 : 0.1;
-															currentScale = Math.min(Math.max(0.5, currentScale + delta), 4);
-															updateTransform(true);
-														};
-
-														modalContent.onmousedown = (e) => {
-															if (!modalOpen) return;
-															isDragging = true;
-															startX = e.clientX - translateX;
-															startY = e.clientY - translateY;
-															modalContent.style.cursor = 'grabbing';
-														};
-
-														window.onmousemove = (e) => {
-															if (!isDragging || !modalOpen) return;
-															translateX = e.clientX - startX;
-															translateY = e.clientY - startY;
-															updateTransform(false);
-														};
-
-														window.onmouseup = () => {
-															isDragging = false;
-															modalContent.style.cursor = 'grab';
-														};
-
-														// Mobile Touch Support (Pinch to Zoom & Single-finger Pan)
-														let initialDistance = 0;
-														let initialScale = 1;
-
-														modalContent.ontouchstart = (e) => {
-															if (!modalOpen) return;
-															if (e.touches.length === 1) {
-																isDragging = true;
-																startX = e.touches[0].clientX - translateX;
-																startY = e.touches[0].clientY - translateY;
-															} else if (e.touches.length === 2) {
-																isDragging = false;
-																initialDistance = Math.hypot(
-																	e.touches[0].clientX - e.touches[1].clientX,
-																	e.touches[0].clientY - e.touches[1].clientY
-																);
-																initialScale = currentScale;
-															}
-														};
-
-														modalContent.ontouchmove = (e) => {
-															if (!modalOpen) return;
-															if (e.touches.length === 1 && isDragging) {
-																translateX = e.touches[0].clientX - startX;
-																translateY = e.touches[0].clientY - startY;
-																updateTransform(false);
-															} else if (e.touches.length === 2) {
-																const currentDistance = Math.hypot(
-																	e.touches[0].clientX - e.touches[1].clientX,
-																	e.touches[0].clientY - e.touches[1].clientY
-																);
-																const delta = currentDistance / initialDistance;
-																currentScale = Math.min(Math.max(0.5, initialScale * delta), 4);
-																updateTransform(false);
-															}
-														};
-
-														modalContent.ontouchend = () => {
-															isDragging = false;
-														};
-													}
-												}
-											};
-
-											window.closeArchModal = () => {
-												const modal = document.getElementById('arch-modal');
-												if (modal && modalOpen) {
-													modal.classList.remove('opacity-100');
-													isDragging = false;
-													setTimeout(() => {
-														modal.classList.add('hidden');
-														modal.classList.remove('flex');
-														modalOpen = false;
-													}, 700);
-												}
-											};
-
-											const renderMermaid = async () => {
-												const container = document.getElementById('architecture-graph-container');
 												const dataScript = document.getElementById('product-graph-data');
 												
-												if (container && dataScript) {
-													const showError = () => {
-														container.innerHTML = `<div class="text-error/70 text-xs flex flex-col items-center gap-2"><svg class="fill-current w-6 h-6" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path></svg><span>Syntax error in architecture diagram</span></div>`;
-													};
+												if (modal && modalContent && dataScript && card) {
+													modalOpen = true;
+													currentScale = 1;
+													translateX = 0;
+													translateY = 0;
+
+													// Show modal with Loading Screen immediately
+													modalContent.innerHTML = `
+														<div class="flex flex-col items-center gap-6 animate-pulse">
+															<div class="relative">
+																<div class="w-16 h-16 border-2 border-primary/20 rounded-full"></div>
+																<div class="absolute inset-0 border-t-2 border-primary rounded-full animate-spin"></div>
+															</div>
+															<div class="flex flex-col items-center gap-2">
+																<p class="font-headline font-bold text-white text-lg tracking-tight">Compiling Architecture</p>
+																<p class="font-label text-[10px] uppercase tracking-[0.2em] text-primary/40">Initializing Mermaid Core Engine</p>
+															</div>
+														</div>
+													`;
+													
+													modal.classList.remove('hidden');
+													modal.classList.add('flex');
+													
+													setTimeout(() => { 
+														modal.classList.add('opacity-100'); 
+														if (window.innerWidth < 768) {
+															card.classList.remove('translate-y-full');
+															card.classList.add('translate-y-0');
+														}
+													}, 10);
 
 													try {
+														// Performance Improvement: Lazy Load Mermaid only on click
+														const { default: mermaid } = await import('https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs');
+														
 														let graphDefinition = JSON.parse(dataScript.textContent);
-														if (!graphDefinition) return;
-
 														if (graphDefinition.trim().startsWith('```')) {
 															graphDefinition = graphDefinition.trim()
 																.replace(/^```mermaid\n?/, '')
@@ -362,35 +274,120 @@ templ ProductContent(product *models.Product) {
 														});
 
 														await mermaid.parse(graphDefinition);
-														
 														const graphId = 'mermaid-graph-' + Math.random().toString(36).substr(2, 9);
 														const { svg } = await mermaid.render(graphId, graphDefinition);
 														
-														if (svg.includes('aria-roledescription="error"') || svg.includes('Syntax error')) {
-															showError();
-															return;
-														}
-
-														container.innerHTML = svg;
-														const svgElement = container.querySelector('svg');
+														// Inject maximized SVG
+														modalContent.innerHTML = svg;
+														const svgElement = modalContent.querySelector('svg');
 														if (svgElement) {
-															// Strip hardcoded dimensions to prevent overflow on mobile
 															svgElement.removeAttribute('width');
 															svgElement.removeAttribute('height');
-															svgElement.style.maxWidth = '100%';
+															svgElement.style.maxWidth = '95vw';
+															svgElement.style.maxHeight = '80vh';
+															svgElement.style.width = 'auto';
 															svgElement.style.height = 'auto';
-															svgElement.style.display = 'block';
 															svgElement.style.opacity = '0';
-															svgElement.style.transition = 'opacity 0.8s ease-in-out';
+															svgElement.style.transition = 'opacity 0.5s ease-in-out, transform 0.2s cubic-bezier(0.2, 0, 0.2, 1)';
+															svgElement.style.transformOrigin = 'center center';
 															setTimeout(() => { svgElement.style.opacity = '1'; }, 50);
+
+															const updateTransform = (withTransition = true) => {
+																svgElement.style.transition = withTransition ? 'transform 0.2s cubic-bezier(0.2, 0, 0.2, 1), opacity 0.5s ease-in-out' : 'none';
+																svgElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale})`;
+															};
+
+															// Interactive Pan/Zoom Setup
+															modalContent.onwheel = (e) => {
+																if (!modalOpen) return;
+																e.preventDefault();
+																const delta = e.deltaY > 0 ? -0.1 : 0.1;
+																currentScale = Math.min(Math.max(0.5, currentScale + delta), 4);
+																updateTransform(true);
+															};
+
+															modalContent.onmousedown = (e) => {
+																if (!modalOpen) return;
+																isDragging = true;
+																startX = e.clientX - translateX;
+																startY = e.clientY - translateY;
+																modalContent.style.cursor = 'grabbing';
+															};
+
+															window.onmousemove = (e) => {
+																if (!isDragging || !modalOpen) return;
+																translateX = e.clientX - startX;
+																translateY = e.clientY - startY;
+																updateTransform(false);
+															};
+
+															window.onmouseup = () => {
+																isDragging = false;
+																modalContent.style.cursor = 'grab';
+															};
+
+															// Mobile Touch Support
+															let initialDistance = 0;
+															let initialScale = 1;
+
+															modalContent.ontouchstart = (e) => {
+																if (!modalOpen) return;
+																if (e.touches.length === 1) {
+																	isDragging = true;
+																	startX = e.touches[0].clientX - translateX;
+																	startY = e.touches[0].clientY - translateY;
+																} else if (e.touches.length === 2) {
+																	isDragging = false;
+																	initialDistance = Math.hypot(
+																		e.touches[0].clientX - e.touches[1].clientX,
+																		e.touches[0].clientY - e.touches[1].clientY
+																	);
+																	initialScale = currentScale;
+																}
+															};
+
+															modalContent.ontouchmove = (e) => {
+																if (!modalOpen) return;
+																if (e.touches.length === 1 && isDragging) {
+																	translateX = e.touches[0].clientX - startX;
+																	translateY = e.touches[0].clientY - startY;
+																	updateTransform(false);
+																} else if (e.touches.length === 2) {
+																	const currentDistance = Math.hypot(
+																		e.touches[0].clientX - e.touches[1].clientX,
+																		e.touches[0].clientY - e.touches[1].clientY
+																	);
+																	const delta = currentDistance / initialDistance;
+																	currentScale = Math.min(Math.max(0.5, initialScale * delta), 4);
+																	updateTransform(false);
+																}
+															};
+
+															modalContent.ontouchend = () => { isDragging = false; };
 														}
 													} catch (e) {
-														showError();
+														modalContent.innerHTML = `<div class="text-error/70 text-xs flex flex-col items-center gap-2"><svg class="fill-current w-6 h-6" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path></svg><span>Syntax error in architecture diagram</span></div>`;
 													}
 												}
 											};
-											
-											renderMermaid();
+
+											window.closeArchModal = () => {
+												const modal = document.getElementById('arch-modal');
+												const card = document.getElementById('arch-modal-card');
+												if (modal && modalOpen) {
+													modal.classList.remove('opacity-100');
+													if (window.innerWidth < 768 && card) {
+														card.classList.add('translate-y-full');
+														card.classList.remove('translate-y-0');
+													}
+													isDragging = false;
+													setTimeout(() => {
+														modal.classList.add('hidden');
+														modal.classList.remove('flex');
+														modalOpen = false;
+													}, 500);
+												}
+											};
 										</script>
 									} else {
 										<div class="aspect-video bg-[linear-gradient(135deg,#ffffff08_0%,#ffffff04_100%)] rounded-lg flex items-center justify-center text-on-surface-variant/40 text-sm">

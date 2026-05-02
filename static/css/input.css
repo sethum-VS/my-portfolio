@@ -4,15 +4,21 @@
 
 /* ── Global overrides (outside @layer for max specificity) ──────────────── */
 
-/* Disable selecting/copying visible text globally. */
-html,
-body,
-body * {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+/* Basic content protection: disable right-click callout on images */
+img {
   -webkit-touch-callout: none;
+}
+
+/* Desktop-only content protection: disable text selection and dragging */
+@media (pointer: fine) {
+  html,
+  body,
+  body * {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
 }
 
 /* Hide fallback system pointer on desktop, except in dashboard/admin areas */
