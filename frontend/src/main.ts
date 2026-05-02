@@ -70,6 +70,12 @@ function initCursor() {
   const cursor = document.getElementById("custom-cursor");
   if (!cursor) return;
 
+  // Disable custom cursor if in dashboard/admin mode
+  if (document.body.classList.contains('dashboard-ui')) {
+    cursor.style.display = 'none';
+    return;
+  }
+
   let targetX = -100;
   let targetY = -100;
   let isMoving = false;
@@ -275,8 +281,10 @@ function toggleMobileNav(isOpen: boolean) {
   if (isOpen) {
     nav.classList.remove('hidden', 'closing');
     nav.classList.add('flex');
+    document.body.style.overflow = 'hidden'; // Disable scroll on mobile menu open
   } else {
     nav.classList.add('closing');
+    document.body.style.overflow = ''; // Restore scroll
     
     // Duration matches the fade-out animation.
     setTimeout(() => {

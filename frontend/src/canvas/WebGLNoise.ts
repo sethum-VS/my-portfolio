@@ -19,15 +19,22 @@ export class WebGLNoise {
 
   // Reverted throttling for film grain to a stable 24fps (faster than 14, prevents lag)
   private lastTime: number = 0;
-  private readonly fps: number = 50;
-  private readonly interval: number = 1000 / this.fps;
+  private fps: number;
+  private interval: number;
 
   constructor(canvas: HTMLCanvasElement) {
+    const isMobile = window.innerWidth <= 768;
+    this.fps = isMobile ? 0 : 50;
+    this.interval = this.fps > 0 ? 1000 / this.fps : Infinity;
+
     this.renderer = new WebGLRenderer({ canvas, alpha: true, antialias: false });
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    // Cap pixel ratio at 1.0 for performance (Finding #5)
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.0));
+    
+    // Cap pixel ratio at 1.5 for mobile to prevent overheating, 
+    // while allowing desktop to use full device density (Finding #5 / S-10)
+    const dpr = isMobile ? Math.min(window.devicePixelRatio, 1.5) : window.devicePixelRatio;
+    this.renderer.setPixelRatio(dpr);
 
     this.scene = new Scene();
     this.camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -37,7 +44,7 @@ export class WebGLNoise {
         u_time_smooth: { value: 0.0 },
         u_time_noise: { value: 0.0 },
         u_resolution: { value: new Vector2(window.innerWidth, window.innerHeight) },
-        u_is_mobile: { value: window.innerWidth <= 768 ? 1.0 : 0.0 }
+        u_is_mobile: { value: isMobile ? 1.0 : 0.0 }
       },
       vertexShader: `
         void main() {
@@ -246,10 +253,22 @@ export class WebGLNoise {
     const plane = new Mesh(geometry, this.material);
     this.scene.add(plane);
 
+    this.observer = new IntersectionObserver((entries) => {
+      this.isVisible = entries[0].isIntersecting;
+      if (this.isVisible && !this.rafId && !document.hidden) {
+        this.lastTime = 0;
+        this.rafId = requestAnimationFrame(this.animate);
+      }
+    }, { threshold: 0.01 });
+    this.observer.observe(canvas);
+
     window.addEventListener('resize', this.onWindowResize);
     document.addEventListener('visibilitychange', this.onVisibilityChange);
     this.rafId = requestAnimationFrame(this.animate);
   }
+
+  private isVisible: boolean = true;
+  private observer: IntersectionObserver;
 
   // Implement 150ms debounce on resize (Finding #8)
   private onWindowResize = () => {
@@ -274,10 +293,12 @@ export class WebGLNoise {
   // Pause animation when tab is hidden, resume when visible (P-02)
   private onVisibilityChange = () => {
     if (document.hidden) {
-      cancelAnimationFrame(this.rafId);
-      this.rafId = 0;
+      if (this.rafId) {
+        cancelAnimationFrame(this.rafId);
+        this.rafId = 0;
+      }
     } else {
-      if (!this.rafId) {
+      if (!this.rafId && this.isVisible) {
         this.lastTime = 0;
         this.rafId = requestAnimationFrame(this.animate);
       }
@@ -285,6 +306,10 @@ export class WebGLNoise {
   };
 
   private animate = (currentTime: number) => {
+    if (!this.isVisible || document.hidden) {
+      this.rafId = 0;
+      return;
+    }
     this.rafId = requestAnimationFrame(this.animate);
 
     // Smooth 60fps for orbital mechanics
@@ -304,6 +329,7 @@ export class WebGLNoise {
     cancelAnimationFrame(this.rafId);
     window.removeEventListener('resize', this.onWindowResize);
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    this.observer.disconnect();
     clearTimeout(this.resizeTimeout);
     this.geometryDispose();
     this.material.dispose();
