@@ -20,6 +20,27 @@ templ DashboardPage(products []models.Product) {
 
 			<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
 			<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+			
+			<!-- Global HTMX CSRF Interceptor -->
+			<script>
+				document.addEventListener('htmx:configRequest', function(evt) {
+					var name = 'csrf_token=';
+					var decodedCookie = decodeURIComponent(document.cookie);
+					var ca = decodedCookie.split(';');
+					var token = "";
+					for(var i = 0; i <ca.length; i++) {
+						var c = ca[i];
+						while (c.charAt(0) == ' ') { c = c.substring(1); }
+						if (c.indexOf(name) == 0) {
+							token = c.substring(name.length, c.length);
+							break;
+						}
+					}
+					if (token) {
+						evt.detail.headers['X-CSRF-Token'] = token;
+					}
+				});
+			</script>
 			<style>
 				/* Custom Scrollbar for Dashboard (overrides the hidden scrollbar in output.css) */
 				::-webkit-scrollbar {
@@ -41,9 +62,13 @@ templ DashboardPage(products []models.Product) {
 				html {
 					scrollbar-width: auto;
 				}
+				/* Restore standard system pointer in the dashboard (overrides global cursor: none) */
+				a, button, [role="button"], input, textarea, select, .cursor-pointer {
+					cursor: pointer !important;
+				}
 			</style>
 		</head>
-		<body class="bg-surface text-on-surface flex h-screen overflow-hidden antialiased selection:bg-primary-container selection:text-on-primary-container">
+		<body class="dashboard-ui bg-surface text-on-surface flex h-screen overflow-hidden antialiased selection:bg-primary-container selection:text-on-primary-container">
 			<!-- Top App Bar (Mobile Only via hidden md:flex rules, but requested for layout. Integrating TopAppBar json structural commands) -->
 			<div class="md:hidden fixed top-0 w-full z-40 bg-[#131314]/70 backdrop-blur-20px border-b border-[#3e484f]/10 px-8 py-4 flex justify-between items-center transition-all duration-300">
 				<span class="font-['Plus_Jakarta_Sans'] text-sm tracking-wide font-extrabold text-primary">Soul Dashboard</span>
@@ -140,5 +165,7 @@ templ DashboardPage(products []models.Product) {
 				</section>
 			</main>
 		</body>
+		<!-- Compiled TypeScript Bundle -->
+		<script src="/static/out/bundle.js" defer></script>
 	</html>
 }

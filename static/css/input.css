@@ -15,9 +15,11 @@ body * {
   -webkit-touch-callout: none;
 }
 
-/* Hide fallback system pointer on desktop */
+/* Hide fallback system pointer on desktop, except in dashboard/admin areas */
 @media (pointer: fine) {
-  *, *::before, *::after {
+  body:not(.dashboard-ui) *, 
+  body:not(.dashboard-ui) *::before, 
+  body:not(.dashboard-ui) *::after {
     cursor: none !important;
   }
 }
