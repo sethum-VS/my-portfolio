@@ -10,6 +10,7 @@ export class MagneticGrid {
   private handleMouseMove: (e: MouseEvent) => void;
   private handleMouseLeave: () => void;
   private resizeTimeout: any;
+  private lastWidth: number = window.innerWidth;
   
   // Configuration
   private readonly gridSize = 40; // 40px blocks
@@ -30,6 +31,11 @@ export class MagneticGrid {
     this.handleResize = () => {
       clearTimeout(this.resizeTimeout);
       this.resizeTimeout = setTimeout(() => {
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile && window.innerWidth === this.lastWidth) {
+          return;
+        }
+        this.lastWidth = window.innerWidth;
         this.resize();
         this.draw(); // Ensure it redraws immediately after resize
       }, 150);
