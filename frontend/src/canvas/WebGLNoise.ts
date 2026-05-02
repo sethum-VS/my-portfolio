@@ -247,6 +247,7 @@ export class WebGLNoise {
     this.scene.add(plane);
 
     window.addEventListener('resize', this.onWindowResize);
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
     this.rafId = requestAnimationFrame(this.animate);
   }
 
@@ -270,6 +271,19 @@ export class WebGLNoise {
     }, 150);
   };
 
+  // Pause animation when tab is hidden, resume when visible (P-02)
+  private onVisibilityChange = () => {
+    if (document.hidden) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = 0;
+    } else {
+      if (!this.rafId) {
+        this.lastTime = 0;
+        this.rafId = requestAnimationFrame(this.animate);
+      }
+    }
+  };
+
   private animate = (currentTime: number) => {
     this.rafId = requestAnimationFrame(this.animate);
 
@@ -289,6 +303,7 @@ export class WebGLNoise {
   public destroy() {
     cancelAnimationFrame(this.rafId);
     window.removeEventListener('resize', this.onWindowResize);
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
     clearTimeout(this.resizeTimeout);
     this.geometryDispose();
     this.material.dispose();

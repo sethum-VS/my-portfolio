@@ -27,24 +27,30 @@ func AdminAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Verify the token using Firebase Admin
-		token, err := services.FirebaseAuth.VerifyIDToken(r.Context(), cookie.Value)
+		// Verify the session cookie using Firebase Admin
+		token, err := services.FirebaseAuth.VerifySessionCookie(r.Context(), cookie.Value)
 		if err != nil {
-			log.Printf("Auth Error: Token verification failed: %v", err)
-			// Clear invalid cookie
-			http.SetCookie(w, &http.Cookie{
-				Name:   "session_token",
-				Value:  "",
-				Path:   "/",
-				MaxAge: -1,
-			})
-			if r.Header.Get("HX-Request") == "true" {
-				w.Header().Set("HX-Redirect", "/login")
-				w.WriteHeader(http.StatusUnauthorized)
+			// Fallback: If VerifySessionCookie fails, try VerifyIDToken.
+			// This handles the local dev fallback where we stored the ID token directly
+			// because the service account lacked the Service Account Token Creator role.
+			token, err = services.FirebaseAuth.VerifyIDToken(r.Context(), cookie.Value)
+			if err != nil {
+				log.Printf("Auth Error: Session and ID cookie verification failed: %v", err)
+				// Clear invalid cookie
+				http.SetCookie(w, &http.Cookie{
+					Name:   "session_token",
+					Value:  "",
+					Path:   "/",
+					MaxAge: -1,
+				})
+				if r.Header.Get("HX-Request") == "true" {
+					w.Header().Set("HX-Redirect", "/login")
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+				http.Redirect(w, r, "/login", http.StatusSeeOther)
 				return
 			}
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			return
 		}
 
 		// Whitelist verification from environment variable
