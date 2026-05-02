@@ -8,7 +8,7 @@ templ Layout(title string) {
 	<html class="dark" lang="en">
 		<head>
 			<meta charset="UTF-8"/>
-			<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>SMWDev | Soul</title>
 			<link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg"/>
 
@@ -59,16 +59,21 @@ templ Layout(title string) {
 					font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24;
 				}
 
-				/* Prevent overscroll bounce/rubber-banding on mobile which can break layout */
+				/* Prevent overscroll bounce/rubber-banding on mobile */
 				@media (max-width: 768px) {
-					html, body {
+					body {
 						overscroll-behavior-y: none;
 					}
 				}
 
-				html, body {
+				html {
+					height: 100%;
+				}
+
+				body {
 					width: 100%;
 					overflow-x: hidden;
+					min-height: 100%;
 				}
 			</style>
 			<script src="/static/out/bundle.js" defer></script>
