@@ -281,10 +281,10 @@ function toggleMobileNav(isOpen: boolean) {
   if (isOpen) {
     nav.classList.remove('hidden', 'closing');
     nav.classList.add('flex');
-    document.body.style.overflow = 'hidden'; // Disable scroll on mobile menu open
+    document.body.classList.add('overflow-hidden'); // Disable scroll on mobile menu open
   } else {
     nav.classList.add('closing');
-    document.body.style.overflow = ''; // Restore scroll
+    document.body.classList.remove('overflow-hidden'); // Restore scroll
     
     // Duration matches the fade-out animation.
     setTimeout(() => {

@@ -20,8 +20,8 @@ templ SplashPage() {
 				before the splash screen dismisses. Hidden from view but present in DOM.
 			-->
 			<div class="sr-only" aria-hidden="true">
-				<span class="material-symbols-outlined">arrow_forward</span>
-				<span class="material-symbols-outlined">download</span>
+				@Icon("arrow_forward", "")
+				@Icon("download", "")
 				<span class="font-serif">Software Developer</span>
 				<span class="font-headline">Sethum Methsanda</span>
 			</div>
@@ -143,22 +143,32 @@ templ SplashPage() {
 				return Promise.resolve();
 			}
 
-			// ── 3. Specific Glyph Verification for Material Symbols ──────────────
-			function verifyGlyphs() {
-				advanceStatus(); // → "Verifying Human Essence"
+			// ── 3. Wait for critical JS Bundle (bundle.js) ──────────────────────────
+			function waitForJS() {
+				advanceStatus(); // → "Verifying Human Essence" (Re-using stage text)
 				return new Promise(function(resolve) {
-					if (document.fonts && document.fonts.check) {
-						var check = function() {
-							if (document.fonts.check('24px "Material Symbols Outlined"')) {
-								resolve();
-							} else {
-								requestAnimationFrame(check);
-							}
-						};
-						check();
-					} else {
-						setTimeout(resolve, 300); // Fallback
+					var script = document.querySelector('script[src*="bundle.js"]');
+					if (!script) { resolve(); return; }
+
+					// Check if already loaded/executed:
+					// 1. Check if a known global from the bundle exists
+					// 2. Check if the document is already complete
+					// 3. Check Performance API for a finished download (responseEnd > 0)
+					var entry = performance.getEntriesByName(script.src)[0];
+					var isLoaded = window.WebGLArchitectureVisualizer || 
+								  document.readyState === 'complete' || 
+								  (entry && entry.responseEnd > 0);
+
+					if (isLoaded) {
+						resolve();
+						return;
 					}
+
+					script.addEventListener('load', resolve);
+					script.addEventListener('error', resolve); // fail-open
+					
+					// Final fail-safe timeout (15s) to ensure the splash never hangs permanently
+					setTimeout(resolve, 15000);
 				});
 			}
 
@@ -170,10 +180,23 @@ templ SplashPage() {
 				var remaining = Math.max(0, MIN_DISPLAY_MS - elapsed);
 
 				setTimeout(function () {
-					if (typeof htmx !== 'undefined') {
-						htmx.trigger(document.body, 'splash:ready');
+					// Ensure the DOM is fully loaded and HTMX has initialized
+					var fireEvent = function() {
+						if (typeof htmx !== 'undefined') {
+							// Force processing just in case we beat the DOMContentLoaded event
+							if (document.body && !document.body.classList.contains('htmx-added')) {
+								htmx.process(document.body);
+							}
+							htmx.trigger(document.body, 'splash:ready');
+						} else {
+							document.body.dispatchEvent(new CustomEvent('splash:ready', { bubbles: true }));
+						}
+					};
+
+					if (document.readyState === 'loading') {
+						document.addEventListener('DOMContentLoaded', fireEvent);
 					} else {
-						document.body.dispatchEvent(new CustomEvent('splash:ready', { bubbles: true }));
+						fireEvent();
 					}
 				}, remaining);
 			}
@@ -181,7 +204,7 @@ templ SplashPage() {
 			// ── Orchestrate ───────────────────────────────────────────────────────
 			waitForCSS()
 				.then(waitForFonts)
-				.then(verifyGlyphs)
+				.then(waitForJS)
 				.then(dispatchReady)
 				.catch(function (err) {
 					console.error('Splash load error:', err);
