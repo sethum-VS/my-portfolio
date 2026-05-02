@@ -52,13 +52,14 @@ templ NavBar(active string) {
 				class="font-headline tracking-tight text-sm uppercase font-semibold text-sky-300 hover:text-sky-200 transition-colors duration-300 transform hover:scale-95 flex items-center gap-2"
 				href="#"
 			>
-				Resume <span class="material-symbols-outlined text-[18px]">download</span>
+				Resume 
+				@Icon("download", "w-[18px] h-[18px]")
 			</a>
 		</div>
 
 		<!-- Mobile hamburger -->
 		<button class="md:hidden text-zinc-400 hover:text-sky-200 transition-colors" onclick="toggleMobileNav(true)">
-			<span class="material-symbols-outlined">menu</span>
+			@Icon("menu", "w-6 h-6")
 		</button>
 	</nav>
 	@MobileNav(active)
@@ -69,7 +70,7 @@ templ MobileNav(active string) {
 	<div id="mobile-nav" class="hidden fixed inset-0 z-[500] bg-zinc-900/30 backdrop-blur-xl flex-col justify-center items-start px-12 gap-8 opacity-0">
 		<div class="absolute top-6 right-6 p-4">
 			<button class="text-[#abdeff] hover:opacity-80 transition-opacity" onclick="toggleMobileNav(false)">
-				<span class="material-symbols-outlined text-3xl" data-icon="close">close</span>
+				@Icon("close", "w-8 h-8")
 			</button>
 		</div>
 		<nav class="flex flex-col w-full gap-12 flex-1 justify-center">

@@ -38,14 +38,14 @@ templ ProductContent(product *models.Product) {
 								if product.LiveURL != "" {
 									<a href={ templ.SafeURL(product.LiveURL) } target="_blank" class="bg-gradient-to-br from-primary to-primary-container text-on-primary-fixed font-headline font-semibold px-8 py-4 rounded-full hover:scale-[1.02] transition-transform duration-300 shadow-lg shadow-primary-container/20 flex items-center gap-2">
 										View Live Project
-										<span class="material-symbols-outlined text-[20px]">open_in_new</span>
+										@Icon("open_in_new", "w-5 h-5")
 									</a>
 								}
 								if product.GitHubURL != "" {
 									<a href={ templ.SafeURL(product.GitHubURL) } target="_blank" class="group relative px-8 py-4 font-headline font-semibold text-primary hover:text-primary-container transition-colors duration-300 flex items-center gap-2 overflow-hidden rounded-full border border-primary/30 hover:border-primary-container/30">
 										<div class="absolute inset-0 bg-surface-container-highest opacity-0 group-hover:opacity-20 transition-opacity duration-500 -z-10"></div>
 										View Source Code
-										<span class="material-symbols-outlined text-[20px]">code</span>
+										@Icon("code", "w-5 h-5")
 									</a>
 								}
 							</div>
@@ -93,7 +93,7 @@ templ ProductContent(product *models.Product) {
 								</div>
 							} else {
 								<div class="aspect-video bg-surface-container-high/30 rounded-2xl border border-white/5 flex items-center justify-center">
-									<span class="material-symbols-outlined text-6xl text-on-surface-variant/20">farsight_24</span>
+									@Icon("farsight_24", "w-16 h-16 text-on-surface-variant/20")
 								</div>
 							}
 						</div>
@@ -152,7 +152,7 @@ templ ProductContent(product *models.Product) {
 											<div id="architecture-graph-container" class="w-full h-full p-4 relative z-10 flex items-center justify-center overflow-auto scrollbar-hide">
 												<!-- Loading State -->
 												<div class="animate-pulse flex items-center gap-2">
-													<span class="material-symbols-outlined animate-spin text-primary/40">sync</span>
+													@Icon("sync", "animate-spin text-primary/40 w-6 h-6")
 													<span class="text-xs text-primary/40 uppercase tracking-widest font-label">Rendering Architecture...</span>
 												</div>
 											</div>
@@ -173,7 +173,7 @@ templ ProductContent(product *models.Product) {
 													onclick="closeArchModal()" 
 													class="absolute top-6 right-6 z-40 p-2 rounded-full bg-white/5 border border-white/10 text-white/40 hover:text-white transition-colors"
 												>
-													<span class="material-symbols-outlined text-xl">close</span>
+													@Icon("close", "w-5 h-5")
 												</button>
 
 												<div id="arch-modal-content" class="w-full h-full flex items-center justify-center overflow-auto scrollbar-hide p-6 md:p-12 cursor-grab active:cursor-grabbing">
@@ -238,6 +238,7 @@ templ ProductContent(product *models.Product) {
 															clonedSvg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale})`;
 														};
 
+														// Mouse Pan/Zoom
 														modalContent.onwheel = (e) => {
 															if (!modalOpen) return;
 															e.preventDefault();
@@ -258,12 +259,53 @@ templ ProductContent(product *models.Product) {
 															if (!isDragging || !modalOpen) return;
 															translateX = e.clientX - startX;
 															translateY = e.clientY - startY;
-															updateTransform(false); // No transition during drag for responsiveness
+															updateTransform(false);
 														};
 
 														window.onmouseup = () => {
 															isDragging = false;
 															modalContent.style.cursor = 'grab';
+														};
+
+														// Mobile Touch Support (Pinch to Zoom & Single-finger Pan)
+														let initialDistance = 0;
+														let initialScale = 1;
+
+														modalContent.ontouchstart = (e) => {
+															if (!modalOpen) return;
+															if (e.touches.length === 1) {
+																isDragging = true;
+																startX = e.touches[0].clientX - translateX;
+																startY = e.touches[0].clientY - translateY;
+															} else if (e.touches.length === 2) {
+																isDragging = false;
+																initialDistance = Math.hypot(
+																	e.touches[0].clientX - e.touches[1].clientX,
+																	e.touches[0].clientY - e.touches[1].clientY
+																);
+																initialScale = currentScale;
+															}
+														};
+
+														modalContent.ontouchmove = (e) => {
+															if (!modalOpen) return;
+															if (e.touches.length === 1 && isDragging) {
+																translateX = e.touches[0].clientX - startX;
+																translateY = e.touches[0].clientY - startY;
+																updateTransform(false);
+															} else if (e.touches.length === 2) {
+																const currentDistance = Math.hypot(
+																	e.touches[0].clientX - e.touches[1].clientX,
+																	e.touches[0].clientY - e.touches[1].clientY
+																);
+																const delta = currentDistance / initialDistance;
+																currentScale = Math.min(Math.max(0.5, initialScale * delta), 4);
+																updateTransform(false);
+															}
+														};
+
+														modalContent.ontouchend = () => {
+															isDragging = false;
 														};
 													}
 												}
@@ -288,7 +330,7 @@ templ ProductContent(product *models.Product) {
 												
 												if (container && dataScript) {
 													const showError = () => {
-														container.innerHTML = '<div class="text-error/70 text-xs flex flex-col items-center gap-2"><span class="material-symbols-outlined text-2xl">error</span><span>Syntax error in architecture diagram</span></div>';
+														container.innerHTML = `<div class="text-error/70 text-xs flex flex-col items-center gap-2"><svg class="fill-current w-6 h-6" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path></svg><span>Syntax error in architecture diagram</span></div>`;
 													};
 
 													try {
@@ -332,6 +374,9 @@ templ ProductContent(product *models.Product) {
 														container.innerHTML = svg;
 														const svgElement = container.querySelector('svg');
 														if (svgElement) {
+															// Strip hardcoded dimensions to prevent overflow on mobile
+															svgElement.removeAttribute('width');
+															svgElement.removeAttribute('height');
 															svgElement.style.maxWidth = '100%';
 															svgElement.style.height = 'auto';
 															svgElement.style.display = 'block';
@@ -349,7 +394,7 @@ templ ProductContent(product *models.Product) {
 										</script>
 									} else {
 										<div class="aspect-video bg-[linear-gradient(135deg,#ffffff08_0%,#ffffff04_100%)] rounded-lg flex items-center justify-center text-on-surface-variant/40 text-sm">
-											<span class="material-symbols-outlined text-4xl opacity-30">architecture</span>
+											@Icon("architecture", "w-10 h-10 opacity-30")
 										</div>
 									}
 								</div>
@@ -417,7 +462,7 @@ templ ProductContent(product *models.Product) {
 						</div>
 						<a href="/projects" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML swap:250ms" class="group relative px-10 py-5 font-headline font-bold text-on-primary-fixed bg-primary rounded-full hover:scale-105 transition-all duration-300 shadow-xl shadow-primary/10 flex items-center gap-3">
 							Browse All Projects
-							<span class="material-symbols-outlined text-[24px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+							@Icon("arrow_forward", "w-6 h-6 group-hover:translate-x-1 transition-transform")
 						</a>
 					</div>
 				</div>
