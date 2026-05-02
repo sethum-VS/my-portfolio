@@ -138,6 +138,7 @@ templ ProductContent(product *models.Product) {
 										<div 
 											class="aspect-video w-full bg-[#0a0a0b] rounded-lg flex items-center justify-center text-on-surface-variant/40 text-sm border border-white/5 shadow-inner relative overflow-hidden group/arch-reveal"
 											onmouseenter="openArchModal()"
+											onclick="openArchModal()"
 										>
 											<div class="absolute inset-0 bg-[linear-gradient(135deg,#ffffff04_0%,transparent_100%)] z-0 pointer-events-none"></div>
 											
@@ -157,24 +158,34 @@ templ ProductContent(product *models.Product) {
 											</div>
 										</div>
 
-										<!-- Fullscreen Focused View -->
+										<!-- Fullscreen Focused View (Redesigned for Mobile) -->
 										<div 
 											id="arch-modal" 
-											class="fixed inset-0 z-[200] bg-black/60 backdrop-blur-xl hidden opacity-0 transition-all duration-700 items-center justify-center p-4 md:p-8 overflow-hidden"
+											class="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md hidden opacity-0 transition-all duration-500 items-center justify-center p-4 md:p-12 overflow-hidden"
 											onmouseleave="closeArchModal()"
 										>
-											<!-- The Floating Card -->
-											<div class="relative w-full h-full bg-[#0a0a0b] rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col items-center justify-center">
+											<!-- The Floating Card (Responsive sizing) -->
+											<div class="relative w-full h-[70vh] md:h-full max-w-6xl bg-[#0a0a0b] rounded-3xl md:rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col items-center justify-center">
 												<div class="absolute inset-0 bg-[linear-gradient(135deg,#ffffff04_0%,transparent_100%)] pointer-events-none"></div>
 												
-												<div id="arch-modal-content" class="w-full h-full flex items-center justify-center overflow-auto scrollbar-hide p-8 cursor-grab active:cursor-grabbing">
+												<!-- Close Button (Mobile Primary) -->
+												<button 
+													onclick="closeArchModal()" 
+													class="absolute top-6 right-6 z-40 p-2 rounded-full bg-white/5 border border-white/10 text-white/40 hover:text-white transition-colors"
+												>
+													<span class="material-symbols-outlined text-xl">close</span>
+												</button>
+
+												<div id="arch-modal-content" class="w-full h-full flex items-center justify-center overflow-auto scrollbar-hide p-6 md:p-12 cursor-grab active:cursor-grabbing">
 													<!-- SVG will be injected here -->
 												</div>
 
-												<div class="absolute bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-md flex items-center gap-4 text-[10px] text-white/60 uppercase tracking-widest font-label pointer-events-none z-30">
-													<span>Focused Architecture View</span>
-													<div class="w-px h-3 bg-white/20"></div>
-													<span>Scroll to Zoom • Drag to Pan</span>
+												<!-- Responsive Instruction Bar -->
+												<div class="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 px-4 md:px-6 py-2.5 md:py-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-md flex items-center gap-3 md:gap-4 text-[9px] md:text-[10px] text-white/60 uppercase tracking-widest font-label pointer-events-none z-30 whitespace-nowrap">
+													<span class="hidden sm:inline">Focused Architecture View</span>
+													<div class="hidden sm:block w-px h-3 bg-white/20"></div>
+													<span class="md:hidden">Pinch to Zoom • Drag to Pan</span>
+													<span class="hidden md:inline">Scroll to Zoom • Drag to Pan</span>
 												</div>
 											</div>
 										</div>

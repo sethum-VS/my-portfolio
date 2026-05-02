@@ -13,20 +13,34 @@ export class MagneticGrid {
   private lastWidth: number = window.innerWidth;
   
   // Configuration
-  private readonly gridSize = 40; // 40px blocks
-  private readonly magnetRadius = 200; // Pull radius
-  private readonly magnetStrength = 0.6; // How strong the pull is
+  private gridSize: number;
+  private magnetRadius: number = 200;
+  private magnetStrength: number = 0.6;
   
   // Animation frame id
   private rafId: number = 0;
   private alpha: number;
+  private isVisible: boolean = true;
+  private observer: IntersectionObserver;
 
   constructor(canvas: HTMLCanvasElement, alpha: number = 0.25) {
     this.canvas = canvas;
     this.alpha = alpha;
+    
+    // Responsive grid density: Increase gap on mobile to save CPU (2. Fix iOS Overheating)
+    this.gridSize = window.innerWidth < 768 ? 80 : 40;
+
     const context = canvas.getContext("2d");
     if (!context) throw new Error("Could not initialize 2D context");
     this.ctx = context;
+
+    this.observer = new IntersectionObserver((entries) => {
+      this.isVisible = entries[0].isIntersecting;
+      if (this.isVisible && !this.rafId) {
+        this.rafId = requestAnimationFrame(this.loop);
+      }
+    }, { threshold: 0.01 });
+    this.observer.observe(canvas);
 
     this.handleResize = () => {
       clearTimeout(this.resizeTimeout);
@@ -36,6 +50,7 @@ export class MagneticGrid {
           return;
         }
         this.lastWidth = window.innerWidth;
+        this.gridSize = isMobile ? 80 : 40;
         this.resize();
         this.draw(); // Ensure it redraws immediately after resize
       }, 150);
@@ -157,6 +172,10 @@ export class MagneticGrid {
   }
 
   private loop = () => {
+    if (!this.isVisible) {
+      this.rafId = 0;
+      return;
+    }
     const needsUpdate = this.update();
     this.draw();
     
@@ -175,5 +194,6 @@ export class MagneticGrid {
     window.removeEventListener("resize", this.handleResize);
     window.removeEventListener("mousemove", this.handleMouseMove);
     window.removeEventListener("mouseleave", this.handleMouseLeave);
+    this.observer.disconnect();
   }
 }

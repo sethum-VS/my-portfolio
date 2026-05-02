@@ -34,6 +34,29 @@ templ Layout(title string) {
 
 			<!-- HTMX — drives the splash→home transition + future dynamic interactions -->
 			<script src="/static/js/htmx.min.js"></script>
+			
+			<!-- Global HTMX CSRF Interceptor -->
+			<script>
+				document.addEventListener('htmx:configRequest', function(evt) {
+					var name = 'csrf_token=';
+					var decodedCookie = decodeURIComponent(document.cookie);
+					var ca = decodedCookie.split(';');
+					var token = "";
+					for(var i = 0; i <ca.length; i++) {
+						var c = ca[i];
+						while (c.charAt(0) == ' ') { c = c.substring(1); }
+						if (c.indexOf(name) == 0) {
+							token = c.substring(name.length, c.length);
+							break;
+						}
+					}
+					if (token) {
+						evt.detail.headers['X-CSRF-Token'] = token;
+					} else {
+						console.error("HTMX CSRF Error: csrf_token cookie not found. document.cookie:", document.cookie);
+					}
+				});
+			</script>
 
 			<style>
 				/* Material Symbols variable font axis settings */
@@ -59,6 +82,12 @@ templ Layout(title string) {
 			<div id="custom-cursor" class="pointer-events-none fixed top-0 left-0 z-[99999] w-6 h-6 border-[1.5px] border-white rounded-full opacity-0 transition-opacity duration-300 hidden md:block" style="transform: translate(-50%, -50%);"></div>
 
 			{ children... }
+			<!-- Dashboard/Login Cursor Restoration -->
+			<script>
+				if (window.location.pathname.startsWith('/login') || window.location.pathname.startsWith('/dashboard')) {
+					document.body.classList.add('dashboard-ui');
+				}
+			</script>
 			<!-- Compiled TypeScript Bundle -->
 			<script src="/static/out/bundle.js" defer></script>
 		</body>
