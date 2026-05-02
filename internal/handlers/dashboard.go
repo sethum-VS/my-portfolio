@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -19,10 +18,6 @@ func DashboardHandler(w http.ResponseWriter, r *http.Request) {
 
 // HandleAIParseReadme processes raw README content and returns the auto-filled form fields.
 func HandleAIParseReadme(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 
 	readme := r.FormValue("readme_content")
 	if readme == "" {
@@ -39,7 +34,7 @@ func HandleAIParseReadme(w http.ResponseWriter, r *http.Request) {
 	product, err := services.ParseReadmeToProductContext(r.Context(), readme)
 	if err != nil {
 		log.Printf("AI Parse Error: %v", err)
-		http.Error(w, fmt.Sprintf("AI parsing failed: %v", err), http.StatusInternalServerError)
+		http.Error(w, "AI parsing failed. Please try again.", http.StatusInternalServerError)
 		return
 	}
 

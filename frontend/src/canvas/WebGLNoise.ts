@@ -15,6 +15,7 @@ export class WebGLNoise {
   private material: ShaderMaterial;
   private rafId: number = 0;
   private resizeTimeout: any;
+  private lastWidth: number = window.innerWidth;
 
   // Reverted throttling for film grain to a stable 24fps (faster than 14, prevents lag)
   private lastTime: number = 0;
@@ -35,7 +36,8 @@ export class WebGLNoise {
       uniforms: {
         u_time_smooth: { value: 0.0 },
         u_time_noise: { value: 0.0 },
-        u_resolution: { value: new Vector2(window.innerWidth, window.innerHeight) }
+        u_resolution: { value: new Vector2(window.innerWidth, window.innerHeight) },
+        u_is_mobile: { value: window.innerWidth <= 768 ? 1.0 : 0.0 }
       },
       vertexShader: `
         void main() {
@@ -46,6 +48,7 @@ export class WebGLNoise {
         uniform float u_time_smooth;
         uniform float u_time_noise;
         uniform vec2 u_resolution;
+        uniform float u_is_mobile;
 
         // High frequency hash for denser particle count
         float hash(vec2 p) {
@@ -72,10 +75,15 @@ export class WebGLNoise {
             float noise = hash(noiseUv + u_time_noise);
             
             // Sharpened power curve back to reduce overall bright dust presence 
-            noise = pow(noise, 1.55); 
+            // On mobile, completely suppress background film grain for clean dark mode
+            noise = pow(noise, 1.55) * (1.0 - u_is_mobile); 
 
             vec2 center = vec2(-1.2, 0.6);
-            float radius = 2.65; 
+            
+            // Base radius is 2.65 for desktop
+            // For mobile, reduce size based on available vertical screen area to prevent overwhelming the layout
+            float mobileRadius = u_resolution.y * 0.0018; 
+            float radius = mix(2.65, mobileRadius, u_is_mobile); 
             
             vec2 localP = p - center;
             float angle = radians(275.0);
@@ -135,10 +143,12 @@ export class WebGLNoise {
             vec4 maskNext = getMask(nextState);
 
             // Crossfade mathematically (Now visible and seamlessly integrated)
-            float finalEdgeWave = mix(dot(edgeVector, maskCurrent), dot(edgeVector, maskNext), blend);
-            float finalSurfaceWave = mix(dot(surfVector, maskCurrent), dot(surfVector, maskNext), blend);
-            float finalPulse = mix(dot(pulseVector, maskCurrent), dot(pulseVector, maskNext), blend);
-            float finalEmission = mix(dot(emVector, maskCurrent), dot(emVector, maskNext), blend);
+            // On mobile, suppress chaotic queue animations, retaining only the base wavy animations
+            float mobileSuppress = 1.0 - u_is_mobile;
+            float finalEdgeWave = mix(dot(edgeVector, maskCurrent), dot(edgeVector, maskNext), blend) * mobileSuppress;
+            float finalSurfaceWave = mix(dot(surfVector, maskCurrent), dot(surfVector, maskNext), blend) * mobileSuppress;
+            float finalPulse = mix(dot(pulseVector, maskCurrent), dot(pulseVector, maskNext), blend) * mobileSuppress;
+            float finalEmission = mix(dot(emVector, maskCurrent), dot(emVector, maskNext), blend) * mobileSuppress;
             // =========================================================
 
             // Perpetual ambient base wave to ensure the edges are continuously rippling like fluid independent of queue transitions
@@ -237,6 +247,7 @@ export class WebGLNoise {
     this.scene.add(plane);
 
     window.addEventListener('resize', this.onWindowResize);
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
     this.rafId = requestAnimationFrame(this.animate);
   }
 
@@ -244,9 +255,33 @@ export class WebGLNoise {
   private onWindowResize = () => {
     clearTimeout(this.resizeTimeout);
     this.resizeTimeout = setTimeout(() => {
+      const isMobile = window.innerWidth <= 768;
+      
+      // CRITICAL: Skip resize if width hasn't changed on mobile.
+      // This prevents the background from 'stuttering' or jumping when the 
+      // browser address bar hides/shows during scroll.
+      if (isMobile && window.innerWidth === this.lastWidth) {
+        return;
+      }
+      this.lastWidth = window.innerWidth;
+
       this.renderer.setSize(window.innerWidth, window.innerHeight);
       this.material.uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
+      this.material.uniforms.u_is_mobile.value = isMobile ? 1.0 : 0.0;
     }, 150);
+  };
+
+  // Pause animation when tab is hidden, resume when visible (P-02)
+  private onVisibilityChange = () => {
+    if (document.hidden) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = 0;
+    } else {
+      if (!this.rafId) {
+        this.lastTime = 0;
+        this.rafId = requestAnimationFrame(this.animate);
+      }
+    }
   };
 
   private animate = (currentTime: number) => {
@@ -268,6 +303,7 @@ export class WebGLNoise {
   public destroy() {
     cancelAnimationFrame(this.rafId);
     window.removeEventListener('resize', this.onWindowResize);
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
     clearTimeout(this.resizeTimeout);
     this.geometryDispose();
     this.material.dispose();
