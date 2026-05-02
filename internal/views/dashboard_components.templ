@@ -29,7 +29,7 @@ templ DashboardProjectList(products []models.Product, activeID string) {
 					hx-target="#dashboard-project-list"
 					onclick="event.stopPropagation()"
 				>
-					<span class="material-symbols-outlined text-lg">delete</span>
+					@Icon("delete", "w-[18px] h-[18px] text-on-surface-variant group-hover:text-error transition-colors")
 				</button>
 			</div>
 		</div>
@@ -50,7 +50,7 @@ templ DashboardProjectForm(product *models.Product) {
 		</div>
 		<div class="flex gap-2">
 			<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container border border-outline-variant/20 text-on-surface-variant hover:text-error hover:border-error/50 transition-all duration-300 group">
-				<span class="material-symbols-outlined text-sm">logout</span>
+				@Icon("logout", "w-3.5 h-3.5 text-on-surface-variant group-hover:text-error transition-colors")
 				<span class="text-xs font-label uppercase tracking-wider font-bold">Sign Out</span>
 			</button>
 		</div>
@@ -61,7 +61,7 @@ templ DashboardProjectForm(product *models.Product) {
 		<div class="flex items-center justify-between mb-4">
 			<div class="flex items-center gap-3">
 				<div class="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
-					<span class="material-symbols-outlined text-lg">auto_awesome</span>
+					@Icon("auto_awesome", "w-[18px] h-[18px] text-primary")
 				</div>
 				<div class="flex flex-col">
 					<h3 class="text-sm font-headline font-bold text-on-surface tracking-tight">AI README Ingestion</h3>
@@ -80,11 +80,11 @@ templ DashboardProjectForm(product *models.Product) {
 				disabled
 			>
 				<span class="htmx-indicator flex items-center gap-2">
-					<span class="animate-spin material-symbols-outlined text-[14px]">sync</span>
+					@Icon("sync", "animate-spin w-3.5 h-3.5 text-on-primary")
 					<span class="text-[10px] font-bold uppercase tracking-wider">Analyzing...</span>
 				</span>
 				<span class="htmx-dis-indicator flex items-center gap-2">
-					<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+					@Icon("auto_awesome", "w-3.5 h-3.5 text-on-primary")
 					<span class="text-[10px] font-bold uppercase tracking-wider">Auto-Fill</span>
 				</span>
 			</button>
@@ -130,7 +130,7 @@ templ DashboardProjectForm(product *models.Product) {
 						Update Product Page
 					}
 				</span>
-				<span class="material-symbols-outlined text-sm text-[#00344a] transition-transform group-hover:translate-x-1 relative z-10">arrow_forward</span>
+				@Icon("arrow_forward", "w-3.5 h-3.5 text-[#00344a] transition-transform group-hover:translate-x-1 relative z-10")
 			</button>
 		</div>
 	</form>
@@ -253,8 +253,8 @@ templ DashboardFormFields(product *models.Product) {
 templ DashboardPlaceholder() {
 	<div class="flex-grow flex flex-col items-center justify-center text-outline/20 gap-6 py-20">
 		<div class="relative">
-			<span class="material-symbols-outlined text-8xl">database</span>
-			<span class="material-symbols-outlined absolute -bottom-2 -right-2 text-4xl text-primary/40">edit_note</span>
+			@Icon("database", "w-24 h-24 text-outline/20")
+			@Icon("edit_note", "absolute -bottom-2 -right-2 w-10 h-10 text-primary/40")
 		</div>
 		<div class="flex flex-col items-center gap-1">
 			<p class="font-headline text-xl font-semibold text-on-surface/40">Repository Standby</p>
