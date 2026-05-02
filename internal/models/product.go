@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sync"
+	"time"
 
 	"cloud.google.com/go/firestore"
 	"google.golang.org/api/iterator"
@@ -16,6 +18,23 @@ var DB *firestore.Client
 // InitDB sets the Firestore client.
 func InitDB(client *firestore.Client) {
 	DB = client
+}
+
+// ── TTL Cache for AllProducts ────────────────────────────────────────────────
+var (
+	productCacheMu    sync.RWMutex
+	productCache      []Product
+	productCacheTime  time.Time
+	productCacheTTL   = 60 * time.Second
+)
+
+// invalidateProductCache clears the cached product list, forcing the next
+// AllProducts() call to re-fetch from Firestore.
+func invalidateProductCache() {
+	productCacheMu.Lock()
+	productCache = nil
+	productCacheTime = time.Time{}
+	productCacheMu.Unlock()
 }
 
 // Product represents a portfolio project with detailed engineering and architectural information.
@@ -40,7 +59,18 @@ type Product struct {
 }
 
 // AllProducts returns the catalog of all portfolio projects from Firestore.
+// Results are cached for 60 seconds to reduce redundant Firestore reads.
 func AllProducts() []Product {
+	// Check cache first
+	productCacheMu.RLock()
+	if productCache != nil && time.Since(productCacheTime) < productCacheTTL {
+		cached := make([]Product, len(productCache))
+		copy(cached, productCache)
+		productCacheMu.RUnlock()
+		return cached
+	}
+	productCacheMu.RUnlock()
+
 	ctx := context.Background()
 	var products []Product
 
@@ -66,6 +96,13 @@ func AllProducts() []Product {
 		}
 		products = append(products, p)
 	}
+
+	// Update cache
+	productCacheMu.Lock()
+	productCache = make([]Product, len(products))
+	copy(productCache, products)
+	productCacheTime = time.Now()
+	productCacheMu.Unlock()
 
 	return products
 }
@@ -113,6 +150,7 @@ func CreateProduct(p Product) error {
 		return fmt.Errorf("failed to create product: %v", err)
 	}
 
+	invalidateProductCache()
 	return nil
 }
 
@@ -139,6 +177,7 @@ func UpdateProduct(id string, updated Product) error {
 		return fmt.Errorf("failed to update product: %v", err)
 	}
 
+	invalidateProductCache()
 	return nil
 }
 
@@ -155,5 +194,6 @@ func DeleteProduct(id string) error {
 		return fmt.Errorf("failed to delete product: %v", err)
 	}
 
+	invalidateProductCache()
 	return nil
 }

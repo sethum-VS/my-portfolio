@@ -10,6 +10,7 @@ export class MagneticGrid {
   private handleMouseMove: (e: MouseEvent) => void;
   private handleMouseLeave: () => void;
   private resizeTimeout: any;
+  private lastWidth: number = window.innerWidth;
   
   // Configuration
   private readonly gridSize = 40; // 40px blocks
@@ -30,6 +31,11 @@ export class MagneticGrid {
     this.handleResize = () => {
       clearTimeout(this.resizeTimeout);
       this.resizeTimeout = setTimeout(() => {
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile && window.innerWidth === this.lastWidth) {
+          return;
+        }
+        this.lastWidth = window.innerWidth;
         this.resize();
         this.draw(); // Ensure it redraws immediately after resize
       }, 150);
@@ -139,17 +145,15 @@ export class MagneticGrid {
   private draw() {
     this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     
+    // Batch all nodes into a single Path2D for a single fill() call (P-03)
+    const path = new Path2D();
     for (const node of this.nodes) {
-      this.ctx.beginPath();
-      const displacementX = node.x - node.baseX;
-      const displacementY = node.y - node.baseY;
-      const displacement = Math.sqrt(displacementX * displacementX + displacementY * displacementY);
-      
-      // Fixed aesthetic, purely positional magnetic displacement
-      this.ctx.fillStyle = `rgba(88, 199, 255, ${this.alpha})`;
-      this.ctx.arc(node.x, node.y, 1.5, 0, Math.PI * 2);
-      this.ctx.fill();
+      path.moveTo(node.x + 1.5, node.y);
+      path.arc(node.x, node.y, 1.5, 0, Math.PI * 2);
     }
+    
+    this.ctx.fillStyle = `rgba(88, 199, 255, ${this.alpha})`;
+    this.ctx.fill(path);
   }
 
   private loop = () => {

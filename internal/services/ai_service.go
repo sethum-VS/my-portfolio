@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/sethum-VS/my-portfolio/internal/models"
+	"github.com/sethum-VS/my-portfolio/internal/utils"
 	"google.golang.org/genai"
 )
 
@@ -112,26 +112,10 @@ func ParseReadmeToProductContext(ctx context.Context, readme string) (*models.Pr
 		Architecture: raw.ArchitectureOverview,
 		ArchDiagram:  raw.MarkdownArchitecture,
 		HeroGIF:      raw.HeroAssetPath,
-		TechStack:    splitAndTrim(raw.TechnologyStack),
-		DisplayStack: splitAndTrim(raw.DisplayStack),
-		KeyFeatures:  splitAndTrim(raw.CoreFeatures),
+		TechStack:    utils.SplitAndTrim(raw.TechnologyStack),
+		DisplayStack: utils.SplitAndTrim(raw.DisplayStack),
+		KeyFeatures:  utils.SplitAndTrim(raw.CoreFeatures),
 	}
 
 	return product, nil
-}
-
-// splitAndTrim helper to convert comma-separated strings to cleaned slices
-func splitAndTrim(s string) []string {
-	if s == "" {
-		return []string{}
-	}
-	parts := strings.Split(s, ",")
-	var result []string
-	for _, p := range parts {
-		trimmed := strings.TrimSpace(p)
-		if trimmed != "" {
-			result = append(result, trimmed)
-		}
-	}
-	return result
 }

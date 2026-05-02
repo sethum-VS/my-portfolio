@@ -1,5 +1,8 @@
 package views
 
+import "fmt"
+import "time"
+
 // NavBar renders the fixed floating pill navigation bar.
 // Extracted from the Home Screen HTML as a reusable component.
 templ NavBar(active string) {
@@ -121,12 +124,9 @@ templ Footer() {
 		<div class="max-w-4xl mx-auto px-6 md:border-t border-white/5 pt-16 flex flex-col items-center text-center md:flex-row md:justify-between md:items-start md:text-left gap-12 md:gap-0">
 			<!-- Copyright -->
 			<div class="font-body text-sm tracking-tight text-zinc-400 mt-1 md:mt-0">
-				© <span id="copyright-year">2026</span> Sethum Methsanda
+				© { fmt.Sprint(time.Now().Year()) } Sethum Methsanda
 				<span class="mx-2 text-zinc-600">•</span>
 				Colombo
-				<script>
-					document.getElementById('copyright-year').textContent = new Date().getFullYear();
-				</script>
 			</div>
 
 			<!-- Link columns -->
@@ -150,4 +150,23 @@ templ Footer() {
 			</div>
 		</div>
 	</footer>
+}
+
+// BackgroundLayer renders the shared fixed background layers used across all
+// public pages: WebGL noise canvas, CSS grid lines, and MagneticGrid canvases.
+// The noiseZIndex parameter controls the z-index of the noise canvas layer
+// (e.g., "z-50" for overlay pages, "z-[-20]" for product, "z-0" for contact).
+templ BackgroundLayer(noiseZIndex string) {
+	<!-- Ultra-crisp WebGL pixel noise shader layer (Globally overlaying) -->
+	<canvas id="webgl-noise-canvas" class={ "fixed inset-0 w-full h-full pointer-events-none", noiseZIndex }></canvas>
+
+	<!-- Fixed Background Layer: Static CSS grid lines + sweeping wave + Canvas magnetic overlay -->
+	<div class="fixed inset-0 pointer-events-none z-[-30] bg-[#131314] overflow-hidden">
+		<!-- Static grid lines (always visible) -->
+		<div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+		<!-- Global Canvas for magnetic interaction (always visible, subtle) -->
+		<canvas id="magnetic-canvas-base" class="absolute inset-0 w-full h-full"></canvas>
+		<!-- Sweeping grid node glitch animation drawn on a masked Canvas -->
+		<canvas id="magnetic-canvas-wave" class="grid-wave-overlay"></canvas>
+	</div>
 }

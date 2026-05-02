@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/a-h/templ"
 	"github.com/sethum-VS/my-portfolio/internal/views"
 )
 
@@ -14,11 +13,5 @@ import (
 // perform an outerHTML swap without re-rendering the full page shell.
 // Direct browser navigation always receives the complete HTML document.
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("HX-Request") == "true" {
-		// Return the home content fragment only (for the HTMX outerHTML swap)
-		templ.Handler(views.HomeContent()).ServeHTTP(w, r)
-		return
-	}
-	// Full-page response for direct navigation: Force redirect to splash
-	http.Redirect(w, r, "/", http.StatusFound)
+	htmxAwareRender(w, r, views.HomeContent())
 }

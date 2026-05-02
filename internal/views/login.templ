@@ -1,6 +1,11 @@
 package views
 
-templ LoginPage() {
+import "github.com/sethum-VS/my-portfolio/internal/services"
+
+// LoginPage renders the admin login page with Firebase Google Sign-In.
+// S-02: Firebase config is injected from server-side environment variables
+// rather than being hardcoded in the template.
+templ LoginPage(config services.FirebaseClientConfig) {
 	@Layout("Admin Login") {
 		<div class="min-h-screen flex items-center justify-center bg-[#131314] px-6">
 			<!-- Ultra-crisp background noise -->
@@ -52,19 +57,14 @@ templ LoginPage() {
 			</div>
 		</div>
 
+		@templ.JSONScript("firebase-config", config)
 		<!-- Firebase & Authentication Logic -->
 		<script type="module">
 			import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js';
 			import { getAuth, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js';
 
-			const firebaseConfig = {
-				apiKey: "AIzaSyBHUsZvFm1e3VCQJjRuYyMo3-44dohxjcE",
-				authDomain: "project-3bb9c91c-69ed-4507-998.firebaseapp.com",
-				projectId: "project-3bb9c91c-69ed-4507-998",
-				storageBucket: "project-3bb9c91c-69ed-4507-998.firebasestorage.app",
-				messagingSenderId: "1047596610069",
-				appId: "1:1047596610069:web:fb8aa48c22d07c18b2d41c"
-			};
+			// S-02: Firebase config injected via templ.JSONScript
+			const firebaseConfig = JSON.parse(document.getElementById('firebase-config').textContent);
 
 			const app = initializeApp(firebaseConfig);
 			const auth = getAuth(app);
@@ -72,6 +72,12 @@ templ LoginPage() {
 
 			const loginBtn = document.getElementById('google-login-btn');
 			const errorMsg = document.getElementById('error-message');
+
+			const getCookie = (name) => {
+				const value = `; ${document.cookie}`;
+				const parts = value.split(`; ${name}=`);
+				if (parts.length === 2) return parts.pop().split(';').shift();
+			};
 
 			const showError = (text) => {
 				errorMsg.textContent = text;
@@ -89,10 +95,14 @@ templ LoginPage() {
 					const result = await signInWithPopup(auth, provider);
 					const idToken = await result.user.getIdToken();
 
+					// S-05: Send CSRF token in header
+					const csrfToken = getCookie('csrf_token');
+
 					const response = await fetch('/api/auth/session', {
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json',
+							'X-CSRF-Token': csrfToken
 						},
 						body: JSON.stringify({ idToken })
 					});
@@ -100,7 +110,7 @@ templ LoginPage() {
 					if (response.ok) {
 						window.location.href = "/dashboard";
 					} else if (response.status === 403) {
-						showError("Access Denied: You are not authorized to view the dashboard.");
+						showError("Access Denied: CSRF validation failed or unauthorized access.");
 					} else {
 						showError("Authentication failed: Server error.");
 					}
