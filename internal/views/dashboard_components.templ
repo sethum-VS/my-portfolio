@@ -235,6 +235,25 @@ templ DashboardFormFields(product *models.Product) {
 			}
 		/>
 	</div>
+	<!-- Deployment Links -->
+	<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+		<div class="flex flex-col gap-2 group">
+			<label for="project-live-url" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">Live Deployment URL</label>
+			<input id="project-live-url" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="https://example.com" type="url" name="live_url"
+				if product != nil {
+					value={ product.LiveURL }
+				}
+			/>
+		</div>
+		<div class="flex flex-col gap-2 group">
+			<label for="project-github-url" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1">GitHub Repository URL</label>
+			<input id="project-github-url" class="w-full bg-surface-container-lowest/50 border border-outline-variant/20 rounded-lg p-4 text-base font-body text-on-surface-variant placeholder:text-outline/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-sm" placeholder="https://github.com/user/repo" type="url" name="github_url"
+				if product != nil {
+					value={ product.GitHubURL }
+				}
+			/>
+		</div>
+	</div>
 	<!-- Hero Path Input -->
 	<div class="flex flex-col gap-2 group">
 		<label for="project-hero-gif" class="font-label text-xs text-outline uppercase tracking-wider group-focus-within:text-primary transition-colors ml-1 flex items-center gap-2">Hero Asset Path</label>
