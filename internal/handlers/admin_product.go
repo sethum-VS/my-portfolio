@@ -79,6 +79,8 @@ func AdminProjectSaveHandler(w http.ResponseWriter, r *http.Request) {
 		TechStack:    utils.SplitAndTrim(r.FormValue("tech_stack")),
 		DisplayStack: utils.SplitAndTrim(r.FormValue("display_stack")),
 		KeyFeatures:  utils.SplitAndTrim(r.FormValue("core_features")),
+		GitHubURL:    r.FormValue("github_url"),
+		LiveURL:      r.FormValue("live_url"),
 		HeroGIF:      r.FormValue("hero_gif"),
 		Description:  r.FormValue("description"),
 		ArchDiagram:  r.FormValue("markdown_architecture"),
