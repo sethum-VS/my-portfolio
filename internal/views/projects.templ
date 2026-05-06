@@ -19,7 +19,7 @@ templ ProjectsContent(products []models.Product) {
 				for i, p := range products {
 					<article class={ "flex flex-col items-center max-w-3xl w-full relative seq-in", templ.KV("delay-1", i%4 == 0), templ.KV("delay-2", i%4 == 1), templ.KV("delay-3", i%4 == 2), templ.KV("delay-4", i%4 == 3) }>
 						<a href={ templ.SafeURL("/projects/" + p.ID) } class="group inline-block cursor-pointer" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML swap:250ms">
-							<h2 class="whitespace-normal md:whitespace-nowrap font-headline text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-on-surface group-hover:font-serif group-hover:text-primary group-hover:tracking-tighter group-hover:font-black transition-all duration-500 delay-100 ease-[cubic-bezier(0.22,1,0.36,1)] text-center">
+							<h2 class="whitespace-normal md:whitespace-nowrap font-headline text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-on-surface group-hover:font-serif group-hover:text-primary group-hover:tracking-tighter group-hover:font-semibold group-hover:italic transition-[color,transform,opacity,letter-spacing] duration-500 ease-out text-center transform-gpu will-change-transform">
 								{ p.Title }
 							</h2>
 						</a>
