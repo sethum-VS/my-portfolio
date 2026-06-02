@@ -118,6 +118,26 @@ function initCursor() {
   }
 }
 
+const NAV_LINK_ACTIVE_CLASSES = ["font-bold", "text-white"] as const;
+const NAV_LINK_INACTIVE_CLASSES = [
+  "font-semibold",
+  "text-zinc-400",
+  "hover:text-sky-200",
+  "hover:scale-95",
+] as const;
+
+function applyNavLinkActive(el: HTMLElement) {
+  el.classList.remove(...NAV_LINK_INACTIVE_CLASSES);
+  el.classList.add(...NAV_LINK_ACTIVE_CLASSES);
+  el.setAttribute("data-active", "true");
+}
+
+function applyNavLinkInactive(el: HTMLElement) {
+  el.classList.remove(...NAV_LINK_ACTIVE_CLASSES);
+  el.classList.add(...NAV_LINK_INACTIVE_CLASSES);
+  el.setAttribute("data-active", "false");
+}
+
 /**
  * Updates the navigation active state and positions the blob based on the current URL path.
  * This handles cases where navigation is triggered by elements outside the navbar (like body buttons).
@@ -143,14 +163,10 @@ function updateNavActiveState(animate: boolean = true) {
                    (!isHome && href !== '/' && path.startsWith(href!));
     
     if (isMatch) {
-      el.classList.add('font-bold', 'text-white');
-      el.classList.remove('font-semibold', 'text-zinc-400');
-      el.setAttribute('data-active', 'true');
+      applyNavLinkActive(el);
       activeLink = el;
     } else {
-      el.classList.remove('font-bold', 'text-white');
-      el.classList.add('font-semibold', 'text-zinc-400');
-      el.setAttribute('data-active', 'false');
+      applyNavLinkInactive(el);
     }
   }
 
@@ -229,14 +245,8 @@ function initNavBlob() {
       moveBlobTo(el, true);
       
       // Set clicked link to active state visually
-      links.forEach(l => {
-        l.classList.remove('font-bold', 'text-white');
-        l.classList.add('font-semibold', 'text-zinc-400');
-        l.setAttribute('data-active', 'false');
-      });
-      el.classList.add('font-bold', 'text-white');
-      el.classList.remove('font-semibold', 'text-zinc-400');
-      el.setAttribute('data-active', 'true');
+      links.forEach(l => applyNavLinkInactive(l as HTMLElement));
+      applyNavLinkActive(el);
 
       // Trigger SPA page exit transition on main-content immediately
       const mainContent = document.getElementById('main-content');
