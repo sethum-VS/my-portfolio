@@ -32,7 +32,7 @@ func ResumeRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := services.VerifyRecaptcha(r.Context(), token); err != nil {
+	if _, err := services.VerifyRecaptcha(r.Context(), token, r); err != nil {
 		log.Printf("recaptcha verification failed: %v", err)
 		resumeRequestError(w, r, "Verification failed. Complete reCAPTCHA and try again.", http.StatusForbidden)
 		return

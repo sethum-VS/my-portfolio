@@ -51,21 +51,31 @@ func CSRFMiddleware(next http.Handler) http.Handler {
 		// For state-mutating methods, validate the CSRF token
 		cookie, err := r.Cookie(csrfCookieName)
 		if err != nil || cookie.Value == "" {
-			http.Error(w, "Forbidden: missing CSRF token", http.StatusForbidden)
+			csrfForbidden(w, r, "Session expired. Refresh the page and try again.")
 			return
 		}
 
 		headerToken := r.Header.Get(csrfHeaderName)
 		if headerToken == "" {
-			http.Error(w, "Forbidden: missing CSRF header", http.StatusForbidden)
+			csrfForbidden(w, r, "Security token missing. Refresh the page and try again.")
 			return
 		}
 
 		if cookie.Value != headerToken {
-			http.Error(w, "Forbidden: CSRF token mismatch", http.StatusForbidden)
+			csrfForbidden(w, r, "Security token mismatch. Refresh the page and try again.")
 			return
 		}
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func csrfForbidden(w http.ResponseWriter, r *http.Request, message string) {
+	if r.Header.Get("HX-Request") == "true" && r.URL.Path == "/api/resume/request" {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte(`<div id="resume-modal-inner" class="relative w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900/40 p-8 shadow-2xl backdrop-blur-xl"><p class="text-sm text-red-400 font-body rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2" role="alert">` + message + `</p></div>`))
+		return
+	}
+	http.Error(w, "Forbidden: "+message, http.StatusForbidden)
 }

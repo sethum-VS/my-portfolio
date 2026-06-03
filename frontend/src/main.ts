@@ -14,7 +14,10 @@ function initContentProtection() {
   };
 
   const blockCopyShortcuts = (event: KeyboardEvent) => {
-    const key = event.key.toLowerCase();
+    // event.key can be undefined for some keydown events (e.g. modifier-only).
+    const key = (event.key ?? "").toLowerCase();
+    if (!key) return;
+
     const hasModifier = event.ctrlKey || event.metaKey;
 
     // Block common copy and select-all shortcuts, including Shift+Insert paste-copy pathways.
