@@ -83,6 +83,9 @@ templ Layout(title string) {
 			<!-- Custom DOM-based Cursor (Smooth circling white pointer) -->
 			<div id="custom-cursor" class="pointer-events-none fixed top-0 left-0 z-[99999] w-6 h-6 border-[1.5px] border-white rounded-full opacity-0 transition-opacity duration-300 hidden md:block" style="transform: translate(-50%, -50%);"></div>
 
+			<!-- Resume modal portal: must be a direct body child so fixed positioning is viewport-relative (not clipped by #app-shell overflow). -->
+			<div id="resume-modal-root" class="fixed inset-0 z-[600] flex items-center justify-center p-4 pointer-events-none empty:pointer-events-none [&:not(:empty)]:pointer-events-auto"></div>
+
 			{ children... }
 			<!-- Dashboard/Login Cursor Restoration -->
 			<script>

@@ -1,10 +1,14 @@
 package views
 
 templ ResumeModal(isComingSoon bool, siteKey string, formError string) {
-	<div class="pointer-events-auto fixed inset-0 z-[600] flex items-center justify-center p-4" id="resume-modal-overlay">
+	<div
+		class="absolute inset-0 flex items-center justify-center p-4"
+		id="resume-modal-overlay"
+	>
 		<div
 			class="absolute inset-0 bg-black/60 backdrop-blur-md"
 			onclick="document.getElementById('resume-modal-root').innerHTML = ''"
+			aria-hidden="true"
 		></div>
 		@ResumeModalInner(isComingSoon, siteKey, formError)
 	</div>
@@ -13,7 +17,7 @@ templ ResumeModal(isComingSoon bool, siteKey string, formError string) {
 templ ResumeModalInner(isComingSoon bool, siteKey string, formError string) {
 	<div
 		id="resume-modal-inner"
-		class="relative w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900/40 p-5 sm:p-8 shadow-2xl backdrop-blur-xl"
+		class="relative z-10 mx-auto w-full max-w-md shrink-0 rounded-2xl border border-white/10 bg-zinc-900/40 p-5 sm:p-8 shadow-2xl backdrop-blur-xl"
 	>
 		<button
 			type="button"
@@ -89,7 +93,7 @@ templ ResumeModalInner(isComingSoon bool, siteKey string, formError string) {
 templ ResumeModalSuccess(message string) {
 	<div
 		id="resume-modal-inner"
-		class="relative w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900/40 p-8 shadow-2xl backdrop-blur-xl text-center pointer-events-auto"
+		class="relative z-10 mx-auto w-full max-w-md shrink-0 rounded-2xl border border-white/10 bg-zinc-900/40 p-8 shadow-2xl backdrop-blur-xl text-center"
 	>
 		<div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-sky-500/20 text-sky-300">
 			@Icon("lock_open", "w-6 h-6")
