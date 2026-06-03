@@ -223,6 +223,55 @@ img {
     display: flex !important; /* Force flex during closing animation */
     animation: mobile-nav-fade-out 0.4s ease-in forwards;
 }
+
+/* ── Resume modal ─────────────────────────────────────────────────────────── */
+@keyframes resume-modal-backdrop-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes resume-modal-backdrop-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes resume-modal-panel-in {
+    from {
+        opacity: 0;
+        transform: scale(0.97) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes resume-modal-panel-out {
+    from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.97) translateY(8px);
+    }
+}
+
+#resume-modal-overlay .resume-modal-backdrop {
+    animation: resume-modal-backdrop-in 0.32s ease-out forwards;
+}
+
+#resume-modal-overlay #resume-modal-inner {
+    animation: resume-modal-panel-in 0.36s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+}
+
+#resume-modal-overlay.resume-modal-closing .resume-modal-backdrop {
+    animation: resume-modal-backdrop-out 0.28s ease-in forwards;
+}
+
+#resume-modal-overlay.resume-modal-closing #resume-modal-inner {
+    animation: resume-modal-panel-out 0.26s ease-in forwards;
+}
  
 /* ── SPA Exit Transitions ────────────────────────────────────────────────── */
 @keyframes seq-fade-out {

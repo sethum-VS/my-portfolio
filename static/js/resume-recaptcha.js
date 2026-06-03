@@ -209,6 +209,7 @@
   }
 
   document.body.addEventListener("htmx:afterSwap", onModalSwap);
+  document.body.addEventListener("resume-modal-closed", resetWidget);
 
   var resizeTimer;
   window.addEventListener("resize", function () {

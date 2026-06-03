@@ -6,8 +6,8 @@ templ ResumeModal(isComingSoon bool, siteKey string, formError string) {
 		id="resume-modal-overlay"
 	>
 		<div
-			class="absolute inset-0 bg-black/60 backdrop-blur-md"
-			onclick="document.getElementById('resume-modal-root').innerHTML = ''"
+			class="resume-modal-backdrop absolute inset-0 bg-black/60 backdrop-blur-md"
+			onclick="closeResumeModal()"
 			aria-hidden="true"
 		></div>
 		@ResumeModalInner(isComingSoon, siteKey, formError)
@@ -22,14 +22,14 @@ templ ResumeModalInner(isComingSoon bool, siteKey string, formError string) {
 		<button
 			type="button"
 			class="absolute right-4 top-4 text-zinc-400 transition-colors hover:text-white"
-			onclick="document.getElementById('resume-modal-root').innerHTML = ''"
+			onclick="closeResumeModal()"
 			aria-label="Close"
 		>
 			@Icon("close", "w-6 h-6")
 		</button>
 		if isComingSoon {
 			<h2 class="font-headline text-2xl font-bold tracking-tight text-white pr-8">Resume work in progress</h2>
-			<p class="mt-2 text-sm text-zinc-400 font-body">Leave your email and we will send your copy when it goes live.</p>
+			<p class="mt-2 text-sm text-zinc-400 font-body">Leave your email and I will send you a copy when it goes live.</p>
 		} else {
 			<h2 class="font-headline text-2xl font-bold tracking-tight text-white pr-8">Enter your email to receive my CV</h2>
 			<p class="mt-2 text-sm text-zinc-400 font-body">A PDF will be delivered to your inbox shortly.</p>
@@ -102,7 +102,7 @@ templ ResumeModalSuccess(message string) {
 		<button
 			type="button"
 			class="mt-6 text-sm text-zinc-400 hover:text-white transition-colors font-body"
-			onclick="document.getElementById('resume-modal-root').innerHTML = ''"
+			onclick="closeResumeModal()"
 		>
 			Close
 		</button>

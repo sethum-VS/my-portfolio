@@ -54,6 +54,7 @@ templ NavBar(active string) {
 				hx-get="/modal/resume"
 				hx-target="#resume-modal-root"
 				hx-swap="innerHTML"
+				hx-trigger="click delay:120ms"
 			>
 				Resume
 				@Icon("download", "w-[18px] h-[18px]")
@@ -122,6 +123,7 @@ templ MobileNav(active string) {
 				hx-get="/modal/resume"
 				hx-target="#resume-modal-root"
 				hx-swap="innerHTML"
+				hx-trigger="click delay:120ms"
 				onclick="toggleMobileNav(false)"
 			>
 				<span class="font-headline font-bold uppercase tracking-tighter text-2xl">Resume</span>
@@ -156,6 +158,7 @@ templ Footer() {
 							hx-get="/modal/resume"
 							hx-target="#resume-modal-root"
 							hx-swap="innerHTML"
+							hx-trigger="click delay:120ms"
 						>CV</button>
 						<a class="font-body text-[14px] text-zinc-300 hover:text-white transition-colors duration-200" href="https://www.linkedin.com/in/sethumm" target="_blank" rel="noopener noreferrer">LinkedIn</a>
 					</div>
