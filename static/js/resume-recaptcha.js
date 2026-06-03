@@ -1,7 +1,10 @@
 (function () {
   const ACTION = "resume_request";
+  const RECAPTCHA_W = 304;
+  const RECAPTCHA_H = 78;
   let widgetId = null;
   let scriptLoading = false;
+  let resizeObserver = null;
 
   function setToken(token) {
     var el = document.getElementById("g-recaptcha-response");
@@ -65,7 +68,69 @@
     });
   }
 
+  function recaptchaWrap() {
+    return document.querySelector(".recaptcha-responsive");
+  }
+
+  function recaptchaInner() {
+    var widget = document.getElementById("recaptcha-widget");
+    return widget ? widget.firstElementChild : null;
+  }
+
+  function disconnectRecaptchaFit() {
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+      resizeObserver = null;
+    }
+    var wrap = recaptchaWrap();
+    if (wrap) wrap.style.height = "";
+    var inner = recaptchaInner();
+    if (inner) inner.style.transform = "";
+  }
+
+  function fitRecaptcha() {
+    var wrap = recaptchaWrap();
+    var inner = recaptchaInner();
+    if (!wrap || !inner) return;
+
+    var available = wrap.getBoundingClientRect().width;
+    if (available <= 0) return;
+
+    var scale = Math.min(1, available / RECAPTCHA_W);
+    inner.style.transformOrigin = "top left";
+    inner.style.transform = scale < 1 ? "scale(" + scale + ")" : "";
+    wrap.style.height = RECAPTCHA_H * scale + "px";
+  }
+
+  function observeRecaptchaFit() {
+    disconnectRecaptchaFit();
+    var wrap = recaptchaWrap();
+    if (!wrap || typeof ResizeObserver === "undefined") return;
+
+    resizeObserver = new ResizeObserver(function () {
+      fitRecaptcha();
+    });
+    resizeObserver.observe(wrap);
+    if (wrap.parentElement) resizeObserver.observe(wrap.parentElement);
+  }
+
+  function scheduleRecaptchaFit() {
+    fitRecaptcha();
+    var attempts = 0;
+    function tick() {
+      fitRecaptcha();
+      if (!recaptchaInner()) {
+        if (++attempts < 60) requestAnimationFrame(tick);
+        return;
+      }
+      observeRecaptchaFit();
+      fitRecaptcha();
+    }
+    requestAnimationFrame(tick);
+  }
+
   function resetWidget() {
+    disconnectRecaptchaFit();
     if (
       widgetId !== null &&
       window.grecaptcha &&
@@ -122,6 +187,7 @@
             setToken("");
           },
         });
+        scheduleRecaptchaFit();
       })
       .catch(function (err) {
         console.error("reCAPTCHA render failed:", err);
@@ -143,6 +209,15 @@
   }
 
   document.body.addEventListener("htmx:afterSwap", onModalSwap);
+
+  var resizeTimer;
+  window.addEventListener("resize", function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(fitRecaptcha, 50);
+  });
+  window.addEventListener("orientationchange", function () {
+    setTimeout(fitRecaptcha, 150);
+  });
 
   document.body.addEventListener("htmx:beforeRequest", function (evt) {
     var elt = evt.detail && evt.detail.elt;

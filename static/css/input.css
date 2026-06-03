@@ -54,6 +54,18 @@ img {
 }
 
 @layer components {
+  /* reCAPTCHA normal size is 304×78px; JS scales it to fit .recaptcha-responsive */
+  .recaptcha-responsive {
+    width: 100%;
+    min-height: 78px;
+  }
+
+  .recaptcha-responsive #recaptcha-widget > div {
+    transform-origin: top left;
+    width: 304px;
+    height: 78px;
+  }
+
   .grid-wave-overlay {
     position: absolute;
     inset: 0;

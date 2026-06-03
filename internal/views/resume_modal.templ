@@ -13,7 +13,7 @@ templ ResumeModal(isComingSoon bool, siteKey string, formError string) {
 templ ResumeModalInner(isComingSoon bool, siteKey string, formError string) {
 	<div
 		id="resume-modal-inner"
-		class="relative w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900/40 p-8 shadow-2xl backdrop-blur-xl"
+		class="relative w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900/40 p-5 sm:p-8 shadow-2xl backdrop-blur-xl"
 	>
 		<button
 			type="button"
@@ -24,7 +24,7 @@ templ ResumeModalInner(isComingSoon bool, siteKey string, formError string) {
 			@Icon("close", "w-6 h-6")
 		</button>
 		if isComingSoon {
-			<h2 class="font-headline text-2xl font-bold tracking-tight text-white pr-8">Pre-register for my upcoming CV</h2>
+			<h2 class="font-headline text-2xl font-bold tracking-tight text-white pr-8">Resume work in progress</h2>
 			<p class="mt-2 text-sm text-zinc-400 font-body">Leave your email and we will send your copy when it goes live.</p>
 		} else {
 			<h2 class="font-headline text-2xl font-bold tracking-tight text-white pr-8">Enter your email to receive my CV</h2>
@@ -65,7 +65,9 @@ templ ResumeModalInner(isComingSoon bool, siteKey string, formError string) {
 				/>
 			</div>
 			if siteKey != "" {
-				<div id="recaptcha-widget" data-sitekey={ siteKey }></div>
+				<div class="recaptcha-responsive">
+					<div id="recaptcha-widget" data-sitekey={ siteKey }></div>
+				</div>
 			}
 			<input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response" value=""/>
 			<div class="flex items-center gap-4">
