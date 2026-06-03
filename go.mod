@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/recaptchaenterprise/v2 v2.26.0
 	cloud.google.com/go/storage v1.62.2
 	firebase.google.com/go/v4 v4.19.0
-	github.com/a-h/templ v0.3.1001
+	github.com/a-h/templ v0.3.1020
 	github.com/joho/godotenv v1.5.1
 	github.com/resend/resend-go/v2 v2.28.0
 	google.golang.org/api v0.274.0

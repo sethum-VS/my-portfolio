@@ -14,8 +14,8 @@ RUN go mod download
 COPY package.json package-lock.json* ./
 RUN npm install
 
-# Install templ CLI
-RUN go install github.com/a-h/templ/cmd/templ@latest
+# Install templ CLI at the same version as go.mod (mismatch breaks go build with undefined templ.* symbols)
+RUN go install github.com/a-h/templ/cmd/templ@$(go list -m -f '{{.Version}}' github.com/a-h/templ)
 
 # Copy the rest of the application code
 COPY . .
