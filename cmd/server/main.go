@@ -100,6 +100,7 @@ func main() {
 	mux.Handle("POST /api/ai/parse-readme", aiRateLimiter.Middleware(middleware.AdminAuthMiddleware(http.HandlerFunc(handlers.HandleAIParseReadme))))
 	mux.Handle("GET /api/admin/resume", middleware.AdminAuthMiddleware(http.HandlerFunc(handlers.AdminResumeFormHandler)))
 	mux.Handle("POST /api/admin/resume", middleware.AdminAuthMiddleware(http.HandlerFunc(handlers.AdminResumeSaveHandler)))
+	mux.Handle("POST /api/admin/resume/broadcast", middleware.AdminAuthMiddleware(http.HandlerFunc(handlers.AdminResumeBroadcastHandler)))
 
 	// S-05: Apply CSRF protection to all admin mutation routes
 	csrfProtectedMux := middleware.CSRFMiddleware(mux)

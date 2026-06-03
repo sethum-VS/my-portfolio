@@ -57,6 +57,11 @@ func SaveResumeConfig(cfg ResumeConfig) error {
 	return nil
 }
 
+// WaitlistCount returns how many emails are on the resume waitlist.
+func WaitlistCount() int {
+	return len(ListWaitlistEmails())
+}
+
 // ListWaitlistEmails returns all emails on the resume waitlist.
 func ListWaitlistEmails() []string {
 	ctx := context.Background()

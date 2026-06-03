@@ -2,7 +2,7 @@ package views
 
 import "github.com/sethum-VS/my-portfolio/internal/models"
 
-templ ResumeAdminCard(cfg models.ResumeConfig, message string, isError bool) {
+templ ResumeAdminCard(cfg models.ResumeConfig, waitlistCount int, message string, isError bool) {
 	<div id="resume-admin-card" class="flex-grow flex flex-col relative z-10 max-w-2xl w-full">
 		<div class="flex flex-col gap-2 mb-10">
 			<span class="text-primary font-label text-xs uppercase tracking-[0.2em] font-semibold">Resume</span>
@@ -44,6 +44,50 @@ templ ResumeAdminCard(cfg models.ResumeConfig, message string, isError bool) {
 					/>
 					<div class="w-11 h-6 bg-outline-variant/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
 				</label>
+			</div>
+			<div class="p-5 rounded-xl bg-surface-container border border-outline-variant/20 space-y-4">
+				<div class="flex flex-col gap-1">
+					<span class="text-sm font-headline font-semibold text-on-surface">Waitlist</span>
+					if waitlistCount > 0 {
+						<p class="text-xs text-on-surface-variant font-body">
+							{ waitlistCount } visitor(s) registered while Coming Soon was on. Upload a PDF, then send the CV to everyone on the list.
+						</p>
+					} else {
+						<p class="text-xs text-on-surface-variant font-body">No pre-registrations yet. Emails appear here when visitors sign up during Coming Soon.</p>
+					}
+				</div>
+				<div class="flex flex-wrap items-center gap-3">
+					<button
+						type="button"
+						class={
+							"flex items-center gap-2 px-5 py-2.5 rounded-full font-label text-xs uppercase tracking-widest font-bold transition-all active:scale-95",
+							templ.KV("bg-secondary text-on-secondary hover:opacity-90", waitlistCount > 0 && cfg.PDFStorageURI != ""),
+							templ.KV("bg-outline-variant/20 text-outline cursor-not-allowed", waitlistCount == 0 || cfg.PDFStorageURI == ""),
+						}
+						hx-post="/api/admin/resume/broadcast"
+						hx-target="#resume-admin-card"
+						hx-swap="outerHTML"
+						hx-indicator="#resume-broadcast-spinner"
+						disabled?={ waitlistCount == 0 || cfg.PDFStorageURI == "" }
+					>
+						Send CV to waitlist
+					</button>
+					<div id="resume-broadcast-spinner" class="htmx-indicator flex items-center gap-2 text-on-surface-variant text-xs font-label uppercase tracking-widest">
+						@Icon("sync", "w-4 h-4 animate-spin")
+						Sending…
+					</div>
+				</div>
+				if waitlistCount > 0 {
+					<label class="flex items-start gap-3 cursor-pointer">
+						<input
+							type="checkbox"
+							name="send_to_waitlist"
+							value="on"
+							class="mt-1 rounded border-outline-variant/40 text-primary focus:ring-primary/50"
+						/>
+						<span class="text-xs text-on-surface-variant font-body">Also send to the waitlist when saving (after uploading or updating the PDF)</span>
+					</label>
+				}
 			</div>
 			<div class="flex flex-col gap-2">
 				<label for="resume_pdf" class="text-sm font-headline font-semibold text-on-surface">Resume PDF</label>

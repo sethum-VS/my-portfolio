@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -15,16 +16,41 @@ import (
 
 const maxResumeUploadBytes = 10 << 20 // 10MB
 
+func renderResumeAdmin(w http.ResponseWriter, r *http.Request, cfg models.ResumeConfig, message string, isError bool) {
+	templ.Handler(views.ResumeAdminCard(cfg, models.WaitlistCount(), message, isError)).ServeHTTP(w, r)
+}
+
 // AdminResumeFormHandler serves GET /api/admin/resume.
 func AdminResumeFormHandler(w http.ResponseWriter, r *http.Request) {
 	cfg := models.GetResumeConfig()
-	templ.Handler(views.ResumeAdminCard(cfg, "", false)).ServeHTTP(w, r)
+	renderResumeAdmin(w, r, cfg, "", false)
+}
+
+// AdminResumeBroadcastHandler sends the current PDF to everyone on the waitlist.
+func AdminResumeBroadcastHandler(w http.ResponseWriter, r *http.Request) {
+	cfg := models.GetResumeConfig()
+	waitlistCount := models.WaitlistCount()
+
+	if waitlistCount == 0 {
+		renderResumeAdmin(w, r, cfg, "No one is on the waitlist.", true)
+		return
+	}
+	if cfg.PDFStorageURI == "" {
+		renderResumeAdmin(w, r, cfg, "Upload a PDF before sending to the waitlist.", true)
+		return
+	}
+
+	pdfURI := cfg.PDFStorageURI
+	go services.BroadcastResumeToWaitlist(context.Background(), pdfURI)
+
+	msg := fmt.Sprintf("Sending CV to %d waitlist subscriber(s) in the background.", waitlistCount)
+	renderResumeAdmin(w, r, cfg, msg, false)
 }
 
 // AdminResumeSaveHandler handles POST /api/admin/resume.
 func AdminResumeSaveHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(maxResumeUploadBytes); err != nil {
-		templ.Handler(views.ResumeAdminCard(models.GetResumeConfig(), "Invalid form data.", true)).ServeHTTP(w, r)
+		renderResumeAdmin(w, r, models.GetResumeConfig(), "Invalid form data.", true)
 		return
 	}
 
@@ -38,20 +64,20 @@ func AdminResumeSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 		ext := strings.ToLower(filepath.Ext(header.Filename))
 		if ext != ".pdf" {
-			templ.Handler(views.ResumeAdminCard(prev, "Only PDF files are allowed.", true)).ServeHTTP(w, r)
+			renderResumeAdmin(w, r, prev, "Only PDF files are allowed.", true)
 			return
 		}
 
 		contentType := header.Header.Get("Content-Type")
 		if contentType != "" && contentType != "application/pdf" {
-			templ.Handler(views.ResumeAdminCard(prev, "Invalid file type. Upload a PDF.", true)).ServeHTTP(w, r)
+			renderResumeAdmin(w, r, prev, "Invalid file type. Upload a PDF.", true)
 			return
 		}
 
 		gsURI, err := services.UploadResumePDF(r.Context(), file, "application/pdf")
 		if err != nil {
 			log.Printf("resume upload error: %v", err)
-			templ.Handler(views.ResumeAdminCard(prev, "Failed to upload PDF. Check GCS configuration.", true)).ServeHTTP(w, r)
+			renderResumeAdmin(w, r, prev, "Failed to upload PDF. Check GCS configuration.", true)
 			return
 		}
 		cfg.PDFStorageURI = gsURI
@@ -59,14 +85,24 @@ func AdminResumeSaveHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := models.SaveResumeConfig(cfg); err != nil {
 		log.Printf("resume config save error: %v", err)
-		templ.Handler(views.ResumeAdminCard(prev, "Failed to save configuration.", true)).ServeHTTP(w, r)
+		renderResumeAdmin(w, r, prev, "Failed to save configuration.", true)
 		return
 	}
 
-	if prev.IsComingSoon && !cfg.IsComingSoon && cfg.PDFStorageURI != "" {
+	message := "Resume settings saved."
+	waitlistCount := models.WaitlistCount()
+	turnedOffComingSoon := prev.IsComingSoon && !cfg.IsComingSoon
+	manualBroadcast := r.FormValue("send_to_waitlist") == "on"
+
+	if cfg.PDFStorageURI != "" && waitlistCount > 0 && (turnedOffComingSoon || manualBroadcast) {
 		pdfURI := cfg.PDFStorageURI
 		go services.BroadcastResumeToWaitlist(context.Background(), pdfURI)
+		if turnedOffComingSoon {
+			message = fmt.Sprintf("Resume settings saved. Sending CV to %d waitlist subscriber(s).", waitlistCount)
+		} else {
+			message = fmt.Sprintf("Resume settings saved. Sending CV to %d waitlist subscriber(s) in the background.", waitlistCount)
+		}
 	}
 
-	templ.Handler(views.ResumeAdminCard(cfg, "Resume settings saved.", false)).ServeHTTP(w, r)
+	renderResumeAdmin(w, r, cfg, message, false)
 }
