@@ -19,16 +19,74 @@ func InitEmail() {
 	resendClient = resend.NewClient(apiKey)
 }
 
-// ResumeEmailHTML returns a simple branded HTML body for CV delivery emails.
+// Resume email subject options (pick one via ResumeEmailSubject or change the default below):
+//
+//  1. "Sethum Methsanda · Software Developer — resume attached"
+//  2. "Thanks for your interest — my CV is inside"
+//  3. "Resume ready · Sethum Methsanda"
+//  4. "From sethum.dev — your requested resume"
+const resumeEmailSubject = "Sethum Methsanda · Software Developer — resume attached"
+
+// ResumeEmailSubject returns the subject line for CV delivery emails.
+func ResumeEmailSubject() string {
+	return resumeEmailSubject
+}
+
+// ResumeEmailHTML returns a branded HTML body for CV delivery emails (inline styles for Gmail/Outlook).
 func ResumeEmailHTML() string {
 	return `<!DOCTYPE html>
-<html>
-<body style="font-family: system-ui, sans-serif; background:#131314; color:#e4e4e7; padding:32px;">
-  <div style="max-width:480px; margin:0 auto;">
-    <h1 style="color:#58c7ff; font-size:20px;">Your CV from Sethum</h1>
-    <p style="line-height:1.6;">Thanks for your interest. My resume is attached to this email as a PDF.</p>
-    <p style="line-height:1.6; color:#a1a1aa;">— Sethum Methsanda</p>
-  </div>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Resume from Sethum Methsanda</title>
+</head>
+<body style="margin:0; padding:0; width:100%; background-color:#131314; background-image:radial-gradient(ellipse 80% 50% at 50% -10%, #252528 0%, #131314 65%); font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#131314; background-image:radial-gradient(ellipse 80% 50% at 50% -10%, #252528 0%, #131314 65%);">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px; background-color:#1e1e20; border:1px solid rgba(255,255,255,0.1); border-radius:16px;">
+          <tr>
+            <td style="padding:40px 32px 32px 32px;">
+              <p style="margin:0 0 8px 0; font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:#58c7ff;">Portfolio</p>
+              <h1 style="margin:0 0 24px 0; font-size:22px; font-weight:600; line-height:1.35; color:#ffffff;">Sethum Methsanda <span style="color:#52525b;">//</span> Software Engineer</h1>
+              <p style="margin:0 0 20px 0; font-size:16px; line-height:1.65; color:#a1a1aa;">Thank you for taking the time to reach out and for your interest in my work. I genuinely appreciate you considering me — it means a lot.</p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 28px 0;">
+                <tr>
+                  <td style="padding:16px 20px; background-color:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-left:3px solid #58c7ff; border-radius:12px;">
+                    <p style="margin:0 0 4px 0; font-size:14px; font-weight:600; color:#ffffff;">Resume attached</p>
+                    <p style="margin:0; font-size:14px; line-height:1.55; color:#a1a1aa;">My CV is included with this email as a PDF — ready for you to review at your convenience.</p>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0 0 32px 0; font-size:15px; line-height:1.6; color:#a1a1aa;">If you have any questions or would like to connect further, feel free to reply to this email or find me through the links below.</p>
+              <p style="margin:0 0 20px 0; font-size:15px; line-height:1.5; color:#ffffff;">Warm regards,<br><span style="color:#a1a1aa;">Sethum Methsanda</span></p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 32px 32px 32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-top:1px solid rgba(255,255,255,0.08);">
+                <tr>
+                  <td style="padding-top:24px;">
+                    <p style="margin:0 0 12px 0; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#71717a;">Connect</p>
+                    <p style="margin:0; font-size:14px; line-height:1.8;">
+                      <a href="https://sethum.dev" style="color:#58c7ff; text-decoration:none;">sethum.dev</a>
+                      <span style="color:#3f3f46;">&nbsp;&middot;&nbsp;</span>
+                      <a href="https://github.com/sethum-VS/" style="color:#58c7ff; text-decoration:none;">GitHub</a>
+                      <span style="color:#3f3f46;">&nbsp;&middot;&nbsp;</span>
+                      <a href="https://www.linkedin.com/in/sethumm" style="color:#58c7ff; text-decoration:none;">LinkedIn</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:24px 0 0 0; font-size:12px; color:#52525b; text-align:center;">You received this because you requested a resume from sethum.dev</p>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`
 }

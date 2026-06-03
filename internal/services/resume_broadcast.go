@@ -28,7 +28,7 @@ func broadcastResumeToWaitlist(ctx context.Context, pdfURI string) error {
 		return err
 	}
 
-	subject := "Your CV from Sethum Methsanda"
+	subject := ResumeEmailSubject()
 	body := ResumeEmailHTML()
 
 	var failed int

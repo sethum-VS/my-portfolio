@@ -63,8 +63,7 @@ func ResumeRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	subject := "Your CV from Sethum Methsanda"
-	if err := services.SendEmail(r.Context(), email, subject, services.ResumeEmailHTML(), pdfBytes, "Seth_Ummethsanda_CV.pdf"); err != nil {
+	if err := services.SendEmail(r.Context(), email, services.ResumeEmailSubject(), services.ResumeEmailHTML(), pdfBytes, "Seth_Ummethsanda_CV.pdf"); err != nil {
 		log.Printf("resume email error: %v", err)
 		resumeRequestError(w, r, "Could not send email. Try again later.", http.StatusInternalServerError)
 		return
