@@ -23,7 +23,7 @@ func securityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://apis.google.com blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://lh3.googleusercontent.com https://github.com https://raw.githubusercontent.com; connect-src 'self' https://cdn.jsdelivr.net https://*.googleapis.com https://www.gstatic.com https://*.firebaseio.com https://*.firebaseapp.com; frame-src https://*.firebaseapp.com https://apis.google.com; worker-src 'self' blob:;")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://apis.google.com blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://lh3.googleusercontent.com https://github.com https://raw.githubusercontent.com; connect-src 'self' https://cdn.jsdelivr.net https://*.googleapis.com https://www.gstatic.com https://www.google.com https://*.firebaseio.com https://*.firebaseapp.com; frame-src https://*.firebaseapp.com https://apis.google.com https://www.google.com; worker-src 'self' blob:;")
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 		w.Header().Set("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
 
@@ -58,8 +58,14 @@ func main() {
 	// Inject Firestore client into the models package
 	models.InitDB(services.FirestoreClient)
 
+	if err := services.InitStorage(context.Background()); err != nil {
+		log.Printf("Warning: GCS storage not initialized: %v", err)
+	}
+	services.InitEmail()
+
 	// S-08: Rate limiter for expensive AI endpoint (10 requests per minute per IP)
 	aiRateLimiter := middleware.NewRateLimiter(10, 1*time.Minute)
+	resumeRateLimiter := middleware.NewRateLimiter(5, 1*time.Minute)
 
 	mux := http.NewServeMux()
 
@@ -75,7 +81,9 @@ func main() {
 	mux.HandleFunc("GET /projects", handlers.ProjectsHandler)
 	mux.HandleFunc("GET /projects/{id}", handlers.ProductHandler)
 	mux.HandleFunc("GET /contact", handlers.ContactHandler)
-	
+	mux.HandleFunc("GET /modal/resume", handlers.ResumeModalHandler)
+	mux.Handle("POST /api/resume/request", resumeRateLimiter.Middleware(http.HandlerFunc(handlers.ResumeRequestHandler)))
+
 	// Authentication
 	mux.HandleFunc("GET /login", handlers.LoginHandler)
 	mux.HandleFunc("POST /api/auth/session", handlers.HandleCreateSession)
@@ -90,6 +98,8 @@ func main() {
 	mux.Handle("DELETE /api/projects/{id}", middleware.AdminAuthMiddleware(http.HandlerFunc(handlers.AdminProjectDeleteHandler)))
 	// S-08: AI parse endpoint wrapped with rate limiter + auth
 	mux.Handle("POST /api/ai/parse-readme", aiRateLimiter.Middleware(middleware.AdminAuthMiddleware(http.HandlerFunc(handlers.HandleAIParseReadme))))
+	mux.Handle("GET /api/admin/resume", middleware.AdminAuthMiddleware(http.HandlerFunc(handlers.AdminResumeFormHandler)))
+	mux.Handle("POST /api/admin/resume", middleware.AdminAuthMiddleware(http.HandlerFunc(handlers.AdminResumeSaveHandler)))
 
 	// S-05: Apply CSRF protection to all admin mutation routes
 	csrfProtectedMux := middleware.CSRFMiddleware(mux)

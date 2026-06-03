@@ -67,6 +67,11 @@ jobs:
             GOOGLE_CLOUD_PROJECT=${{ secrets.GCP_PROJECT_ID }}
             GOOGLE_CLOUD_LOCATION=global
             ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
+            GCP_STORAGE_BUCKET=${{ secrets.GCP_STORAGE_BUCKET }}
+            RECAPTCHA_SITE_KEY=${{ secrets.RECAPTCHA_SITE_KEY }}
+            RECAPTCHA_MIN_SCORE=${{ secrets.RECAPTCHA_MIN_SCORE }}
+            RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+            EMAIL_FROM=${{ secrets.EMAIL_FROM }}
 
       # Output the live URL
       - name: Show Deployment URL

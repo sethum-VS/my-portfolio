@@ -48,13 +48,16 @@ templ NavBar(active string) {
 
 		<!-- Resume CTA -->
 		<div class="hidden md:flex items-center">
-			<a
+			<button
+				type="button"
 				class="font-headline tracking-tight text-sm uppercase font-semibold text-sky-300 hover:text-sky-200 transition-colors duration-300 transform hover:scale-95 flex items-center gap-2"
-				href="#"
+				hx-get="/modal/resume"
+				hx-target="#resume-modal-root"
+				hx-swap="innerHTML"
 			>
-				Resume 
+				Resume
 				@Icon("download", "w-[18px] h-[18px]")
-			</a>
+			</button>
 		</div>
 
 		<!-- Mobile hamburger -->
@@ -62,6 +65,7 @@ templ NavBar(active string) {
 			@Icon("menu", "w-6 h-6")
 		</button>
 	</nav>
+	<div id="resume-modal-root" class="fixed inset-0 z-[600] pointer-events-none"></div>
 	@MobileNav(active)
 }
 
@@ -113,6 +117,16 @@ templ MobileNav(active string) {
 					<span class="font-headline font-bold uppercase tracking-tighter text-2xl">Contact</span>
 				</a>
 			}
+			<button
+				type="button"
+				class="group flex items-center text-[#f0f0f0] opacity-50 hover:text-[#ffcdbd] hover:opacity-100 transition-all duration-300 text-left"
+				hx-get="/modal/resume"
+				hx-target="#resume-modal-root"
+				hx-swap="innerHTML"
+				onclick="toggleMobileNav(false)"
+			>
+				<span class="font-headline font-bold uppercase tracking-tighter text-2xl">Resume</span>
+			</button>
 		</nav>
 	</div>
 }
@@ -137,7 +151,13 @@ templ Footer() {
 					<span class="font-body text-sm font-semibold text-primary">Someplaces</span>
 					<div class="flex flex-col gap-5">
 						<a class="font-body text-[14px] text-zinc-300 hover:text-white transition-colors duration-200" href="https://github.com/sethum-VS/" target="_blank" rel="noopener noreferrer">Github</a>
-						<a class="font-body text-[14px] text-zinc-300 hover:text-white transition-colors duration-200" href="#">CV</a>
+						<button
+							type="button"
+							class="font-body text-[14px] text-zinc-300 hover:text-white transition-colors duration-200 text-left"
+							hx-get="/modal/resume"
+							hx-target="#resume-modal-root"
+							hx-swap="innerHTML"
+						>CV</button>
 						<a class="font-body text-[14px] text-zinc-300 hover:text-white transition-colors duration-200" href="https://www.linkedin.com/in/sethumm" target="_blank" rel="noopener noreferrer">LinkedIn</a>
 					</div>
 				</div>

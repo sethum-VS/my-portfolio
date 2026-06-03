@@ -1,0 +1,77 @@
+package views
+
+import "github.com/sethum-VS/my-portfolio/internal/models"
+
+templ ResumeAdminCard(cfg models.ResumeConfig, message string, isError bool) {
+	<div id="resume-admin-card" class="flex-grow flex flex-col relative z-10 max-w-2xl w-full">
+		<div class="flex flex-col gap-2 mb-10">
+			<span class="text-primary font-label text-xs uppercase tracking-[0.2em] font-semibold">Resume</span>
+			<h2 class="text-headline text-4xl font-extrabold text-on-surface tracking-tight">CV Control</h2>
+			<p class="text-body text-on-surface-variant text-sm font-medium">Upload your PDF and toggle availability for the public site.</p>
+		</div>
+		if message != "" {
+			<div
+				class={
+					"mb-6 px-4 py-3 rounded-xl text-sm font-body border",
+					templ.KV("bg-error/10 border-error/30 text-error", isError),
+					templ.KV("bg-primary/10 border-primary/30 text-primary", !isError),
+				}
+			>
+				{ message }
+			</div>
+		}
+		<form
+			id="resume-admin-form"
+			class="p-8 rounded-2xl bg-surface-container-low border border-outline-variant/20 space-y-8"
+			hx-post="/api/admin/resume"
+			hx-encoding="multipart/form-data"
+			hx-target="#resume-admin-card"
+			hx-swap="outerHTML"
+			hx-indicator="#resume-admin-spinner"
+		>
+			<div class="flex items-center justify-between gap-4">
+				<div class="flex flex-col gap-1">
+					<label for="is_coming_soon" class="text-sm font-headline font-semibold text-on-surface">Coming Soon</label>
+					<p class="text-xs text-on-surface-variant font-body">When enabled, visitors can pre-register for your CV.</p>
+				</div>
+				<label class="relative inline-flex items-center cursor-pointer">
+					<input
+						id="is_coming_soon"
+						name="is_coming_soon"
+						type="checkbox"
+						class="sr-only peer"
+						checked?={ cfg.IsComingSoon }
+					/>
+					<div class="w-11 h-6 bg-outline-variant/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+				</label>
+			</div>
+			<div class="flex flex-col gap-2">
+				<label for="resume_pdf" class="text-sm font-headline font-semibold text-on-surface">Resume PDF</label>
+				<input
+					id="resume_pdf"
+					name="resume_pdf"
+					type="file"
+					accept="application/pdf,.pdf"
+					class="block w-full text-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-label file:uppercase file:tracking-widest file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+				/>
+				if cfg.PDFStorageURI != "" {
+					<p class="text-xs text-outline font-mono break-all">Current: { cfg.PDFStorageURI }</p>
+				} else {
+					<p class="text-xs text-outline">No PDF uploaded yet.</p>
+				}
+			</div>
+			<div class="flex items-center gap-4">
+				<button
+					type="submit"
+					class="flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-on-primary hover:opacity-90 transition-all active:scale-95 font-label text-xs uppercase tracking-widest font-bold"
+				>
+					Save Resume Settings
+				</button>
+				<div id="resume-admin-spinner" class="htmx-indicator flex items-center gap-2 text-on-surface-variant text-xs font-label uppercase tracking-widest">
+					@Icon("sync", "w-4 h-4 animate-spin")
+					Saving…
+				</div>
+			</div>
+		</form>
+	</div>
+}
