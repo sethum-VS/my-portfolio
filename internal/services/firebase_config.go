@@ -1,6 +1,10 @@
 package services
 
-import "os"
+import (
+	"log"
+	"os"
+	"sync"
+)
 
 // FirebaseClientConfig holds the public Firebase client configuration values
 // used by the frontend authentication page. These are injected from environment
@@ -14,23 +18,38 @@ type FirebaseClientConfig struct {
 	AppID             string `json:"appId"`
 }
 
-// GetFirebaseClientConfig reads the Firebase client config from environment
-// variables. Falls back to reasonable defaults based on the project ID.
+var (
+	firebaseClientConfig     FirebaseClientConfig
+	firebaseClientConfigOnce sync.Once
+)
+
+// GetFirebaseClientConfig returns Firebase web client config from environment
+// variables. Loads once; missing required vars terminate the process via log.Fatal.
 func GetFirebaseClientConfig() FirebaseClientConfig {
-	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
-	return FirebaseClientConfig{
-		APIKey:            envOrDefault("FIREBASE_API_KEY", "REDACTED_API_KEY"),
-		AuthDomain:        envOrDefault("FIREBASE_AUTH_DOMAIN", projectID+".firebaseapp.com"),
-		ProjectID:         projectID,
-		StorageBucket:     envOrDefault("FIREBASE_STORAGE_BUCKET", projectID+".firebasestorage.app"),
-		MessagingSenderID: envOrDefault("FIREBASE_MESSAGING_SENDER_ID", "REDACTED_SENDER_ID"),
-		AppID:             envOrDefault("FIREBASE_APP_ID", "1:REDACTED_SENDER_ID:web:fb8aa48c22d07c18b2d41c"),
-	}
+	firebaseClientConfigOnce.Do(func() {
+		firebaseClientConfig = loadFirebaseClientConfig()
+	})
+	return firebaseClientConfig
 }
 
-func envOrDefault(key, fallback string) string {
-	if val := os.Getenv(key); val != "" {
-		return val
+func loadFirebaseClientConfig() FirebaseClientConfig {
+	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	apiKey := os.Getenv("FIREBASE_API_KEY")
+	authDomain := os.Getenv("FIREBASE_AUTH_DOMAIN")
+	storageBucket := os.Getenv("FIREBASE_STORAGE_BUCKET")
+	messagingSenderID := os.Getenv("FIREBASE_MESSAGING_SENDER_ID")
+	appID := os.Getenv("FIREBASE_APP_ID")
+
+	if projectID == "" || apiKey == "" || authDomain == "" || storageBucket == "" || messagingSenderID == "" || appID == "" {
+		log.Fatal("FATAL: Missing required Firebase environment variables")
 	}
-	return fallback
+
+	return FirebaseClientConfig{
+		APIKey:            apiKey,
+		AuthDomain:        authDomain,
+		ProjectID:         projectID,
+		StorageBucket:     storageBucket,
+		MessagingSenderID: messagingSenderID,
+		AppID:             appID,
+	}
 }

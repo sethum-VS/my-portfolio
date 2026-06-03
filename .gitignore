@@ -22,3 +22,4 @@
 # Environment
 .env
 .env.local
+secrets-to-remove.txt

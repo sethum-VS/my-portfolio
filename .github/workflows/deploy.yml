@@ -72,6 +72,11 @@ jobs:
             RECAPTCHA_MIN_SCORE=${{ secrets.RECAPTCHA_MIN_SCORE }}
             RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
             EMAIL_FROM=${{ secrets.EMAIL_FROM }}
+            FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
+            FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}
+            FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}
+            FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+            FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}
 
       # Output the live URL
       - name: Show Deployment URL

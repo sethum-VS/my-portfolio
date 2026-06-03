@@ -50,6 +50,9 @@ func main() {
 		log.Printf("Warning: .env file not found or could not be loaded: %v", err)
 	}
 
+	// Fail fast if Firebase client env vars are missing (also caches config for /login).
+	_ = services.GetFirebaseClientConfig()
+
 	// Initialize Firebase & Firestore
 	if err := services.InitFirebase(context.Background()); err != nil {
 		log.Fatalf("Failed to initialize Firebase: %v", err)
