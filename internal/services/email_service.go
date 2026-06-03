@@ -25,7 +25,7 @@ func InitEmail() {
 //  2. "Thanks for your interest — my CV is inside"
 //  3. "Resume ready · Sethum Methsanda"
 //  4. "From sethum.dev — your requested resume"
-const resumeEmailSubject = "Sethum Methsanda · Software Developer — resume attached"
+const resumeEmailSubject = "From sethum.dev — your requested resume"
 
 // ResumeEmailSubject returns the subject line for CV delivery emails.
 func ResumeEmailSubject() string {
@@ -50,7 +50,7 @@ func ResumeEmailHTML() string {
           <tr>
             <td style="padding:40px 32px 32px 32px;">
               <p style="margin:0 0 8px 0; font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:#58c7ff;">Portfolio</p>
-              <h1 style="margin:0 0 24px 0; font-size:22px; font-weight:600; line-height:1.35; color:#ffffff;">Sethum Methsanda <span style="color:#52525b;">//</span> Software Engineer</h1>
+              <h1 style="margin:0 0 24px 0; font-size:22px; font-weight:600; line-height:1.35; color:#ffffff;">Sethum Methsanda <span style="color:#52525b;">—</span> Software Developer</h1>
               <p style="margin:0 0 20px 0; font-size:16px; line-height:1.65; color:#a1a1aa;">Thank you for taking the time to reach out and for your interest in my work. I genuinely appreciate you considering me — it means a lot.</p>
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 28px 0;">
                 <tr>
@@ -60,7 +60,7 @@ func ResumeEmailHTML() string {
                   </td>
                 </tr>
               </table>
-              <p style="margin:0 0 32px 0; font-size:15px; line-height:1.6; color:#a1a1aa;">If you have any questions or would like to connect further, feel free to reply to this email or find me through the links below.</p>
+              <p style="margin:0 0 32px 0; font-size:15px; line-height:1.6; color:#a1a1aa;">If you have any questions or would like to connect further, feel free to find me through the links below.</p>
               <p style="margin:0 0 20px 0; font-size:15px; line-height:1.5; color:#ffffff;">Warm regards,<br><span style="color:#a1a1aa;">Sethum Methsanda</span></p>
             </td>
           </tr>
