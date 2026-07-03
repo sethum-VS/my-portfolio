@@ -48,8 +48,7 @@ COPY --from=builder /app/bin/server ./server
 # We copy the entire static directory which now includes static/out (CSS/JS)
 COPY --from=builder /app/static ./static
 
-# Expose the application port
-EXPOSE 8080
+# Port is assigned dynamically by Heroku
 
 # Run the binary
 CMD ["./server"]

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -109,7 +110,11 @@ func main() {
 	csrfProtectedMux := middleware.CSRFMiddleware(mux)
 	secureMux := securityHeadersMiddleware(csrfProtectedMux)
 
-	const addr = ":8080"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	addr := ":" + port
 	log.Printf("→ Server listening on http://localhost%s", addr)
 	log.Fatal(http.ListenAndServe(addr, secureMux))
 }
