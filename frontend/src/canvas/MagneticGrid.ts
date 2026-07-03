@@ -1,5 +1,5 @@
 export class MagneticGrid {
-  private canvas: HTMLCanvasElement;
+  public canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private nodes: { x: number; y: number; baseX: number; baseY: number }[] = [];
   

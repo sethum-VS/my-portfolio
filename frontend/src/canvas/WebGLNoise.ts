@@ -9,6 +9,7 @@ import {
 } from 'three';
 
 export class WebGLNoise {
+  public canvas: HTMLCanvasElement;
   private camera: OrthographicCamera;
   private scene: Scene;
   private renderer: WebGLRenderer;
@@ -23,6 +24,7 @@ export class WebGLNoise {
   private interval: number;
 
   constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
     const isMobile = window.innerWidth <= 768;
     this.fps = isMobile ? 0 : 50;
     this.interval = this.fps > 0 ? 1000 / this.fps : Infinity;

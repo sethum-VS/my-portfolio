@@ -51,6 +51,29 @@ function initCanvas() {
   const waveCanvas = document.getElementById("magnetic-canvas-wave") as HTMLCanvasElement;
   const noiseCanvas = document.getElementById("webgl-noise-canvas") as HTMLCanvasElement;
   
+  // Clean up any stale instances whose canvas DOM element has changed or been removed
+  if (noiseInstance && (!noiseCanvas || noiseInstance.canvas !== noiseCanvas)) {
+    noiseInstance.destroy();
+    noiseInstance = null;
+  }
+  
+  if (gridInstances.length > 0) {
+    const baseGrid = gridInstances[0];
+    if (!baseCanvas || baseGrid.canvas !== baseCanvas) {
+      gridInstances.forEach(g => g.destroy());
+      gridInstances = [];
+    }
+  }
+  
+  if (gridInstances.length > 1) {
+    const waveGrid = gridInstances[1];
+    if (!waveCanvas || waveGrid.canvas !== waveCanvas) {
+      gridInstances.forEach(g => g.destroy());
+      gridInstances = [];
+    }
+  }
+  
+  // Initialize only if they don't already exist
   if (baseCanvas && gridInstances.length === 0) {
     gridInstances.push(new MagneticGrid(baseCanvas, 0.25));
   }
@@ -276,7 +299,6 @@ function cleanExitAnimation() {
  */
 function reinitPage() {
   cleanExitAnimation();
-  destroyCanvas();
   initCanvas();
   initCursor();
 
