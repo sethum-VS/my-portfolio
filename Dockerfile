@@ -51,4 +51,4 @@ COPY --from=builder /app/static ./static
 # Port is assigned dynamically by Heroku
 
 # Run the binary
-CMD ["./server"]
+CMD sh -c 'if [ -n "$GCP_CREDENTIALS" ]; then echo "$GCP_CREDENTIALS" > /tmp/gcp.json; export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp.json; fi; exec ./server'
