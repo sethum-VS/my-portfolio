@@ -45,6 +45,15 @@ func cacheControlMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// pageCacheMiddleware adds caching headers for public HTML routes and HTMX fragments.
+func pageCacheMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=300, stale-while-revalidate=60")
+		w.Header().Add("Vary", "HX-Request")
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	// Load environment variables from .env file
 	if err := godotenv.Load(); err != nil {
@@ -80,11 +89,11 @@ func main() {
 
 	// ── Public Application routes ────────────────────────────────────────────
 	mux.HandleFunc("GET /", handlers.SplashHandler)
-	mux.HandleFunc("GET /home", handlers.HomeHandler)
-	mux.HandleFunc("GET /about", handlers.AboutHandler)
-	mux.HandleFunc("GET /projects", handlers.ProjectsHandler)
-	mux.HandleFunc("GET /projects/{id}", handlers.ProductHandler)
-	mux.HandleFunc("GET /contact", handlers.ContactHandler)
+	mux.Handle("GET /home", pageCacheMiddleware(http.HandlerFunc(handlers.HomeHandler)))
+	mux.Handle("GET /about", pageCacheMiddleware(http.HandlerFunc(handlers.AboutHandler)))
+	mux.Handle("GET /projects", pageCacheMiddleware(http.HandlerFunc(handlers.ProjectsHandler)))
+	mux.Handle("GET /projects/{id}", pageCacheMiddleware(http.HandlerFunc(handlers.ProductHandler)))
+	mux.Handle("GET /contact", pageCacheMiddleware(http.HandlerFunc(handlers.ContactHandler)))
 	mux.HandleFunc("GET /modal/resume", handlers.ResumeModalHandler)
 	mux.Handle("POST /api/resume/request", resumeRateLimiter.Middleware(http.HandlerFunc(handlers.ResumeRequestHandler)))
 
