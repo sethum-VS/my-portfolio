@@ -172,7 +172,48 @@ templ SplashPage() {
 				});
 			}
 
-			// ── 4. Fire the HTMX trigger once ready ──────────────────────────────
+			// ── 4. Warm nav route cache for first-click speed ───────────────────────
+			function prefetchNavRoutes() {
+				var routes = ['/home', '/about', '/projects', '/contact'];
+				var timeoutMs = 1500;
+				var controllers = [];
+
+				var prefetches = routes.map(function(route) {
+					var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+					if (controller) {
+						controllers.push(controller);
+					}
+
+					return fetch(route, {
+						method: 'GET',
+						credentials: 'same-origin',
+						cache: 'force-cache',
+						headers: {
+							'HX-Request': 'true'
+						},
+						signal: controller ? controller.signal : undefined
+					}).catch(function() {
+						return null;
+					});
+				});
+
+				var allDone = Promise.all(prefetches).then(function() {
+					return null;
+				});
+
+				var timeout = new Promise(function(resolve) {
+					setTimeout(function() {
+						controllers.forEach(function(controller) {
+							controller.abort();
+						});
+						resolve(null);
+					}, timeoutMs);
+				});
+
+				return Promise.race([allDone, timeout]);
+			}
+
+			// ── 5. Fire the HTMX trigger once ready ──────────────────────────────
 			function dispatchReady() {
 				advanceStatus(); // → "Manifesting Future Interface"
 
@@ -205,6 +246,7 @@ templ SplashPage() {
 			waitForCSS()
 				.then(waitForFonts)
 				.then(waitForJS)
+				.then(prefetchNavRoutes)
 				.then(dispatchReady)
 				.catch(function (err) {
 					console.error('Splash load error:', err);
