@@ -29,7 +29,6 @@ templ Layout(title string) {
 
 			<!-- HTMX — drives the splash→home transition + future dynamic interactions -->
 			<script src="/static/js/htmx.min.js"></script>
-			<script src="https://unpkg.com/htmx.org/dist/ext/preload.js"></script>
 			<script src="/static/js/resume-modal.js" defer></script>
 			<script src="/static/js/resume-recaptcha.js" defer></script>
 			
@@ -81,7 +80,7 @@ templ Layout(title string) {
 			</style>
 			<script src="/static/out/bundle.js" defer></script>
 		</head>
-		<body hx-ext="preload" class="bg-surface text-on-surface font-body antialiased selection:bg-primary-container selection:text-on-primary-container relative">
+		<body class="bg-surface text-on-surface font-body antialiased selection:bg-primary-container selection:text-on-primary-container relative">
 			<!-- Custom DOM-based Cursor (Smooth circling white pointer) -->
 			<div id="custom-cursor" class="pointer-events-none fixed top-0 left-0 z-[99999] w-6 h-6 border-[1.5px] border-white rounded-full opacity-0 transition-opacity duration-300 hidden md:block" style="transform: translate(-50%, -50%);"></div>
 
