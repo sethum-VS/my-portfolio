@@ -2,8 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to Semantic Versioning.
+## [0.1.0.1] - 2026-07-11
+
+### Added
+- Enabled Row Level Security (RLS) on public database tables `projects`, `resume_config`, and `resume_waitlist`.
+- Added public read-only access policies for `projects` and `resume_config`.
+- Added an insert-only policy for `resume_waitlist` that restricts public access and validates email formats to protect user privacy.
 
 ## [0.1.0.0] - 2026-07-11
 
