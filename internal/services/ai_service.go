@@ -4,83 +4,86 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strings"
 
+	"github.com/sashabaranov/go-openai"
 	"github.com/sethum-VS/my-portfolio/internal/models"
 	"github.com/sethum-VS/my-portfolio/internal/utils"
-	"google.golang.org/genai"
 )
 
-// ParseReadmeToProductContext takes a raw README markdown string and uses Gemini to extract
+// ParseReadmeToProductContext takes a raw README markdown string and uses NVIDIA NIM (GLM-5.2) to extract
 // structured project information into a models.Product struct.
 func ParseReadmeToProductContext(ctx context.Context, readme string) (*models.Product, error) {
-	// Initialize the Google GenAI client
-	client, err := genai.NewClient(ctx, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create genai client: %w", err)
+	apiKey := os.Getenv("NVIDIA_NIM_API")
+	if apiKey == "" {
+		return nil, fmt.Errorf("NVIDIA_NIM_API environment variable is not set")
 	}
 
-	model := "gemini-2.5-flash"
+	config := openai.DefaultConfig(apiKey)
+	config.BaseURL = "https://integrate.api.nvidia.com/v1"
+	client := openai.NewClientWithConfig(config)
+
+	model := "z-ai/glm-5.2"
 
 	// Define the master system instruction for the AI
-	systemInstructionText := "You are an expert Technical Writer and Data Extractor. Your job is to analyze the provided raw README.md file and extract its contents into a strict JSON object. Follow these exact rules for each field:\n\n" +
-		"Project ID: Extract a marketing-friendly display name that sounds cool but remains aligned with the technical name.\n\n" +
-		"Project Title: Extract the straightforward technical name or the repository name.\n\n" +
-		"Subtitle: Write a punchy, compelling one-liner description.\n\n" +
-		"Challenge: Describe the core problem or challenge the project aims to solve. Limit to one concise paragraph.\n\n" +
-		"Solution: Explain the approach to solving the challenge. Limit to one concise paragraph.\n\n" +
-		"Architecture Overview: Provide high-level architecture details. Specifically, describe what is happening in the Mermaid.js script to explain the data flow.\n\n" +
-		"Core Features: List the key features as a single comma-separated string.\n\n" +
-		"Markdown architecture: Find the exact Mermaid.js script block that shows the project architecture. Return ONLY the raw Mermaid script without any surrounding text or backticks.\n\n" +
-		"Technology Stack: Extract only the most impactful technology names (e.g., React, Node.js, PostgreSQL). Ignore minor libraries or versions. Return as a comma-separated string.\n\n" +
-		"Display Stack: From the Technology Stack, select the top 3 or 4 absolute strongest, most highlighting technologies. Return as a comma-separated string (e.g., Go, React, Docker).\n\n" +
-		"Hero Asset Path: Find the image or GIF link in the readme (typically ending in .gif or .webp) and return the raw URL."
+	systemInstructionText := "You are an expert Technical Writer and Data Extractor. Your job is to analyze the provided raw README.md file and extract its contents into a strict JSON object. " +
+		"Ensure your response is valid JSON and nothing else. Do not wrap the JSON in markdown code blocks. Follow these exact JSON keys for each field:\n\n" +
+		"- \"id\": Extract a marketing-friendly display name that sounds cool but remains aligned with the technical name.\n" +
+		"- \"title\": Extract the straightforward technical name or the repository name.\n" +
+		"- \"subtitle\": Write a punchy, compelling one-liner description.\n" +
+		"- \"challenge\": Describe the core problem or challenge the project aims to solve. Limit to one concise paragraph.\n" +
+		"- \"solution\": Explain the approach to solving the challenge. Limit to one concise paragraph.\n" +
+		"- \"architecture_overview\": Provide high-level architecture details. Specifically, describe what is happening in the Mermaid.js script to explain the data flow.\n" +
+		"- \"core_features\": List the key features as a single comma-separated string.\n" +
+		"- \"markdown_architecture\": Find the exact Mermaid.js script block that shows the project architecture. Return ONLY the raw Mermaid script without any surrounding text or backticks.\n" +
+		"- \"technology_stack\": Extract only the most impactful technology names (e.g., React, Node.js, PostgreSQL). Ignore minor libraries or versions. Return as a comma-separated string.\n" +
+		"- \"display_stack\": From the Technology Stack, select the top 3 or 4 absolute strongest, most highlighting technologies. Return as a comma-separated string (e.g., Go, React, Docker).\n" +
+		"- \"hero_asset_path\": Find the image or GIF link in the readme (typically ending in .gif or .webp) and return the raw URL."
 
-	systemInstruction := &genai.Content{
-		Parts: []*genai.Part{
-			{
-				Text: systemInstructionText,
-			},
-		},
-	}
-
-	// Configure the generation request for structured JSON output
-	config := &genai.GenerateContentConfig{
-		SystemInstruction: systemInstruction,
-		ResponseMIMEType:  "application/json",
-		ResponseSchema: &genai.Schema{
-			Type: genai.TypeObject,
-			Properties: map[string]*genai.Schema{
-				"id":                    {Type: genai.TypeString, Description: "Project ID"},
-				"title":                 {Type: genai.TypeString, Description: "Project Title"},
-				"subtitle":              {Type: genai.TypeString},
-				"challenge":             {Type: genai.TypeString},
-				"solution":              {Type: genai.TypeString},
-				"architecture_overview": {Type: genai.TypeString},
-				"core_features":         {Type: genai.TypeString},
-				"markdown_architecture": {Type: genai.TypeString},
-				"technology_stack":      {Type: genai.TypeString},
-				"display_stack":         {Type: genai.TypeString},
-				"hero_asset_path":       {Type: genai.TypeString},
-			},
-			Required: []string{"id", "title", "subtitle", "challenge", "solution", "architecture_overview", "technology_stack", "display_stack"},
-		},
-	}
-
-	// Prepare the prompt
 	prompt := fmt.Sprintf("Extract project details from the following README content:\n\n%s", readme)
 
-	// Call Gemini
-	resp, err := client.Models.GenerateContent(ctx, model, genai.Text(prompt), config)
-	if err != nil {
-		return nil, fmt.Errorf("gemini generation failed: %w", err)
+	req := openai.ChatCompletionRequest{
+		Model: model,
+		Messages: []openai.ChatCompletionMessage{
+			{
+				Role:    openai.ChatMessageRoleSystem,
+				Content: systemInstructionText,
+			},
+			{
+				Role:    openai.ChatMessageRoleUser,
+				Content: prompt,
+			},
+		},
+		Temperature: 1.0,
+		TopP:        1.0,
+		MaxTokens:   16384,
+		ResponseFormat: &openai.ChatCompletionResponseFormat{
+			Type: openai.ChatCompletionResponseFormatTypeJSONObject,
+		},
 	}
 
-	if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
+	resp, err := client.CreateChatCompletion(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("nvidia nim generation failed: %w", err)
+	}
+
+	if len(resp.Choices) == 0 {
 		return nil, fmt.Errorf("no content generated by AI")
 	}
 
-	// Extract the JSON text from the response
-	responseText := resp.Candidates[0].Content.Parts[0].Text
+	responseText := resp.Choices[0].Message.Content
+
+	// Strip markdown blocks if the model accidentally wrapped the output
+	responseText = strings.TrimSpace(responseText)
+	if strings.HasPrefix(responseText, "```json") {
+		responseText = strings.TrimPrefix(responseText, "```json")
+		responseText = strings.TrimSuffix(responseText, "```")
+	} else if strings.HasPrefix(responseText, "```") {
+		responseText = strings.TrimPrefix(responseText, "```")
+		responseText = strings.TrimSuffix(responseText, "```")
+	}
+	responseText = strings.TrimSpace(responseText)
 
 	// Define a temporary struct to hold the AI's specific flat JSON output
 	type aiResponse struct {
