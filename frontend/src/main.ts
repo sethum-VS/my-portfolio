@@ -10,10 +10,12 @@ function initContentProtection() {
   contentProtectionInitialized = true;
 
   const block = (event: Event) => {
+    if (document.body.classList.contains("dashboard-ui")) return;
     event.preventDefault();
   };
 
   const blockCopyShortcuts = (event: KeyboardEvent) => {
+    if (document.body.classList.contains("dashboard-ui")) return;
     // event.key can be undefined for some keydown events (e.g. modifier-only).
     const key = (event.key ?? "").toLowerCase();
     if (!key) return;
