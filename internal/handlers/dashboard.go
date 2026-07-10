@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -34,7 +35,7 @@ func HandleAIParseReadme(w http.ResponseWriter, r *http.Request) {
 	product, err := services.ParseReadmeToProductContext(r.Context(), readme)
 	if err != nil {
 		log.Printf("AI Parse Error: %v", err)
-		http.Error(w, "AI parsing failed. Please try again.", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("AI parsing failed: %v", err), http.StatusInternalServerError)
 		return
 	}
 
