@@ -79,7 +79,20 @@ func AdminAuthMiddleware(next http.Handler) http.Handler {
 
 		if !authorized {
 			log.Printf("Auth Error: Unauthorized access attempt by %s", email)
-			http.Error(w, "Forbidden: Administrative access required", http.StatusForbidden)
+			// Clear invalid cookie
+			http.SetCookie(w, &http.Cookie{
+				Name:     "session_token",
+				Value:    "",
+				Path:     "/",
+				MaxAge:   -1,
+				HttpOnly: true,
+			})
+			if r.Header.Get("HX-Request") == "true" {
+				w.Header().Set("HX-Redirect", "/login?error=unauthorized")
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+			http.Redirect(w, r, "/login?error=unauthorized", http.StatusSeeOther)
 			return
 		}
 
