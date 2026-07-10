@@ -4,97 +4,78 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strings"
-
-	"cloud.google.com/go/storage"
 )
 
-const resumeObjectKey = "resumes/cv.pdf"
+const resumeObjectKey = "cv.pdf" // Bucket is "resumes", so path is just "cv.pdf"
 
-var storageClient *storage.Client
-
-// InitStorage creates the GCS client (call once from main).
-func InitStorage(ctx context.Context) error {
-	client, err := storage.NewClient(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create storage client: %w", err)
-	}
-	storageClient = client
-	return nil
-}
-
-func resumeBucket() (string, error) {
-	bucket := os.Getenv("GCP_STORAGE_BUCKET")
-	if bucket == "" {
-		return "", fmt.Errorf("GCP_STORAGE_BUCKET is not set")
-	}
-	return bucket, nil
-}
-
-// UploadResumePDF uploads a PDF to GCS and returns the gs:// URI.
+// UploadResumePDF uploads a PDF to Supabase Storage and returns the supabase:// URI.
 func UploadResumePDF(ctx context.Context, r io.Reader, contentType string) (string, error) {
-	if storageClient == nil {
-		return "", fmt.Errorf("storage client not initialized")
-	}
-
-	bucket, err := resumeBucket()
-	if err != nil {
-		return "", err
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	serviceKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	if supabaseURL == "" || serviceKey == "" {
+		return "", fmt.Errorf("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set")
 	}
 
 	if contentType == "" {
 		contentType = "application/pdf"
 	}
 
-	w := storageClient.Bucket(bucket).Object(resumeObjectKey).NewWriter(ctx)
-	w.ContentType = contentType
-	w.CacheControl = "private, max-age=3600"
-
-	if _, err := io.Copy(w, r); err != nil {
-		_ = w.Close()
-		return "", fmt.Errorf("failed to upload resume: %w", err)
-	}
-	if err := w.Close(); err != nil {
-		return "", fmt.Errorf("failed to finalize upload: %w", err)
+	// Upload via Supabase Storage API
+	url := fmt.Sprintf("%s/storage/v1/object/resumes/%s", supabaseURL, resumeObjectKey)
+	req, err := http.NewRequestWithContext(ctx, "POST", url, r)
+	if err != nil {
+		return "", err
 	}
 
-	return fmt.Sprintf("gs://%s/%s", bucket, resumeObjectKey), nil
+	req.Header.Set("Authorization", "Bearer "+serviceKey)
+	req.Header.Set("Content-Type", contentType)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("failed to upload to Supabase Storage: status=%d body=%s", resp.StatusCode, string(body))
+	}
+
+	return fmt.Sprintf("supabase://resumes/%s", resumeObjectKey), nil
 }
 
-// DownloadResumePDF reads the PDF bytes from a gs:// URI.
-func DownloadResumePDF(ctx context.Context, gsURI string) ([]byte, error) {
-	if storageClient == nil {
-		return nil, fmt.Errorf("storage client not initialized")
+// DownloadResumePDF reads the PDF bytes from a supabase:// URI.
+func DownloadResumePDF(ctx context.Context, storageURI string) ([]byte, error) {
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	serviceKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	if supabaseURL == "" || serviceKey == "" {
+		return nil, fmt.Errorf("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set")
 	}
 
-	bucket, object, err := parseGSURI(gsURI)
+	// Parse custom uri scheme e.g. "supabase://resumes/cv.pdf"
+	path := strings.TrimPrefix(storageURI, "supabase://resumes/")
+
+	// Using the authenticated object endpoint to download from private bucket
+	url := fmt.Sprintf("%s/storage/v1/object/authenticated/resumes/%s", supabaseURL, path)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	rc, err := storageClient.Bucket(bucket).Object(object).NewReader(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open GCS object: %w", err)
-	}
-	defer rc.Close()
+	req.Header.Set("Authorization", "Bearer "+serviceKey)
 
-	data, err := io.ReadAll(rc)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read GCS object: %w", err)
+		return nil, err
 	}
-	return data, nil
-}
+	defer resp.Body.Close()
 
-func parseGSURI(gsURI string) (bucket, object string, err error) {
-	const prefix = "gs://"
-	if !strings.HasPrefix(gsURI, prefix) {
-		return "", "", fmt.Errorf("invalid gs URI: %s", gsURI)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to download from Supabase Storage: status=%d", resp.StatusCode)
 	}
-	path := strings.TrimPrefix(gsURI, prefix)
-	parts := strings.SplitN(path, "/", 2)
-	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return "", "", fmt.Errorf("invalid gs URI: %s", gsURI)
-	}
-	return parts[0], parts[1], nil
+
+	return io.ReadAll(resp.Body)
 }
