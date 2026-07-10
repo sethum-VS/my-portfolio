@@ -11,9 +11,8 @@ img {
 
 /* Desktop-only content protection: disable text selection and dragging */
 @media (pointer: fine) {
-  html,
-  body,
-  body * {
+  body:not(.dashboard-ui),
+  body:not(.dashboard-ui) * {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
