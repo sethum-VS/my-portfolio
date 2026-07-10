@@ -80,6 +80,19 @@ templ LoginPage(supabaseURL string, supabaseAnonKey string) {
 				loginBtn.style.opacity = '1';
 			};
 
+			// Handle unauthorized error from URL query params (sign out and show error)
+			(async () => {
+				const urlParams = new URLSearchParams(window.location.search);
+				if (urlParams.get('error') === 'unauthorized') {
+					try {
+						await supabase.auth.signOut();
+					} catch (e) {
+						console.error("Sign out error:", e);
+					}
+					showError("Access Denied: You are not authorized to view the dashboard.");
+				}
+			})();
+
 			// Handle successful login redirect callback
 			supabase.auth.onAuthStateChange(async (event, session) => {
 				if (session && event === 'SIGNED_IN') {
@@ -99,8 +112,14 @@ templ LoginPage(supabaseURL string, supabaseAnonKey string) {
 						if (response.ok) {
 							window.location.href = "/dashboard";
 						} else if (response.status === 403) {
-							showError("Access Denied: CSRF validation failed or unauthorized access.");
+							try {
+								await supabase.auth.signOut();
+							} catch (e) {}
+							showError("Access Denied: You are not authorized to view the dashboard.");
 						} else {
+							try {
+								await supabase.auth.signOut();
+							} catch (e) {}
 							showError("Authentication failed: Server error.");
 						}
 					} catch (error) {
