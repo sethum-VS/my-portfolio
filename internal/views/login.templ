@@ -1,11 +1,7 @@
 package views
 
-import "github.com/sethum-VS/my-portfolio/internal/services"
-
-// LoginPage renders the admin login page with Firebase Google Sign-In.
-// S-02: Firebase config is injected from server-side environment variables
-// rather than being hardcoded in the template.
-templ LoginPage(config services.FirebaseClientConfig) {
+// LoginPage renders the admin login page with Supabase Google Sign-In.
+templ LoginPage(supabaseURL string, supabaseAnonKey string) {
 	@Layout("Admin Login") {
 		<div class="min-h-screen flex items-center justify-center bg-[#131314] px-6">
 			<!-- Ultra-crisp background noise -->
@@ -57,18 +53,16 @@ templ LoginPage(config services.FirebaseClientConfig) {
 			</div>
 		</div>
 
-		@templ.JSONScript("firebase-config", config)
-		<!-- Firebase & Authentication Logic -->
+		@templ.JSONScript("supabase-config", map[string]string{
+			"url": supabaseURL,
+			"anon_key": supabaseAnonKey,
+		})
+		<!-- Supabase Authentication Logic -->
 		<script type="module">
-			import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js';
-			import { getAuth, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js';
+			import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-			// S-02: Firebase config injected via templ.JSONScript
-			const firebaseConfig = JSON.parse(document.getElementById('firebase-config').textContent);
-
-			const app = initializeApp(firebaseConfig);
-			const auth = getAuth(app);
-			const provider = new GoogleAuthProvider();
+			const supabaseConfig = JSON.parse(document.getElementById('supabase-config').textContent);
+			const supabase = createClient(supabaseConfig.url, supabaseConfig.anon_key);
 
 			const loginBtn = document.getElementById('google-login-btn');
 			const errorMsg = document.getElementById('error-message');
@@ -86,43 +80,57 @@ templ LoginPage(config services.FirebaseClientConfig) {
 				loginBtn.style.opacity = '1';
 			};
 
+			// Handle successful login redirect callback
+			supabase.auth.onAuthStateChange(async (event, session) => {
+				if (session && event === 'SIGNED_IN') {
+					const idToken = session.access_token;
+					const csrfToken = getCookie('csrf_token');
+					
+					try {
+						const response = await fetch('/api/auth/session', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+								'X-CSRF-Token': csrfToken
+							},
+							body: JSON.stringify({ idToken })
+						});
+
+						if (response.ok) {
+							window.location.href = "/dashboard";
+						} else if (response.status === 403) {
+							showError("Access Denied: CSRF validation failed or unauthorized access.");
+						} else {
+							showError("Authentication failed: Server error.");
+						}
+					} catch (error) {
+						showError("Authentication failed: " + error.message);
+					}
+				}
+			});
+
 			loginBtn.addEventListener('click', async () => {
 				errorMsg.classList.add('hidden');
 				loginBtn.disabled = true;
 				loginBtn.style.opacity = '0.7';
 
 				try {
-					const result = await signInWithPopup(auth, provider);
-					const idToken = await result.user.getIdToken();
-
-					// S-05: Send CSRF token in header
-					const csrfToken = getCookie('csrf_token');
-
-					const response = await fetch('/api/auth/session', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							'X-CSRF-Token': csrfToken
-						},
-						body: JSON.stringify({ idToken })
+					const { error } = await supabase.auth.signInWithOAuth({
+						provider: 'google',
+						options: {
+							redirectTo: window.location.origin + '/login'
+						}
 					});
-
-					if (response.ok) {
-						window.location.href = "/dashboard";
-					} else if (response.status === 403) {
-						showError("Access Denied: CSRF validation failed or unauthorized access.");
-					} else {
-						showError("Authentication failed: Server error.");
+					
+					if (error) {
+						showError("Authentication failed: " + error.message);
 					}
 				} catch (error) {
 					console.error("Auth Error:", error);
-					if (error.code === 'auth/popup-closed-by-user') {
-						showError("Login cancelled.");
-					} else {
-						showError("Authentication failed: " + error.message);
-					}
+					showError("Authentication failed: " + error.message);
 				}
 			});
 		</script>
 	}
 }
+

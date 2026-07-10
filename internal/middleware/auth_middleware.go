@@ -6,10 +6,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/sethum-VS/my-portfolio/internal/services"
 )
 
-// AdminAuthMiddleware protects administrative routes by verifying a Firebase session cookie
+// AdminAuthMiddleware protects administrative routes by verifying a Supabase session token
 // and checking the user's email against an authorized whitelist loaded from environment variables.
 func AdminAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -27,30 +28,32 @@ func AdminAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Verify the session cookie using Firebase Admin
-		token, err := services.FirebaseAuth.VerifySessionCookie(r.Context(), cookie.Value)
-		if err != nil {
-			// Fallback: If VerifySessionCookie fails, try VerifyIDToken.
-			// This handles the local dev fallback where we stored the ID token directly
-			// because the service account lacked the Service Account Token Creator role.
-			token, err = services.FirebaseAuth.VerifyIDToken(r.Context(), cookie.Value)
-			if err != nil {
-				log.Printf("Auth Error: Session and ID cookie verification failed: %v", err)
-				// Clear invalid cookie
-				http.SetCookie(w, &http.Cookie{
-					Name:   "session_token",
-					Value:  "",
-					Path:   "/",
-					MaxAge: -1,
-				})
-				if r.Header.Get("HX-Request") == "true" {
-					w.Header().Set("HX-Redirect", "/login")
-					w.WriteHeader(http.StatusUnauthorized)
-					return
-				}
-				http.Redirect(w, r, "/login", http.StatusSeeOther)
+		// Verify the session cookie using Supabase JWT verification
+		token, err := services.VerifySupabaseJWT(cookie.Value)
+		if err != nil || !token.Valid {
+			log.Printf("Auth Error: Supabase cookie verification failed: %v", err)
+			// Clear invalid cookie
+			http.SetCookie(w, &http.Cookie{
+				Name:   "session_token",
+				Value:  "",
+				Path:   "/",
+				MaxAge: -1,
+			})
+			if r.Header.Get("HX-Request") == "true" {
+				w.Header().Set("HX-Redirect", "/login")
+				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		// Extract claims
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			log.Println("Auth Error: Invalid JWT claims format")
+			http.Error(w, "Forbidden: Invalid token", http.StatusForbidden)
+			return
 		}
 
 		// Whitelist verification from environment variable
@@ -63,7 +66,7 @@ func AdminAuthMiddleware(next http.Handler) http.Handler {
 
 		// Parse multi-admin support (comma-separated)
 		authorized := false
-		email, ok := token.Claims["email"].(string)
+		email, ok := claims["email"].(string)
 		if ok {
 			adminEmails := strings.Split(adminEmailsRaw, ",")
 			for _, adminEmail := range adminEmails {

@@ -24,7 +24,7 @@ func securityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://www.gstatic.com https://www.google.com https://apis.google.com blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://lh3.googleusercontent.com https://github.com https://raw.githubusercontent.com; connect-src 'self' https://cdn.jsdelivr.net https://unpkg.com https://*.googleapis.com https://www.gstatic.com https://www.google.com https://*.firebaseio.com https://*.firebaseapp.com; frame-src https://*.firebaseapp.com https://apis.google.com https://www.google.com; worker-src 'self' blob:;")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://www.gstatic.com https://www.google.com https://apis.google.com blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://lh3.googleusercontent.com https://github.com https://raw.githubusercontent.com; connect-src 'self' https://cdn.jsdelivr.net https://unpkg.com https://*.googleapis.com https://www.gstatic.com https://www.google.com https://*.supabase.co; frame-src https://*.supabase.co https://apis.google.com https://www.google.com; worker-src 'self' blob:;")
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 		w.Header().Set("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
 
@@ -60,24 +60,19 @@ func main() {
 		log.Printf("Warning: .env file not found or could not be loaded: %v", err)
 	}
 
-	// Fail fast if Firebase client env vars are missing (also caches config for /login).
-	_ = services.GetFirebaseClientConfig()
-
-	// Initialize Firebase & Firestore
-	if err := services.InitFirebase(context.Background()); err != nil {
-		log.Fatalf("Failed to initialize Firebase: %v", err)
+	// Initialize Supabase & PostgreSQL
+	if err := services.InitSupabase(context.Background()); err != nil {
+		log.Fatalf("Failed to initialize Supabase: %v", err)
 	}
 	
-	// Inject Firestore client into the models package
-	models.InitDB(services.FirestoreClient)
+	// Inject PostgreSQL pool into the models package
+	models.InitDB(services.DBPool)
 
-	if err := services.InitStorage(context.Background()); err != nil {
-		log.Printf("Warning: GCS storage not initialized: %v", err)
-	}
 	services.InitEmail()
 
 	// S-08: Rate limiter for expensive AI endpoint (10 requests per minute per IP)
 	aiRateLimiter := middleware.NewRateLimiter(10, 1*time.Minute)
+
 	resumeRateLimiter := middleware.NewRateLimiter(5, 1*time.Minute)
 
 	mux := http.NewServeMux()

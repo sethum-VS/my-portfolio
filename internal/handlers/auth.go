@@ -2,32 +2,31 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
-	"time"
+	"os"
 
 	"github.com/a-h/templ"
-	"github.com/sethum-VS/my-portfolio/internal/services"
 	"github.com/sethum-VS/my-portfolio/internal/views"
 )
 
-// LoginHandler serves the login page with Firebase config injected from env vars
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	config := services.GetFirebaseClientConfig()
-	templ.Handler(views.LoginPage(config)).ServeHTTP(w, r)
+// SupabaseConfig holds the public config needed for the JS client
+type SupabaseConfig struct {
+	URL     string `json:"url"`
+	AnonKey string `json:"anon_key"`
 }
 
-// sessionDuration defines the lifetime of admin session cookies.
-const sessionDuration = 1 * time.Hour
+// LoginHandler serves the login page with Supabase config injected from env vars
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	supabaseAnonKey := os.Getenv("SUPABASE_ANON_KEY")
+	templ.Handler(views.LoginPage(supabaseURL, supabaseAnonKey)).ServeHTTP(w, r)
+}
 
-// HandleCreateSession processes a Firebase ID token and creates an opaque
-// server-side session cookie via Firebase's CreateSessionCookie API.
-// S-03: This replaces the previous pattern of storing the raw ID token JWT
-// directly in the cookie, which exposed user claims and could be replayed
-// against Firebase APIs if intercepted.
+// HandleCreateSession processes a Supabase access token (JWT) and creates an opaque
+// server-side session cookie. 
 func HandleCreateSession(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
-		IDToken string `json:"idToken"`
+		IDToken string `json:"idToken"` // It's actually the Supabase access token now
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
@@ -40,26 +39,12 @@ func HandleCreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verify the ID token first
-	_, err := services.FirebaseAuth.VerifyIDToken(r.Context(), payload.IDToken)
-	if err != nil {
-		http.Error(w, "Invalid ID token", http.StatusUnauthorized)
-		return
-	}
-
-	// Create an opaque Firebase session cookie (server-side)
-	sessionCookie, err := services.FirebaseAuth.SessionCookie(r.Context(), payload.IDToken, sessionDuration)
-	if err != nil {
-		log.Printf("Session cookie creation failed (IAM permission issue likely), falling back to ID token: %v", err)
-		// Fallback to using the raw ID token as the session cookie for local dev / limited IAM
-		sessionCookie = payload.IDToken
-	}
-
-	// Set the session cookie
+	// Just set the cookie with the access token. 
+	// The middleware handles verification.
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_token",
-		Value:    sessionCookie,
-		Expires:  time.Now().Add(sessionDuration),
+		Value:    payload.IDToken,
+		MaxAge:   3600, // 1 hour (Supabase tokens usually expire in 1h anyway)
 		HttpOnly: true,
 		Secure:   r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https",
 		SameSite: http.SameSiteStrictMode,
@@ -71,23 +56,10 @@ func HandleCreateSession(w http.ResponseWriter, r *http.Request) {
 
 // HandleLogout clears the session cookie.
 func HandleLogout(w http.ResponseWriter, r *http.Request) {
-	// Revoke the session cookie on Firebase's side
-	cookie, err := r.Cookie("session_token")
-	if err == nil && cookie.Value != "" {
-		// Verify and decode the session cookie to get the UID for revocation
-		decoded, err := services.FirebaseAuth.VerifySessionCookie(r.Context(), cookie.Value)
-		if err == nil {
-			// Revoke all refresh tokens for this user
-			if err := services.FirebaseAuth.RevokeRefreshTokens(r.Context(), decoded.UID); err != nil {
-				log.Printf("Failed to revoke refresh tokens: %v", err)
-			}
-		}
-	}
-
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_token",
 		Value:    "",
-		Expires:  time.Now().Add(-1 * time.Hour),
+		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteStrictMode,

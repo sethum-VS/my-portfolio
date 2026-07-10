@@ -7,17 +7,17 @@ import (
 	"sync"
 	"time"
 
-	"cloud.google.com/go/firestore"
-	"google.golang.org/api/iterator"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// DB holds the Firestore client for the models package.
+// DB holds the PostgreSQL connection pool for the models package.
 // It should be initialized from main.go
-var DB *firestore.Client
+var DB *pgxpool.Pool
 
-// InitDB sets the Firestore client.
-func InitDB(client *firestore.Client) {
-	DB = client
+// InitDB sets the DB pool.
+func InitDB(pool *pgxpool.Pool) {
+	DB = pool
 }
 
 // ── TTL Cache for AllProducts ────────────────────────────────────────────────
@@ -28,8 +28,7 @@ var (
 	productCacheTTL   = 60 * time.Second
 )
 
-// invalidateProductCache clears the cached product list, forcing the next
-// AllProducts() call to re-fetch from Firestore.
+// invalidateProductCache clears the cached product list.
 func invalidateProductCache() {
 	productCacheMu.Lock()
 	productCache = nil
@@ -37,29 +36,28 @@ func invalidateProductCache() {
 	productCacheMu.Unlock()
 }
 
-// Product represents a portfolio project with detailed engineering and architectural information.
+// Product represents a portfolio project.
 type Product struct {
-	ID           string            `firestore:"id" json:"id"`
-	Title        string            `firestore:"title" json:"title"`
-	Subtitle     string            `firestore:"subtitle" json:"subtitle"`
-	Description  string            `firestore:"description" json:"description"`
-	HeroGIF      string            `firestore:"hero_gif" json:"hero_gif"`
-	Challenge    string            `firestore:"challenge" json:"challenge"`
-	Solution     string            `firestore:"solution" json:"solution"`
-	Architecture string            `firestore:"architecture" json:"architecture"`
-	ArchDiagram  string            `firestore:"arch_diagram" json:"arch_diagram"`
-	InternalFlow []string          `firestore:"internal_flow" json:"internal_flow"`
-	TechStack    []string          `firestore:"tech_stack" json:"tech_stack"`
-	DisplayStack []string          `firestore:"display_stack" json:"display_stack"`
-	KeyFeatures  []string          `firestore:"key_features" json:"key_features"`
-	LiveURL      string            `firestore:"live_url" json:"live_url"`
-	GitHubURL    string            `firestore:"github_url" json:"github_url"`
-	Metrics      map[string]string `firestore:"metrics" json:"metrics"`
-	Deployment   string            `firestore:"deployment" json:"deployment"`
+	ID           string            `json:"id"`
+	Title        string            `json:"title"`
+	Subtitle     string            `json:"subtitle"`
+	Description  string            `json:"description"`
+	HeroGIF      string            `json:"hero_gif"`
+	Challenge    string            `json:"challenge"`
+	Solution     string            `json:"solution"`
+	Architecture string            `json:"architecture"`
+	ArchDiagram  string            `json:"arch_diagram"`
+	InternalFlow []string          `json:"internal_flow"`
+	TechStack    []string          `json:"tech_stack"`
+	DisplayStack []string          `json:"display_stack"`
+	KeyFeatures  []string          `json:"key_features"`
+	LiveURL      string            `json:"live_url"`
+	GitHubURL    string            `json:"github_url"`
+	Metrics      map[string]string `json:"metrics"`
+	Deployment   string            `json:"deployment"`
 }
 
-// AllProducts returns the catalog of all portfolio projects from Firestore.
-// Results are cached for 60 seconds to reduce redundant Firestore reads.
+// AllProducts returns the catalog of all portfolio projects.
 func AllProducts() []Product {
 	// Check cache first
 	productCacheMu.RLock()
@@ -71,27 +69,29 @@ func AllProducts() []Product {
 	}
 	productCacheMu.RUnlock()
 
-	ctx := context.Background()
 	var products []Product
 
 	if DB == nil {
-		log.Println("Firestore client not initialized")
+		log.Println("DB pool not initialized")
 		return products
 	}
 
-	iter := DB.Collection("projects").Documents(ctx)
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			log.Printf("Failed to iterate over projects: %v", err)
-			return products
-		}
+	ctx := context.Background()
+	query := `SELECT id, title, subtitle, description, hero_gif, challenge, solution, architecture, arch_diagram, internal_flow, tech_stack, display_stack, key_features, live_url, github_url, metrics, deployment FROM projects`
+	rows, err := DB.Query(ctx, query)
+	if err != nil {
+		log.Printf("Failed to execute query: %v", err)
+		return products
+	}
+	defer rows.Close()
+
+	for rows.Next() {
 		var p Product
-		if err := doc.DataTo(&p); err != nil {
-			log.Printf("Failed to map document to struct: %v", err)
+		if err := rows.Scan(
+			&p.ID, &p.Title, &p.Subtitle, &p.Description, &p.HeroGIF, &p.Challenge, &p.Solution, &p.Architecture, &p.ArchDiagram,
+			&p.InternalFlow, &p.TechStack, &p.DisplayStack, &p.KeyFeatures, &p.LiveURL, &p.GitHubURL, &p.Metrics, &p.Deployment,
+		); err != nil {
+			log.Printf("Failed to scan row: %v", err)
 			continue
 		}
 		products = append(products, p)
@@ -107,45 +107,48 @@ func AllProducts() []Product {
 	return products
 }
 
-// GetProductByID finds and returns a product by its ID from Firestore.
+// GetProductByID finds and returns a product by its ID.
 func GetProductByID(id string) *Product {
-	ctx := context.Background()
-
 	if DB == nil {
-		log.Println("Firestore client not initialized")
+		log.Println("DB pool not initialized")
 		return nil
 	}
 
-	doc, err := DB.Collection("projects").Doc(id).Get(ctx)
-	if err != nil {
-		// Document doesn't exist or other error
-		return nil
-	}
-
+	ctx := context.Background()
 	var p Product
-	if err := doc.DataTo(&p); err != nil {
-		log.Printf("Failed to map document to struct: %v", err)
+	query := `SELECT id, title, subtitle, description, hero_gif, challenge, solution, architecture, arch_diagram, internal_flow, tech_stack, display_stack, key_features, live_url, github_url, metrics, deployment FROM projects WHERE id = $1`
+	err := DB.QueryRow(ctx, query, id).Scan(
+		&p.ID, &p.Title, &p.Subtitle, &p.Description, &p.HeroGIF, &p.Challenge, &p.Solution, &p.Architecture, &p.ArchDiagram,
+		&p.InternalFlow, &p.TechStack, &p.DisplayStack, &p.KeyFeatures, &p.LiveURL, &p.GitHubURL, &p.Metrics, &p.Deployment,
+	)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil
+		}
+		log.Printf("Failed to get product: %v", err)
 		return nil
 	}
 
 	return &p
 }
 
-// CreateProduct adds a new product to Firestore.
+// CreateProduct adds a new product.
 func CreateProduct(p Product) error {
-	ctx := context.Background()
-
 	if DB == nil {
-		return fmt.Errorf("Firestore client not initialized")
+		return fmt.Errorf("DB pool not initialized")
 	}
 
-	// Check if exists first
-	doc, err := DB.Collection("projects").Doc(p.ID).Get(ctx)
-	if err == nil && doc.Exists() {
-		return fmt.Errorf("product with ID %s already exists", p.ID)
-	}
-
-	_, err = DB.Collection("projects").Doc(p.ID).Set(ctx, p)
+	ctx := context.Background()
+	query := `
+		INSERT INTO projects (
+			id, title, subtitle, description, hero_gif, challenge, solution, architecture, arch_diagram, internal_flow, tech_stack, display_stack, key_features, live_url, github_url, metrics, deployment
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+		)`
+	_, err := DB.Exec(ctx, query,
+		p.ID, p.Title, p.Subtitle, p.Description, p.HeroGIF, p.Challenge, p.Solution, p.Architecture, p.ArchDiagram,
+		p.InternalFlow, p.TechStack, p.DisplayStack, p.KeyFeatures, p.LiveURL, p.GitHubURL, p.Metrics, p.Deployment,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create product: %v", err)
 	}
@@ -154,25 +157,50 @@ func CreateProduct(p Product) error {
 	return nil
 }
 
-// UpdateProduct modifies an existing product in Firestore.
+// UpdateProduct modifies an existing product.
 func UpdateProduct(id string, updated Product) error {
-	ctx := context.Background()
-
 	if DB == nil {
-		return fmt.Errorf("Firestore client not initialized")
+		return fmt.Errorf("DB pool not initialized")
 	}
 
-	// If ID changed, we need to create a new doc and delete the old one
+	ctx := context.Background()
+	
+	// If ID changed, delete old one
 	if id != updated.ID {
-		err := CreateProduct(updated)
+		err := DeleteProduct(id)
 		if err != nil {
 			return err
 		}
-		return DeleteProduct(id)
 	}
 
-	// Otherwise just set (overwrite) the existing document
-	_, err := DB.Collection("projects").Doc(id).Set(ctx, updated)
+	query := `
+		INSERT INTO projects (
+			id, title, subtitle, description, hero_gif, challenge, solution, architecture, arch_diagram, internal_flow, tech_stack, display_stack, key_features, live_url, github_url, metrics, deployment
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+		)
+		ON CONFLICT (id) DO UPDATE SET
+			title = EXCLUDED.title,
+			subtitle = EXCLUDED.subtitle,
+			description = EXCLUDED.description,
+			hero_gif = EXCLUDED.hero_gif,
+			challenge = EXCLUDED.challenge,
+			solution = EXCLUDED.solution,
+			architecture = EXCLUDED.architecture,
+			arch_diagram = EXCLUDED.arch_diagram,
+			internal_flow = EXCLUDED.internal_flow,
+			tech_stack = EXCLUDED.tech_stack,
+			display_stack = EXCLUDED.display_stack,
+			key_features = EXCLUDED.key_features,
+			live_url = EXCLUDED.live_url,
+			github_url = EXCLUDED.github_url,
+			metrics = EXCLUDED.metrics,
+			deployment = EXCLUDED.deployment`
+			
+	_, err := DB.Exec(ctx, query,
+		updated.ID, updated.Title, updated.Subtitle, updated.Description, updated.HeroGIF, updated.Challenge, updated.Solution, updated.Architecture, updated.ArchDiagram,
+		updated.InternalFlow, updated.TechStack, updated.DisplayStack, updated.KeyFeatures, updated.LiveURL, updated.GitHubURL, updated.Metrics, updated.Deployment,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to update product: %v", err)
 	}
@@ -181,15 +209,14 @@ func UpdateProduct(id string, updated Product) error {
 	return nil
 }
 
-// DeleteProduct removes a product from Firestore.
+// DeleteProduct removes a product.
 func DeleteProduct(id string) error {
-	ctx := context.Background()
-
 	if DB == nil {
-		return fmt.Errorf("Firestore client not initialized")
+		return fmt.Errorf("DB pool not initialized")
 	}
 
-	_, err := DB.Collection("projects").Doc(id).Delete(ctx)
+	ctx := context.Background()
+	_, err := DB.Exec(ctx, "DELETE FROM projects WHERE id = $1", id)
 	if err != nil {
 		return fmt.Errorf("failed to delete product: %v", err)
 	}
