@@ -180,9 +180,10 @@ templ SplashPage() {
 			// HTML text in an in-memory JS Map (window.__soulPageCache) and intercepting
 			// HTMX's htmx:beforeRequest to serve from that cache instantly.
 			function prefetchNavRoutes() {
-				// Nav pages + resume modal (no HX-Request needed for the modal endpoint)
+				// Nav pages — fetched with HX-Request so the server returns a fragment.
+				// NOTE: /modal/resume is intentionally excluded: serving the modal from
+				// cache breaks the Turnstile captcha (htmx:afterSwap never fires).
 				var navRoutes = ['/home', '/about', '/projects', '/contact'];
-				var modalRoutes = ['/modal/resume'];
 				var timeoutMs = 2000;
 				var controllers = [];
 
@@ -213,17 +214,9 @@ templ SplashPage() {
 					.catch(function() { return null; });
 				}
 
-				// Nav pages need HX-Request so the server returns a fragment, not a redirect.
-				var navPrefetches = navRoutes.map(function(r) {
+				var allDone = Promise.all(navRoutes.map(function(r) {
 					return fetchAndCache(r, { 'HX-Request': 'true' });
-				});
-
-				// Modal endpoint is a plain GET (no HX-Request header needed).
-				var modalPrefetches = modalRoutes.map(function(r) {
-					return fetchAndCache(r, {});
-				});
-
-				var allDone = Promise.all(navPrefetches.concat(modalPrefetches)).then(function() { return null; });
+				})).then(function() { return null; });
 
 				var timeout = new Promise(function(resolve) {
 					setTimeout(function() {
