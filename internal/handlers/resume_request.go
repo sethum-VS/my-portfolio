@@ -21,7 +21,7 @@ func ResumeRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	email := strings.ToLower(strings.TrimSpace(r.FormValue("email")))
-	token := r.FormValue("g-recaptcha-response")
+	token := r.FormValue("cf-turnstile-response")
 
 	if email == "" {
 		resumeRequestError(w, r, "Email is required.", http.StatusBadRequest)
@@ -32,9 +32,9 @@ func ResumeRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := services.VerifyRecaptcha(r.Context(), token, r); err != nil {
-		log.Printf("recaptcha verification failed: %v", err)
-		resumeRequestError(w, r, "Verification failed. Complete reCAPTCHA and try again.", http.StatusForbidden)
+	if err := services.VerifyTurnstile(r.Context(), token, r); err != nil {
+		log.Printf("turnstile verification failed: %v", err)
+		resumeRequestError(w, r, "Verification failed. Complete verification and try again.", http.StatusForbidden)
 		return
 	}
 
@@ -80,7 +80,7 @@ func resumeRequestError(w http.ResponseWriter, r *http.Request, message string, 
 	}
 
 	cfg := models.GetResumeConfig()
-	siteKey := os.Getenv("RECAPTCHA_SITE_KEY")
+	siteKey := os.Getenv("TURNSTILE_SITE_KEY")
 	w.WriteHeader(status)
 	templ.Handler(views.ResumeModalInner(cfg.IsComingSoon, siteKey, message)).ServeHTTP(w, r)
 }
