@@ -12,6 +12,6 @@ import (
 // ResumeModalHandler serves GET /modal/resume.
 func ResumeModalHandler(w http.ResponseWriter, r *http.Request) {
 	cfg := models.GetResumeConfig()
-	siteKey := os.Getenv("RECAPTCHA_SITE_KEY")
+	siteKey := os.Getenv("TURNSTILE_SITE_KEY")
 	templ.Handler(views.ResumeModal(cfg.IsComingSoon, siteKey, "")).ServeHTTP(w, r)
 }
