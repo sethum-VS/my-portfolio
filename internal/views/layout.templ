@@ -120,10 +120,12 @@ templ Layout(title string) {
 				// NAV_PATHS: the set of routes we prefetch.
 				// Keys must match the href values on the nav-link anchors.
 				var NAV_PATHS = ['/home', '/about', '/projects', '/contact'];
-
-				// MODAL_PATH: the resume modal endpoint — prefetched so the first
-				// click on the Resume button is served from the in-memory cache.
-				var MODAL_RESUME_PATH = '/modal/resume';
+				// NOTE: /modal/resume is intentionally NOT cached here.
+				// Turnstile (Cloudflare captcha) only initialises via htmx:afterSwap
+				// (in resume-turnstile.js). If we serve the modal from innerHTML cache
+				// that event never fires, so the widget is empty and form submission
+				// errors with "Complete the verification challenge".
+				// The modal round-trip is ~200ms — fast enough without caching.
 
 				function isNavPath(path) {
 					return NAV_PATHS.indexOf(path) !== -1;
@@ -172,21 +174,7 @@ templ Layout(title string) {
 					var cache = window.__soulPageCache;
 					if (!cache) return;
 
-					// ── Branch A: Resume modal (non-boosted) ─────────────────────────
-					if (path === MODAL_RESUME_PATH && cache.has(MODAL_RESUME_PATH)) {
-						evt.preventDefault();
-
-						var modalRoot = document.getElementById('resume-modal-root');
-						if (!modalRoot) return;
-
-						modalRoot.innerHTML = cache.get(MODAL_RESUME_PATH);
-						// Invalidate: subsequent opens fetch fresh so turnstile re-renders
-						cache.delete(MODAL_RESUME_PATH);
-						htmxProcess(modalRoot);
-						return;
-					}
-
-					// ── Branch B: Boosted nav pages ──────────────────────────────────
+					// ── Boosted nav pages only ────────────────────────────────────────
 					var boosted = detail.boosted || (detail.requestConfig && detail.requestConfig.boosted);
 					if (!boosted) return;
 
