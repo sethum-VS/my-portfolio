@@ -117,12 +117,27 @@ templ Layout(title string) {
 			-->
 			<script>
 			(function() {
-				// NAV_PATHS: the set of routes we prefetch. Keys must match
-				// the href values on the nav-link anchors.
+				// NAV_PATHS: the set of routes we prefetch.
+				// Keys must match the href values on the nav-link anchors.
 				var NAV_PATHS = ['/home', '/about', '/projects', '/contact'];
+
+				// MODAL_PATH: the resume modal endpoint — prefetched so the first
+				// click on the Resume button is served from the in-memory cache.
+				var MODAL_RESUME_PATH = '/modal/resume';
 
 				function isNavPath(path) {
 					return NAV_PATHS.indexOf(path) !== -1;
+				}
+
+				// Re-run htmx.process() on newly swapped-in content so that all
+				// hx-boost / hx-get / hx-target attributes are wired up by HTMX.
+				// Without this, project-title links inside the cached /projects page
+				// are inert and fall back to plain browser navigation, causing a
+				// full page reload to /projects/{id} which then redirects to /.
+				function htmxProcess(el) {
+					if (typeof htmx !== 'undefined' && el) {
+						try { htmx.process(el); } catch(e) {}
+					}
 				}
 
 				// Called after a cache-hit swap to replicate what HTMX would do.
@@ -148,28 +163,41 @@ templ Layout(title string) {
 					var verb = ((detail.verb || (detail.requestConfig && detail.requestConfig.verb)) || '').toLowerCase();
 					if (verb !== 'get') return;
 
-					// Only intercept boosted nav requests
-					var boosted = detail.boosted || (detail.requestConfig && detail.requestConfig.boosted);
-					if (!boosted) return;
-
 					var path = detail.pathInfo && detail.pathInfo.requestPath;
 					if (!path) return;
 
 					// Normalise the path (strip query/hash)
 					try { path = new URL(path, location.href).pathname; } catch(e) {}
 
+					var cache = window.__soulPageCache;
+					if (!cache) return;
+
+					// ── Branch A: Resume modal (non-boosted) ─────────────────────────
+					if (path === MODAL_RESUME_PATH && cache.has(MODAL_RESUME_PATH)) {
+						evt.preventDefault();
+
+						var modalRoot = document.getElementById('resume-modal-root');
+						if (!modalRoot) return;
+
+						modalRoot.innerHTML = cache.get(MODAL_RESUME_PATH);
+						// Invalidate: subsequent opens fetch fresh so turnstile re-renders
+						cache.delete(MODAL_RESUME_PATH);
+						htmxProcess(modalRoot);
+						return;
+					}
+
+					// ── Branch B: Boosted nav pages ──────────────────────────────────
+					var boosted = detail.boosted || (detail.requestConfig && detail.requestConfig.boosted);
+					if (!boosted) return;
+
 					if (!isNavPath(path)) return;
 
-					var cache = window.__soulPageCache;
-					if (!cache || !cache.has(path)) return;
+					if (!cache.has(path)) return;
 
 					// --- Cache HIT ---
 					evt.preventDefault(); // Cancel the real XHR
 
 					var html = cache.get(path);
-
-					// Optionally invalidate so a second click gets fresh content
-					// cache.delete(path);
 
 					// Apply page-exit transition before swap
 					var mainContent = document.getElementById('main-content');
@@ -187,14 +215,19 @@ templ Layout(title string) {
 							return;
 						}
 
-						// HTMX's hx-select="#main-content" + hx-swap="outerHTML" means we
-						// need to extract #main-content from the fetched fragment and replace.
+						// hx-select="#main-content" + hx-swap="outerHTML": extract
+						// #main-content from the fragment and replace the live one.
 						var parser = new DOMParser();
 						var doc = parser.parseFromString(html, 'text/html');
 						var incoming = doc.getElementById('main-content');
 
 						if (incoming) {
 							target.replaceWith(incoming);
+							// CRITICAL: re-run htmx.process() so hx-boost / hx-get
+							// attributes on the new content are wired by HTMX.
+							// Without this, project-title links inside /projects are
+							// inert and cause a full page reload.
+							htmxProcess(incoming);
 						} else {
 							// Fragment IS the content (server returned bare fragment)
 							target.outerHTML = html;
