@@ -41,7 +41,7 @@ templ ResumeModalInner(isComingSoon bool, siteKey string, formError string) {
 			hx-swap="outerHTML"
 			hx-indicator="#resume-submit-spinner"
 			if siteKey != "" {
-				data-recaptcha-sitekey={ siteKey }
+				data-turnstile-sitekey={ siteKey }
 			}
 		>
 			<p
@@ -69,11 +69,11 @@ templ ResumeModalInner(isComingSoon bool, siteKey string, formError string) {
 				/>
 			</div>
 			if siteKey != "" {
-				<div class="recaptcha-responsive">
-					<div id="recaptcha-widget" data-sitekey={ siteKey }></div>
+				<div class="flex justify-center">
+					<div id="turnstile-widget"></div>
 				</div>
 			}
-			<input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response" value=""/>
+			<input type="hidden" id="cf-turnstile-response" name="cf-turnstile-response" value=""/>
 			<div class="flex items-center gap-4">
 				<button
 					type="submit"
