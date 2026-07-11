@@ -173,10 +173,22 @@ templ SplashPage() {
 			}
 
 			// ── 4. Warm nav route cache for first-click speed ───────────────────────
+			// NOTE: The browser HTTP cache cannot be reused by HTMX because HTMX sends
+			// extra headers (HX-Current-URL, HX-Boosted, HX-Trigger, HX-Target) that
+			// differ from our bare fetch() prefetch — the Vary: HX-Request header only
+			// covers one dimension of that mismatch. We solve this by storing the raw
+			// HTML text in an in-memory JS Map (window.__soulPageCache) and intercepting
+			// HTMX's htmx:beforeRequest to serve from that cache instantly.
 			function prefetchNavRoutes() {
 				var routes = ['/home', '/about', '/projects', '/contact'];
-				var timeoutMs = 1500;
+				var timeoutMs = 2000;
 				var controllers = [];
+
+				// Shared in-memory page cache — keyed by pathname.
+				// The htmx:beforeRequest interceptor (in layout) reads from this.
+				if (!window.__soulPageCache) {
+					window.__soulPageCache = new Map();
+				}
 
 				var prefetches = routes.map(function(route) {
 					var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
@@ -187,25 +199,24 @@ templ SplashPage() {
 					return fetch(route, {
 						method: 'GET',
 						credentials: 'same-origin',
-						cache: 'force-cache',
-						headers: {
-							'HX-Request': 'true'
-						},
+						headers: { 'HX-Request': 'true' },
 						signal: controller ? controller.signal : undefined
-					}).catch(function() {
-						return null;
-					});
+					})
+					.then(function(res) {
+						if (res && res.ok) {
+							return res.text().then(function(html) {
+								window.__soulPageCache.set(route, html);
+							});
+						}
+					})
+					.catch(function() { return null; });
 				});
 
-				var allDone = Promise.all(prefetches).then(function() {
-					return null;
-				});
+				var allDone = Promise.all(prefetches).then(function() { return null; });
 
 				var timeout = new Promise(function(resolve) {
 					setTimeout(function() {
-						controllers.forEach(function(controller) {
-							controller.abort();
-						});
+						controllers.forEach(function(c) { c.abort(); });
 						resolve(null);
 					}, timeoutMs);
 				});

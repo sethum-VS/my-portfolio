@@ -94,6 +94,117 @@ templ Layout(title string) {
 					document.body.classList.add('dashboard-ui');
 				}
 			</script>
+
+			<!--
+				Soul Page Cache Interceptor — serves prefetched nav pages instantly.
+
+				During the splash screen, prefetchNavRoutes() fetches /home /about
+				/projects /contact and stores the HTML in window.__soulPageCache.
+
+				HTMX cannot reuse those fetch() responses via the browser HTTP cache
+				because it sends extra headers (HX-Current-URL, HX-Boosted, HX-Trigger,
+				HX-Target) that the prefetch didn't include, causing a cache miss even
+				though Vary: HX-Request is set.
+
+				This interceptor hooks htmx:beforeRequest. When a boosted GET fires for
+				a path we already cached, it:
+				  1. Cancels the real XHR (event.preventDefault())
+				  2. Triggers the page-exit transition
+				  3. Performs the outerHTML swap from the cached HTML string
+				  4. Pushes the URL into history and updates nav state
+
+				Result: nav clicks are ~0ms instead of 300–500ms round-trip.
+			-->
+			<script>
+			(function() {
+				// NAV_PATHS: the set of routes we prefetch. Keys must match
+				// the href values on the nav-link anchors.
+				var NAV_PATHS = ['/home', '/about', '/projects', '/contact'];
+
+				function isNavPath(path) {
+					return NAV_PATHS.indexOf(path) !== -1;
+				}
+
+				// Called after a cache-hit swap to replicate what HTMX would do.
+				function afterCacheSwap(path) {
+					// Push URL into history
+					if (history.pushState) {
+						history.pushState({ htmx: true }, '', path);
+					}
+
+					// Fire htmx:afterSwap so bundle.js reinitialises canvas, cursor, nav blob
+					document.dispatchEvent(new CustomEvent('htmx:afterSwap', {
+						bubbles: true,
+						detail: { pathInfo: { requestPath: path } }
+					}));
+				}
+
+				document.addEventListener('htmx:beforeRequest', function(evt) {
+					var detail = evt.detail;
+					if (!detail) return;
+
+					// verb and boosted live on detail directly (HTMX 2.x)
+					// requestConfig also has them as a fallback for older versions
+					var verb = ((detail.verb || (detail.requestConfig && detail.requestConfig.verb)) || '').toLowerCase();
+					if (verb !== 'get') return;
+
+					// Only intercept boosted nav requests
+					var boosted = detail.boosted || (detail.requestConfig && detail.requestConfig.boosted);
+					if (!boosted) return;
+
+					var path = detail.pathInfo && detail.pathInfo.requestPath;
+					if (!path) return;
+
+					// Normalise the path (strip query/hash)
+					try { path = new URL(path, location.href).pathname; } catch(e) {}
+
+					if (!isNavPath(path)) return;
+
+					var cache = window.__soulPageCache;
+					if (!cache || !cache.has(path)) return;
+
+					// --- Cache HIT ---
+					evt.preventDefault(); // Cancel the real XHR
+
+					var html = cache.get(path);
+
+					// Optionally invalidate so a second click gets fresh content
+					// cache.delete(path);
+
+					// Apply page-exit transition before swap
+					var mainContent = document.getElementById('main-content');
+					if (mainContent) {
+						mainContent.classList.add('page-transition-exit');
+					}
+
+					// Swap on next frame so the exit transition is painted first
+					requestAnimationFrame(function() {
+						var target = document.getElementById('main-content');
+						if (!target) {
+							// Fallback: no transition, just body swap
+							document.body.innerHTML = html;
+							afterCacheSwap(path);
+							return;
+						}
+
+						// HTMX's hx-select="#main-content" + hx-swap="outerHTML" means we
+						// need to extract #main-content from the fetched fragment and replace.
+						var parser = new DOMParser();
+						var doc = parser.parseFromString(html, 'text/html');
+						var incoming = doc.getElementById('main-content');
+
+						if (incoming) {
+							target.replaceWith(incoming);
+						} else {
+							// Fragment IS the content (server returned bare fragment)
+							target.outerHTML = html;
+						}
+
+						afterCacheSwap(path);
+					});
+				});
+			})();
+			</script>
 		</body>
 	</html>
 }
