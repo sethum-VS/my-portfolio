@@ -11,6 +11,8 @@ import (
 // This eliminates the repeated if/else pattern across all public handlers.
 func htmxAwareRender(w http.ResponseWriter, r *http.Request, content templ.Component) {
 	if r.Header.Get("HX-Request") == "true" {
+		w.Header().Set("Cache-Control", "public, max-age=300")
+		w.Header().Set("Vary", "HX-Request")
 		content.Render(r.Context(), w)
 		return
 	}
