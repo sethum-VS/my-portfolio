@@ -1,6 +1,15 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [0.2.0.0] - 2026-07-18
+
+### Added
+- Centralized application configuration in a new `internal/config` module to manage environment settings consistently.
+- NVIDIA NIM API failover support in `ai_service` using a backup API key if the primary key is unavailable or fails.
+
+### Changed
+- Refactored all internal services (Supabase, Email, Storage, Turnstile) and handlers to retrieve environment configurations from the centralized `config.AppConfig`.
+- Updated test suites to load configuration correctly before execution.
 
 ## [0.1.0.1] - 2026-07-11
 

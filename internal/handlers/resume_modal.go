@@ -1,8 +1,9 @@
 package handlers
 
 import (
+	"github.com/sethum-VS/my-portfolio/internal/config"
+
 	"net/http"
-	"os"
 
 	"github.com/a-h/templ"
 	"github.com/sethum-VS/my-portfolio/internal/models"
@@ -11,7 +12,7 @@ import (
 
 // ResumeModalHandler serves GET /modal/resume.
 func ResumeModalHandler(w http.ResponseWriter, r *http.Request) {
-	cfg := models.GetResumeConfig()
-	siteKey := os.Getenv("TURNSTILE_SITE_KEY")
+	cfg := models.GetResumeConfig(r.Context())
+	siteKey := config.AppConfig.TurnstileSiteKey
 	templ.Handler(views.ResumeModal(cfg.IsComingSoon, siteKey, "")).ServeHTTP(w, r)
 }

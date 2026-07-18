@@ -18,7 +18,7 @@ func BroadcastResumeToWaitlist(ctx context.Context, pdfURI string) {
 }
 
 func broadcastResumeToWaitlist(ctx context.Context, pdfURI string) error {
-	emails := models.ListWaitlistEmails()
+	emails := models.ListWaitlistEmails(context.Background())
 	if len(emails) == 0 {
 		return nil
 	}
@@ -44,7 +44,7 @@ func broadcastResumeToWaitlist(ctx context.Context, pdfURI string) error {
 		return fmt.Errorf("waitlist broadcast: %d of %d emails failed", failed, len(emails))
 	}
 
-	if err := models.ClearWaitlist(); err != nil {
+	if err := models.ClearWaitlist(context.Background()); err != nil {
 		return err
 	}
 	return nil

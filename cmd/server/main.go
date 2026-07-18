@@ -4,12 +4,12 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
 
+	"github.com/sethum-VS/my-portfolio/internal/config"
 	"github.com/sethum-VS/my-portfolio/internal/handlers"
 	"github.com/sethum-VS/my-portfolio/internal/middleware"
 	"github.com/sethum-VS/my-portfolio/internal/models"
@@ -60,11 +60,14 @@ func main() {
 		log.Printf("Warning: .env file not found or could not be loaded: %v", err)
 	}
 
+	// Load centralized configuration
+	config.Load()
+
 	// Initialize Supabase & PostgreSQL
 	if err := services.InitSupabase(context.Background()); err != nil {
 		log.Fatalf("Failed to initialize Supabase: %v", err)
 	}
-	
+
 	// Inject PostgreSQL pool into the models package
 	models.InitDB(services.DBPool)
 
@@ -114,10 +117,7 @@ func main() {
 	csrfProtectedMux := middleware.CSRFMiddleware(mux)
 	secureMux := securityHeadersMiddleware(csrfProtectedMux)
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	port := config.AppConfig.Port
 	addr := ":" + port
 	log.Printf("→ Server listening on http://localhost%s", addr)
 	log.Fatal(http.ListenAndServe(addr, secureMux))

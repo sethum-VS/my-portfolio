@@ -17,13 +17,11 @@ type ResumeConfig struct {
 }
 
 // GetResumeConfig returns the resume config from PostgreSQL.
-func GetResumeConfig() ResumeConfig {
-	if DB == nil {
-		log.Println("DB pool not initialized")
+func GetResumeConfig(ctx context.Context) ResumeConfig {
+	if err := checkDB(); err != nil {
 		return ResumeConfig{IsComingSoon: true}
 	}
 
-	ctx := context.Background()
 	var cfg ResumeConfig
 	query := `SELECT is_coming_soon, pdf_storage_uri FROM resume_config WHERE id = 'default'`
 	err := DB.QueryRow(ctx, query).Scan(&cfg.IsComingSoon, &cfg.PDFStorageURI)
@@ -37,19 +35,18 @@ func GetResumeConfig() ResumeConfig {
 }
 
 // SaveResumeConfig updates the resume config in PostgreSQL.
-func SaveResumeConfig(cfg ResumeConfig) error {
-	if DB == nil {
-		return fmt.Errorf("DB pool not initialized")
+func SaveResumeConfig(ctx context.Context, cfg ResumeConfig) error {
+	if err := checkDB(); err != nil {
+		return err
 	}
 
-	ctx := context.Background()
 	query := `
 		INSERT INTO resume_config (id, is_coming_soon, pdf_storage_uri)
 		VALUES ('default', $1, $2)
 		ON CONFLICT (id) DO UPDATE SET
 			is_coming_soon = EXCLUDED.is_coming_soon,
 			pdf_storage_uri = EXCLUDED.pdf_storage_uri`
-	
+
 	_, err := DB.Exec(ctx, query, cfg.IsComingSoon, cfg.PDFStorageURI)
 	if err != nil {
 		return fmt.Errorf("failed to save resume config: %w", err)
@@ -58,13 +55,11 @@ func SaveResumeConfig(cfg ResumeConfig) error {
 }
 
 // WaitlistCount returns how many emails are on the resume waitlist.
-func WaitlistCount() int {
-	if DB == nil {
-		log.Println("DB pool not initialized")
+func WaitlistCount(ctx context.Context) int {
+	if err := checkDB(); err != nil {
 		return 0
 	}
 
-	ctx := context.Background()
 	var count int
 	err := DB.QueryRow(ctx, `SELECT COUNT(*) FROM resume_waitlist`).Scan(&count)
 	if err != nil {
@@ -75,14 +70,12 @@ func WaitlistCount() int {
 }
 
 // ListWaitlistEmails returns all emails on the resume waitlist.
-func ListWaitlistEmails() []string {
+func ListWaitlistEmails(ctx context.Context) []string {
 	var emails []string
-	if DB == nil {
-		log.Println("DB pool not initialized")
+	if err := checkDB(); err != nil {
 		return emails
 	}
 
-	ctx := context.Background()
 	rows, err := DB.Query(ctx, `SELECT email FROM resume_waitlist ORDER BY created_at ASC`)
 	if err != nil {
 		log.Printf("Failed to list waitlist: %v", err)
@@ -104,9 +97,9 @@ func ListWaitlistEmails() []string {
 }
 
 // AddToWaitlist stores an email if not already present.
-func AddToWaitlist(email string) error {
-	if DB == nil {
-		return fmt.Errorf("DB pool not initialized")
+func AddToWaitlist(ctx context.Context, email string) error {
+	if err := checkDB(); err != nil {
+		return err
 	}
 
 	email = strings.ToLower(strings.TrimSpace(email))
@@ -114,7 +107,6 @@ func AddToWaitlist(email string) error {
 		return fmt.Errorf("email is required")
 	}
 
-	ctx := context.Background()
 	query := `INSERT INTO resume_waitlist (email, created_at) VALUES ($1, $2) ON CONFLICT (email) DO NOTHING`
 	_, err := DB.Exec(ctx, query, email, time.Now().UTC())
 	if err != nil {
@@ -124,12 +116,11 @@ func AddToWaitlist(email string) error {
 }
 
 // ClearWaitlist deletes all records in the resume_waitlist table.
-func ClearWaitlist() error {
-	if DB == nil {
-		return fmt.Errorf("DB pool not initialized")
+func ClearWaitlist(ctx context.Context) error {
+	if err := checkDB(); err != nil {
+		return err
 	}
 
-	ctx := context.Background()
 	_, err := DB.Exec(ctx, `DELETE FROM resume_waitlist`)
 	if err != nil {
 		return fmt.Errorf("failed to clear waitlist: %w", err)

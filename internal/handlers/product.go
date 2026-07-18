@@ -19,7 +19,7 @@ func ProductHandler(w http.ResponseWriter, r *http.Request) {
 	productID := r.PathValue("id")
 
 	// Fetch product from data model
-	product := models.GetProductByID(productID)
+	product := models.GetProductByID(r.Context(), productID)
 	if product == nil {
 		http.NotFound(w, r)
 		return

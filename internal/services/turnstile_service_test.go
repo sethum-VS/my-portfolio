@@ -7,12 +7,18 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/sethum-VS/my-portfolio/internal/config"
 )
 
 func TestVerifyTurnstile(t *testing.T) {
 	// Set mock secret key
 	os.Setenv("TURNSTILE_SECRET_KEY", "mock-secret-key")
-	defer os.Unsetenv("TURNSTILE_SECRET_KEY")
+	config.Load()
+	defer func() {
+		os.Unsetenv("TURNSTILE_SECRET_KEY")
+		config.Load()
+	}()
 
 	t.Run("missing token", func(t *testing.T) {
 		err := VerifyTurnstile(context.Background(), "", nil)

@@ -1,9 +1,10 @@
 package services
 
 import (
+	"github.com/sethum-VS/my-portfolio/internal/config"
+
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/resend/resend-go/v2"
 )
@@ -12,7 +13,7 @@ var resendClient *resend.Client
 
 // InitEmail creates the Resend API client when RESEND_API_KEY is set.
 func InitEmail() {
-	apiKey := os.Getenv("RESEND_API_KEY")
+	apiKey := config.AppConfig.ResendAPIKey
 	if apiKey == "" {
 		return
 	}
@@ -97,7 +98,7 @@ func SendEmail(ctx context.Context, to, subject, bodyHTML string, attachment []b
 		return fmt.Errorf("resend client not initialized")
 	}
 
-	from := os.Getenv("EMAIL_FROM")
+	from := config.AppConfig.EmailFrom
 	if from == "" {
 		return fmt.Errorf("EMAIL_FROM is not set")
 	}

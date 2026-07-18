@@ -13,13 +13,18 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/sethum-VS/my-portfolio/internal/config"
 )
 
 func TestVerifySupabaseJWT_HS256(t *testing.T) {
 	// Initialize the secret before running VerifySupabaseJWT
 	secret := "test-jwt-secret-key-with-sufficient-length"
 	os.Setenv("SUPABASE_JWT_SECRET", secret)
-	defer os.Unsetenv("SUPABASE_JWT_SECRET")
+	config.Load()
+	defer func() {
+		os.Unsetenv("SUPABASE_JWT_SECRET")
+		config.Load()
+	}()
 
 	// Helper to generate a token
 	createToken := func(claims jwt.MapClaims, signingKey []byte) (string, error) {
@@ -120,7 +125,11 @@ func TestVerifySupabaseJWT_ES256(t *testing.T) {
 
 	// Configure environment variables
 	os.Setenv("SUPABASE_URL", server.URL)
-	defer os.Unsetenv("SUPABASE_URL")
+	config.Load()
+	defer func() {
+		os.Unsetenv("SUPABASE_URL")
+		config.Load()
+	}()
 
 	// Helper to generate an ES256 token
 	createES256Token := func(claims jwt.MapClaims, key *ecdsa.PrivateKey, kid string) (string, error) {

@@ -1,10 +1,11 @@
 package services
 
 import (
+	"github.com/sethum-VS/my-portfolio/internal/config"
+
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/sashabaranov/go-openai"
@@ -15,14 +16,18 @@ import (
 // ParseReadmeToProductContext takes a raw README markdown string and uses NVIDIA NIM (GLM-5.2) to extract
 // structured project information into a models.Product struct.
 func ParseReadmeToProductContext(ctx context.Context, readme string) (*models.Product, error) {
-	apiKey := os.Getenv("NVIDIA_NIM_API")
+	apiKey := config.AppConfig.NvidiaNIMAPI
 	if apiKey == "" {
 		return nil, fmt.Errorf("NVIDIA_NIM_API environment variable is not set")
 	}
 
-	config := openai.DefaultConfig(apiKey)
-	config.BaseURL = "https://integrate.api.nvidia.com/v1"
-	client := openai.NewClientWithConfig(config)
+	cfg := openai.DefaultConfig(apiKey)
+	baseURL := config.AppConfig.NvidiaNIMBaseURL
+	if baseURL == "" {
+		baseURL = "https://integrate.api.nvidia.com/v1"
+	}
+	cfg.BaseURL = baseURL
+	client := openai.NewClientWithConfig(cfg)
 
 	model := "z-ai/glm-5.2"
 
@@ -65,7 +70,33 @@ func ParseReadmeToProductContext(ctx context.Context, readme string) (*models.Pr
 
 	resp, err := client.CreateChatCompletion(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("nvidia nim generation failed: %w", err)
+		shouldFailover := true
+
+		// If it's an API error, only failover for certain status codes (like 401, 403, 429, 500+)
+		if apiErr, ok := err.(*openai.APIError); ok {
+			if apiErr.HTTPStatusCode == 400 {
+				shouldFailover = false
+			}
+		}
+
+		if shouldFailover {
+			backupAPIKey := config.AppConfig.NvidiaAPIKeyBackup
+			if backupAPIKey != "" {
+				fmt.Printf("Primary NVIDIA API failed: %v. Falling back to backup key.\n", err)
+				backupConfig := openai.DefaultConfig(backupAPIKey)
+				backupConfig.BaseURL = baseURL
+				backupClient := openai.NewClientWithConfig(backupConfig)
+
+				resp, err = backupClient.CreateChatCompletion(ctx, req)
+				if err != nil {
+					return nil, fmt.Errorf("nvidia nim generation failed with both primary and backup keys: %w", err)
+				}
+			} else {
+				return nil, fmt.Errorf("nvidia nim generation failed: %w", err)
+			}
+		} else {
+			return nil, fmt.Errorf("nvidia nim generation failed without failover: %w", err)
+		}
 	}
 
 	if len(resp.Choices) == 0 {

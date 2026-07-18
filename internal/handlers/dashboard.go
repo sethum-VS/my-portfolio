@@ -13,7 +13,7 @@ import (
 
 // DashboardHandler serves the protected administrative dashboard.
 func DashboardHandler(w http.ResponseWriter, r *http.Request) {
-	products := models.AllProducts()
+	products := models.AllProducts(r.Context())
 	templ.Handler(views.DashboardPage(products)).ServeHTTP(w, r)
 }
 

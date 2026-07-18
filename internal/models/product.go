@@ -20,12 +20,20 @@ func InitDB(pool *pgxpool.Pool) {
 	DB = pool
 }
 
+func checkDB() error {
+	if DB == nil {
+		log.Println("DB pool not initialized")
+		return fmt.Errorf("DB pool not initialized")
+	}
+	return nil
+}
+
 // ── TTL Cache for AllProducts ────────────────────────────────────────────────
 var (
-	productCacheMu    sync.RWMutex
-	productCache      []Product
-	productCacheTime  time.Time
-	productCacheTTL   = 60 * time.Second
+	productCacheMu   sync.RWMutex
+	productCache     []Product
+	productCacheTime time.Time
+	productCacheTTL  = 60 * time.Second
 )
 
 // invalidateProductCache clears the cached product list.
@@ -58,7 +66,7 @@ type Product struct {
 }
 
 // AllProducts returns the catalog of all portfolio projects.
-func AllProducts() []Product {
+func AllProducts(ctx context.Context) []Product {
 	// Check cache first
 	productCacheMu.RLock()
 	if productCache != nil && time.Since(productCacheTime) < productCacheTTL {
@@ -71,12 +79,10 @@ func AllProducts() []Product {
 
 	var products []Product
 
-	if DB == nil {
-		log.Println("DB pool not initialized")
+	if err := checkDB(); err != nil {
 		return products
 	}
 
-	ctx := context.Background()
 	query := `SELECT id, title, subtitle, description, hero_gif, challenge, solution, architecture, arch_diagram, internal_flow, tech_stack, display_stack, key_features, live_url, github_url, metrics, deployment FROM projects`
 	rows, err := DB.Query(ctx, query)
 	if err != nil {
@@ -108,13 +114,11 @@ func AllProducts() []Product {
 }
 
 // GetProductByID finds and returns a product by its ID.
-func GetProductByID(id string) *Product {
-	if DB == nil {
-		log.Println("DB pool not initialized")
+func GetProductByID(ctx context.Context, id string) *Product {
+	if err := checkDB(); err != nil {
 		return nil
 	}
 
-	ctx := context.Background()
 	var p Product
 	query := `SELECT id, title, subtitle, description, hero_gif, challenge, solution, architecture, arch_diagram, internal_flow, tech_stack, display_stack, key_features, live_url, github_url, metrics, deployment FROM projects WHERE id = $1`
 	err := DB.QueryRow(ctx, query, id).Scan(
@@ -133,12 +137,11 @@ func GetProductByID(id string) *Product {
 }
 
 // CreateProduct adds a new product.
-func CreateProduct(p Product) error {
-	if DB == nil {
-		return fmt.Errorf("DB pool not initialized")
+func CreateProduct(ctx context.Context, p Product) error {
+	if err := checkDB(); err != nil {
+		return err
 	}
 
-	ctx := context.Background()
 	query := `
 		INSERT INTO projects (
 			id, title, subtitle, description, hero_gif, challenge, solution, architecture, arch_diagram, internal_flow, tech_stack, display_stack, key_features, live_url, github_url, metrics, deployment
@@ -158,16 +161,14 @@ func CreateProduct(p Product) error {
 }
 
 // UpdateProduct modifies an existing product.
-func UpdateProduct(id string, updated Product) error {
-	if DB == nil {
-		return fmt.Errorf("DB pool not initialized")
+func UpdateProduct(ctx context.Context, id string, updated Product) error {
+	if err := checkDB(); err != nil {
+		return err
 	}
 
-	ctx := context.Background()
-	
 	// If ID changed, delete old one
 	if id != updated.ID {
-		err := DeleteProduct(id)
+		err := DeleteProduct(ctx, id)
 		if err != nil {
 			return err
 		}
@@ -196,7 +197,7 @@ func UpdateProduct(id string, updated Product) error {
 			github_url = EXCLUDED.github_url,
 			metrics = EXCLUDED.metrics,
 			deployment = EXCLUDED.deployment`
-			
+
 	_, err := DB.Exec(ctx, query,
 		updated.ID, updated.Title, updated.Subtitle, updated.Description, updated.HeroGIF, updated.Challenge, updated.Solution, updated.Architecture, updated.ArchDiagram,
 		updated.InternalFlow, updated.TechStack, updated.DisplayStack, updated.KeyFeatures, updated.LiveURL, updated.GitHubURL, updated.Metrics, updated.Deployment,
@@ -210,12 +211,11 @@ func UpdateProduct(id string, updated Product) error {
 }
 
 // DeleteProduct removes a product.
-func DeleteProduct(id string) error {
-	if DB == nil {
-		return fmt.Errorf("DB pool not initialized")
+func DeleteProduct(ctx context.Context, id string) error {
+	if err := checkDB(); err != nil {
+		return err
 	}
 
-	ctx := context.Background()
 	_, err := DB.Exec(ctx, "DELETE FROM projects WHERE id = $1", id)
 	if err != nil {
 		return fmt.Errorf("failed to delete product: %v", err)
