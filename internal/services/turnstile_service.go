@@ -1,24 +1,25 @@
 package services
 
 import (
+	"github.com/sethum-VS/my-portfolio/internal/config"
+
 	"context"
 	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 )
 
 // TurnstileResponse represents the verification response from Cloudflare Turnstile API.
 type TurnstileResponse struct {
-	Success     bool      `json:"success"`
-	ChallengeTS string    `json:"challenge_ts"`
-	Hostname    string    `json:"hostname"`
-	ErrorCodes  []string  `json:"error-codes"`
-	Action      string    `json:"action"`
+	Success     bool     `json:"success"`
+	ChallengeTS string   `json:"challenge_ts"`
+	Hostname    string   `json:"hostname"`
+	ErrorCodes  []string `json:"error-codes"`
+	Action      string   `json:"action"`
 }
 
 var turnstileVerifyURL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
@@ -46,7 +47,7 @@ func VerifyTurnstile(ctx context.Context, token string, r *http.Request) error {
 		return fmt.Errorf("missing turnstile token")
 	}
 
-	secretKey := os.Getenv("TURNSTILE_SECRET_KEY")
+	secretKey := config.AppConfig.TurnstileSecretKey
 	if secretKey == "" {
 		return fmt.Errorf("turnstile secret key is not configured")
 	}
@@ -56,7 +57,7 @@ func VerifyTurnstile(ctx context.Context, token string, r *http.Request) error {
 	data := url.Values{}
 	data.Set("secret", secretKey)
 	data.Set("response", token)
-	
+
 	if remoteIP := requestClientIP(r); remoteIP != "" {
 		data.Set("remoteip", remoteIP)
 	}

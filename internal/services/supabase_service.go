@@ -1,6 +1,8 @@
 package services
 
 import (
+	"github.com/sethum-VS/my-portfolio/internal/config"
+
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -10,7 +12,6 @@ import (
 	"log"
 	"math/big"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
@@ -19,12 +20,12 @@ import (
 )
 
 type JWK struct {
-	Alg string   `json:"alg"`
-	Crv string   `json:"crv"`
-	Kid string   `json:"kid"`
-	Kty string   `json:"kty"`
-	X   string   `json:"x"`
-	Y   string   `json:"y"`
+	Alg string `json:"alg"`
+	Crv string `json:"crv"`
+	Kid string `json:"kid"`
+	Kty string `json:"kty"`
+	X   string `json:"x"`
+	Y   string `json:"y"`
 }
 
 type JWKS struct {
@@ -32,9 +33,9 @@ type JWKS struct {
 }
 
 var (
-	DBPool         *pgxpool.Pool
-	jwtSecret      []byte
-	jwtSecretOnce  sync.Once
+	DBPool        *pgxpool.Pool
+	jwtSecret     []byte
+	jwtSecretOnce sync.Once
 
 	jwkCache       map[string]*ecdsa.PublicKey
 	jwkCacheMu     sync.RWMutex
@@ -42,7 +43,7 @@ var (
 )
 
 func InitSupabase(ctx context.Context) error {
-	connStr := os.Getenv("SUPABASE_DB_URL")
+	connStr := config.AppConfig.SupabaseDBURL
 	if connStr == "" {
 		return fmt.Errorf("SUPABASE_DB_URL is not set")
 	}
@@ -78,7 +79,7 @@ func getJWKPublicKey(kid string) (*ecdsa.PublicKey, error) {
 	}
 
 	// Fetch JWKS
-	supabaseURL := os.Getenv("SUPABASE_URL")
+	supabaseURL := config.AppConfig.SupabaseURL
 	if supabaseURL == "" {
 		return nil, fmt.Errorf("SUPABASE_URL environment variable is not set")
 	}
@@ -145,7 +146,7 @@ func VerifySupabaseJWT(tokenStr string) (*jwt.Token, error) {
 		switch alg {
 		case "HS256":
 			jwtSecretOnce.Do(func() {
-				jwtSecret = []byte(os.Getenv("SUPABASE_JWT_SECRET"))
+				jwtSecret = []byte(config.AppConfig.SupabaseJWTSecret)
 			})
 			if len(jwtSecret) == 0 {
 				return nil, fmt.Errorf("SUPABASE_JWT_SECRET environment variable is not set")

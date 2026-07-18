@@ -1,11 +1,12 @@
 package services
 
 import (
+	"github.com/sethum-VS/my-portfolio/internal/config"
+
 	"context"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -13,8 +14,8 @@ const resumeObjectKey = "cv.pdf" // Bucket is "resumes", so path is just "cv.pdf
 
 // UploadResumePDF uploads a PDF to Supabase Storage and returns the supabase:// URI.
 func UploadResumePDF(ctx context.Context, r io.Reader, contentType string) (string, error) {
-	supabaseURL := os.Getenv("SUPABASE_URL")
-	serviceKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	supabaseURL := config.AppConfig.SupabaseURL
+	serviceKey := config.AppConfig.SupabaseServiceRoleKey
 	if supabaseURL == "" || serviceKey == "" {
 		return "", fmt.Errorf("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set")
 	}
@@ -49,8 +50,8 @@ func UploadResumePDF(ctx context.Context, r io.Reader, contentType string) (stri
 
 // DownloadResumePDF reads the PDF bytes from a supabase:// URI.
 func DownloadResumePDF(ctx context.Context, storageURI string) ([]byte, error) {
-	supabaseURL := os.Getenv("SUPABASE_URL")
-	serviceKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	supabaseURL := config.AppConfig.SupabaseURL
+	serviceKey := config.AppConfig.SupabaseServiceRoleKey
 	if supabaseURL == "" || serviceKey == "" {
 		return nil, fmt.Errorf("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set")
 	}

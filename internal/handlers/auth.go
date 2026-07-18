@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
-	"strings"
 
 	"github.com/a-h/templ"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/sethum-VS/my-portfolio/internal/config"
 	"github.com/sethum-VS/my-portfolio/internal/services"
 	"github.com/sethum-VS/my-portfolio/internal/views"
 )
@@ -19,15 +18,15 @@ type SupabaseConfig struct {
 	AnonKey string `json:"anon_key"`
 }
 
-// LoginHandler serves the login page with Supabase config injected from env vars
+// LoginHandler serves the login page with Supabase config injected from config
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	supabaseURL := os.Getenv("SUPABASE_URL")
-	supabaseAnonKey := os.Getenv("SUPABASE_ANON_KEY")
+	supabaseURL := config.AppConfig.SupabaseURL
+	supabaseAnonKey := config.AppConfig.SupabaseAnonKey
 	templ.Handler(views.LoginPage(supabaseURL, supabaseAnonKey)).ServeHTTP(w, r)
 }
 
 // HandleCreateSession processes a Supabase access token (JWT) and creates an opaque
-// server-side session cookie. 
+// server-side session cookie.
 func HandleCreateSession(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
 		IDToken string `json:"idToken"` // It's actually the Supabase access token now
@@ -57,9 +56,9 @@ func HandleCreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	adminEmailsRaw := os.Getenv("ADMIN_EMAIL")
-	if adminEmailsRaw == "" {
-		log.Println("CRITICAL SECURITY WARNING: ADMIN_EMAIL environment variable is not set. Access denied to all users.")
+	// Whitelist verification from centralized config
+	if len(config.AppConfig.AdminEmails) == 0 {
+		log.Println("CRITICAL SECURITY WARNING: ADMIN_EMAIL is not set in config. Access denied to all users.")
 		http.Error(w, "Forbidden: Administrative access is currently disabled for security.", http.StatusForbidden)
 		return
 	}
@@ -67,9 +66,8 @@ func HandleCreateSession(w http.ResponseWriter, r *http.Request) {
 	authorized := false
 	email, ok := claims["email"].(string)
 	if ok {
-		adminEmails := strings.Split(adminEmailsRaw, ",")
-		for _, adminEmail := range adminEmails {
-			if email == strings.TrimSpace(adminEmail) {
+		for _, adminEmail := range config.AppConfig.AdminEmails {
+			if email == adminEmail {
 				authorized = true
 				break
 			}
@@ -82,7 +80,7 @@ func HandleCreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set the cookie with the access token. 
+	// Set the cookie with the access token.
 	// The middleware handles verification.
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_token",
@@ -108,7 +106,7 @@ func HandleLogout(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteStrictMode,
 		Path:     "/",
 	})
-	
+
 	// Redirect to home or login after logout
 	w.Header().Set("HX-Redirect", "/")
 	w.WriteHeader(http.StatusOK)

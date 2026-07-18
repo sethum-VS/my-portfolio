@@ -24,12 +24,12 @@ func AdminProjectFormHandler(w http.ResponseWriter, r *http.Request) {
 		templ.Handler(views.DashboardProjectForm(nil)).ServeHTTP(w, r)
 		return
 	}
-	product := models.GetProductByID(id)
+	product := models.GetProductByID(r.Context(), id)
 	if product == nil {
 		http.Error(w, "Project not found", http.StatusNotFound)
 		return
 	}
-	
+
 	templ.Handler(views.DashboardProjectForm(product)).ServeHTTP(w, r)
 }
 
@@ -40,14 +40,14 @@ func AdminProjectDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing ID", http.StatusBadRequest)
 		return
 	}
-	err := models.DeleteProduct(id)
+	err := models.DeleteProduct(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	// Re-render the project list and reset the right panel via OOB swap
-	products := models.AllProducts()
+	products := models.AllProducts(r.Context())
 	templ.Handler(views.DashboardDeleteResponse(products)).ServeHTTP(w, r)
 }
 
@@ -58,7 +58,7 @@ func AdminProjectSaveHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
 	}
-	
+
 	// Create Product model from form
 	id := r.FormValue("id")
 	if id == "" {
@@ -87,27 +87,27 @@ func AdminProjectSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if isUpdate && originalID != "" {
-		err = models.UpdateProduct(originalID, p)
+		err = models.UpdateProduct(r.Context(), originalID, p)
 	} else {
-		err = models.CreateProduct(p)
+		err = models.CreateProduct(r.Context(), p)
 	}
-	
+
 	if err != nil {
 		log.Printf("Save Error: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, `<div id="form-response" class="text-error">Error: Failed to save project. Please check your input and try again.</div>`)
 		return
 	}
-	
+
 	// We want to update the form (to show success/updated state) AND the list (OOB)
-	products := models.AllProducts()
-	
+	products := models.AllProducts(r.Context())
+
 	// Setup OOB response for the list
 	w.Header().Set("Content-Type", "text/html")
 	w.Write([]byte("<div id=\"dashboard-project-list\" hx-swap-oob=\"true\">"))
 	views.DashboardProjectList(products, id).Render(r.Context(), w)
 	w.Write([]byte("</div>"))
-	
+
 	// Normal response for the form
 	views.DashboardProjectForm(&p).Render(r.Context(), w)
 }

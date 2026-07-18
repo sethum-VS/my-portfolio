@@ -3,10 +3,9 @@ package middleware
 import (
 	"log"
 	"net/http"
-	"os"
-	"strings"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/sethum-VS/my-portfolio/internal/config"
 	"github.com/sethum-VS/my-portfolio/internal/services"
 )
 
@@ -56,21 +55,19 @@ func AdminAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Whitelist verification from environment variable
-		adminEmailsRaw := os.Getenv("ADMIN_EMAIL")
-		if adminEmailsRaw == "" {
-			log.Println("CRITICAL SECURITY WARNING: ADMIN_EMAIL environment variable is not set. Access denied to all users.")
+		// Whitelist verification from centralized config
+		if len(config.AppConfig.AdminEmails) == 0 {
+			log.Println("CRITICAL SECURITY WARNING: ADMIN_EMAIL is not set in config. Access denied to all users.")
 			http.Error(w, "Forbidden: Administrative access is currently disabled for security.", http.StatusForbidden)
 			return
 		}
 
-		// Parse multi-admin support (comma-separated)
+		// Parse multi-admin support
 		authorized := false
 		email, ok := claims["email"].(string)
 		if ok {
-			adminEmails := strings.Split(adminEmailsRaw, ",")
-			for _, adminEmail := range adminEmails {
-				if email == strings.TrimSpace(adminEmail) {
+			for _, adminEmail := range config.AppConfig.AdminEmails {
+				if email == adminEmail {
 					authorized = true
 					break
 				}

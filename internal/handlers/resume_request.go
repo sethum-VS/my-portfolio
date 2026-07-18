@@ -1,10 +1,11 @@
 package handlers
 
 import (
+	"github.com/sethum-VS/my-portfolio/internal/config"
+
 	"log"
 	"net/http"
 	"net/mail"
-	"os"
 	"strings"
 
 	"github.com/a-h/templ"
@@ -38,10 +39,10 @@ func ResumeRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cfg := models.GetResumeConfig()
+	cfg := models.GetResumeConfig(r.Context())
 
 	if cfg.IsComingSoon {
-		if err := models.AddToWaitlist(email); err != nil {
+		if err := models.AddToWaitlist(r.Context(), email); err != nil {
 			log.Printf("waitlist error: %v", err)
 			resumeRequestError(w, r, "Could not add to waitlist. Try again later.", http.StatusInternalServerError)
 			return
@@ -79,8 +80,8 @@ func resumeRequestError(w http.ResponseWriter, r *http.Request, message string, 
 		return
 	}
 
-	cfg := models.GetResumeConfig()
-	siteKey := os.Getenv("TURNSTILE_SITE_KEY")
+	cfg := models.GetResumeConfig(r.Context())
+	siteKey := config.AppConfig.TurnstileSiteKey
 	w.WriteHeader(status)
 	templ.Handler(views.ResumeModalInner(cfg.IsComingSoon, siteKey, message)).ServeHTTP(w, r)
 }

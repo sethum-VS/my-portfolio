@@ -17,19 +17,19 @@ import (
 const maxResumeUploadBytes = 10 << 20 // 10MB
 
 func renderResumeAdmin(w http.ResponseWriter, r *http.Request, cfg models.ResumeConfig, message string, isError bool) {
-	templ.Handler(views.ResumeAdminCard(cfg, models.WaitlistCount(), message, isError)).ServeHTTP(w, r)
+	templ.Handler(views.ResumeAdminCard(cfg, models.WaitlistCount(r.Context()), message, isError)).ServeHTTP(w, r)
 }
 
 // AdminResumeFormHandler serves GET /api/admin/resume.
 func AdminResumeFormHandler(w http.ResponseWriter, r *http.Request) {
-	cfg := models.GetResumeConfig()
+	cfg := models.GetResumeConfig(r.Context())
 	renderResumeAdmin(w, r, cfg, "", false)
 }
 
 // AdminResumeBroadcastHandler sends the current PDF to everyone on the waitlist.
 func AdminResumeBroadcastHandler(w http.ResponseWriter, r *http.Request) {
-	cfg := models.GetResumeConfig()
-	waitlistCount := models.WaitlistCount()
+	cfg := models.GetResumeConfig(r.Context())
+	waitlistCount := models.WaitlistCount(r.Context())
 
 	if waitlistCount == 0 {
 		renderResumeAdmin(w, r, cfg, "No one is on the waitlist.", true)
@@ -50,11 +50,11 @@ func AdminResumeBroadcastHandler(w http.ResponseWriter, r *http.Request) {
 // AdminResumeSaveHandler handles POST /api/admin/resume.
 func AdminResumeSaveHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(maxResumeUploadBytes); err != nil {
-		renderResumeAdmin(w, r, models.GetResumeConfig(), "Invalid form data.", true)
+		renderResumeAdmin(w, r, models.GetResumeConfig(r.Context()), "Invalid form data.", true)
 		return
 	}
 
-	prev := models.GetResumeConfig()
+	prev := models.GetResumeConfig(r.Context())
 	cfg := prev
 	cfg.IsComingSoon = r.FormValue("is_coming_soon") == "on"
 
@@ -83,14 +83,14 @@ func AdminResumeSaveHandler(w http.ResponseWriter, r *http.Request) {
 		cfg.PDFStorageURI = gsURI
 	}
 
-	if err := models.SaveResumeConfig(cfg); err != nil {
+	if err := models.SaveResumeConfig(r.Context(), cfg); err != nil {
 		log.Printf("resume config save error: %v", err)
 		renderResumeAdmin(w, r, prev, "Failed to save configuration.", true)
 		return
 	}
 
 	message := "Resume settings saved."
-	waitlistCount := models.WaitlistCount()
+	waitlistCount := models.WaitlistCount(r.Context())
 	turnedOffComingSoon := prev.IsComingSoon && !cfg.IsComingSoon
 	manualBroadcast := r.FormValue("send_to_waitlist") == "on"
 
