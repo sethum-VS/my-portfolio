@@ -1,6 +1,8 @@
 package services
 
 import (
+	"time"
+
 	"github.com/sethum-VS/my-portfolio/internal/config"
 
 	"context"
@@ -62,13 +64,16 @@ func ParseReadmeToProductContext(ctx context.Context, readme string) (*models.Pr
 		},
 		Temperature: 1.0,
 		TopP:        1.0,
-		MaxTokens:   16384,
+		MaxTokens:   2000,
 		ResponseFormat: &openai.ChatCompletionResponseFormat{
 			Type: openai.ChatCompletionResponseFormatTypeJSONObject,
 		},
 	}
 
-	resp, err := client.CreateChatCompletion(ctx, req)
+	primaryCtx, primaryCancel := context.WithTimeout(ctx, 12*time.Second)
+	defer primaryCancel()
+
+	resp, err := client.CreateChatCompletion(primaryCtx, req)
 	if err != nil {
 		shouldFailover := true
 
@@ -87,7 +92,10 @@ func ParseReadmeToProductContext(ctx context.Context, readme string) (*models.Pr
 				backupConfig.BaseURL = baseURL
 				backupClient := openai.NewClientWithConfig(backupConfig)
 
-				resp, err = backupClient.CreateChatCompletion(ctx, req)
+				backupCtx, backupCancel := context.WithTimeout(ctx, 12*time.Second)
+				defer backupCancel()
+
+				resp, err = backupClient.CreateChatCompletion(backupCtx, req)
 				if err != nil {
 					return nil, fmt.Errorf("nvidia nim generation failed with both primary and backup keys: %w", err)
 				}
