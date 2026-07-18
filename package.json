@@ -1,6 +1,6 @@
 {
   "name": "my-portfolio",
-  "version": "0.1.0.1",
+  "version": "0.2.0.0",
   "description": "Sethum Methsanda's personal portfolio",
   "scripts": {
     "tailwind": "tailwindcss -i ./static/css/input.css -o ./static/out/output.css",
