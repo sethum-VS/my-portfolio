@@ -31,7 +31,7 @@ func ParseReadmeToProductContext(ctx context.Context, readme string) (*models.Pr
 	cfg.BaseURL = baseURL
 	client := openai.NewClientWithConfig(cfg)
 
-	model := "z-ai/glm-5.2"
+	model := "meta/llama-3.1-8b-instruct"
 
 	// Define the master system instruction for the AI
 	systemInstructionText := "You are an expert Technical Writer and Data Extractor. Your job is to analyze the provided raw README.md file and extract its contents into a strict JSON object. " +
