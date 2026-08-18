@@ -23,9 +23,9 @@ env:
   # ── Azure config (must match azure-setup.sh) ─────────────────────────────
   AZURE_RESOURCE_GROUP: rg-portfolio
   AZURE_CONTAINER_APP: ca-portfolio
-  # ── GHCR image config ────────────────────────────────────────────────────
+  # ── GHCR image config (must be strictly lowercase for OCI spec) ───────────
   IMAGE_REGISTRY: ghcr.io
-  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/my-portfolio
+  IMAGE_NAME: ghcr.io/sethum-vs/my-portfolio
   # Note: Container App is hosted in centralindia (Azure for Students policy constraint)
 
 jobs:
@@ -92,6 +92,7 @@ jobs:
     permissions:
       contents: read
       id-token: write # required for Azure OIDC authentication
+      packages: read  # required for GHCR image pull
 
     steps:
       - name: Log in to Azure (OIDC)
@@ -100,6 +101,16 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Configure GHCR credentials in Container App so it can pull the image
+      - name: Configure GHCR credentials in Container App
+        run: |
+          az containerapp registry set \
+            --name "${{ env.AZURE_CONTAINER_APP }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --server "${{ env.IMAGE_REGISTRY }}" \
+            --username "${{ github.actor }}" \
+            --password "${{ secrets.GITHUB_TOKEN }}"
 
       # Update ONLY the image tag. Azure Container Apps resolves secretrefs
       # at runtime from its own secret store — no re-application needed.
