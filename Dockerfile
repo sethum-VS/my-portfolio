@@ -33,7 +33,7 @@ RUN npm run build:ts
 # CGO_ENABLED=0 ensures a statically linked binary, required for scratch/minimal images
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /app/bin/server ./cmd/server
 
-# ── Runner Stage ─────────────────────────────────────────────────────────────
+# ── Runner Stage (Azure Container Apps — port 8080) ─────────────────────────
 FROM alpine:latest
 
 # Add ca-certificates for external API calls (e.g., Vertex AI, Firebase)
@@ -48,7 +48,12 @@ COPY --from=builder /app/bin/server ./server
 # We copy the entire static directory which now includes static/out (CSS/JS)
 COPY --from=builder /app/static ./static
 
-# Port is assigned dynamically by Heroku
+# Port 80 is the target port configured in Azure Container Apps ingress.
+# GCP_CREDENTIALS is injected at runtime via Azure Container Apps native secrets
+# (stored as secretref:gcp-credentials — never in logs or ARM revision history).
+EXPOSE 80
 
-# Run the binary
+# Run the binary.
+# At startup: if GCP_CREDENTIALS is set, write it to a temp file and point
+# GOOGLE_APPLICATION_CREDENTIALS at it so the GCP SDK can authenticate.
 CMD sh -c 'if [ -n "$GCP_CREDENTIALS" ]; then echo "$GCP_CREDENTIALS" > /tmp/gcp.json; export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp.json; fi; exec ./server'

@@ -1,6 +1,7 @@
 # Go build artifacts
 /bin/
 /tmp/
+/server
 *.exe
 /static/out/
 # Node

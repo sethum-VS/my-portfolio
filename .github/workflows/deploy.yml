@@ -1,25 +1,120 @@
-name: Deploy to Heroku
+# =============================================================================
+#  deploy.yml — Build → Push to GHCR → Deploy to Azure Container Apps
+#
+#  Triggered on every push to `main`.
+#
+#  This workflow ONLY updates the running image.
+#  Secrets and environment variables are managed once in Azure (via the
+#  azure-setup.sh script) and are NOT touched here — keeping them out of
+#  logs and ARM revision history entirely.
+#
+#  Required GitHub Repository Secrets (Settings → Secrets → Actions):
+#    AZURE_CREDENTIALS  — JSON output from scripts/azure-setup.sh
+# =============================================================================
+name: Build & Deploy to Azure Container Apps
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch: # allow manual trigger from GitHub UI
+
+env:
+  # ── Azure config (must match azure-setup.sh) ─────────────────────────────
+  AZURE_RESOURCE_GROUP: rg-portfolio
+  AZURE_CONTAINER_APP: ca-portfolio
+  # ── GHCR image config ────────────────────────────────────────────────────
+  IMAGE_REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/my-portfolio
+  # Note: Container App is hosted in centralindia (Azure for Students policy constraint)
 
 jobs:
-  deploy:
+  # ===========================================================================
+  #  JOB 1: Build the Docker image and push to GitHub Container Registry
+  # ===========================================================================
+  build-and-push:
+    name: Build & Push Image
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: read
+      packages: write # required to push to GHCR
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
+
     steps:
-      - name: Checkout Code
+      - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Deploy to Heroku
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-          HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.IMAGE_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Generate tags:
+      #   ghcr.io/sethum-vs/my-portfolio:latest
+      #   ghcr.io/sethum-vs/my-portfolio:<git-sha>
+      - name: Generate image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=,format=short
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Use GitHub Actions cache to speed up subsequent builds
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ===========================================================================
+  #  JOB 2: Deploy the new image to Azure Container Apps
+  #  Runs only after the image is successfully pushed.
+  #  No secrets are passed here — Azure reads them from its own secret store.
+  # ===========================================================================
+  deploy:
+    name: Deploy to Azure
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    permissions:
+      contents: read
+      id-token: write # required for Azure OIDC authentication
+
+    steps:
+      - name: Log in to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Update ONLY the image tag. Azure Container Apps resolves secretrefs
+      # at runtime from its own secret store — no re-application needed.
+      - name: Update Container App image
         run: |
-          curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
-          heroku container:login
-          heroku stack:set container -a $HEROKU_APP_NAME
-          heroku container:push web -a $HEROKU_APP_NAME
-          heroku container:release web -a $HEROKU_APP_NAME
+          az containerapp update \
+            --name "${{ env.AZURE_CONTAINER_APP }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --image "${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image-tag }}"
+
+      - name: Get deployed app URL
+        run: |
+          FQDN=$(az containerapp show \
+            --name "${{ env.AZURE_CONTAINER_APP }}" \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          echo "🚀 Deployed to: https://${FQDN}"
+          echo "FQDN=https://${FQDN}" >> "$GITHUB_STEP_SUMMARY"
