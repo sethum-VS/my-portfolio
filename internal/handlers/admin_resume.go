@@ -74,13 +74,13 @@ func AdminResumeSaveHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		gsURI, err := services.UploadResumePDF(r.Context(), file, "application/pdf")
+		storageURI, err := services.UploadResumePDF(r.Context(), file, "application/pdf")
 		if err != nil {
 			log.Printf("resume upload error: %v", err)
-			renderResumeAdmin(w, r, prev, "Failed to upload PDF. Check GCS configuration.", true)
+			renderResumeAdmin(w, r, prev, "Failed to upload PDF. Check Supabase Storage configuration.", true)
 			return
 		}
-		cfg.PDFStorageURI = gsURI
+		cfg.PDFStorageURI = storageURI
 	}
 
 	if err := models.SaveResumeConfig(r.Context(), cfg); err != nil {
