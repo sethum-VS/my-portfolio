@@ -33,6 +33,7 @@ func UploadResumePDF(ctx context.Context, r io.Reader, contentType string) (stri
 
 	req.Header.Set("Authorization", "Bearer "+serviceKey)
 	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("x-upsert", "true")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
