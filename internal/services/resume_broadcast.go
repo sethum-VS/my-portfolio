@@ -8,7 +8,7 @@ import (
 	"github.com/sethum-VS/my-portfolio/internal/models"
 )
 
-const resumeAttachmentName = "Seth_Ummethsanda_CV.pdf"
+const ResumeAttachmentName = "SethumMethsanda_CV.pdf"
 
 // BroadcastResumeToWaitlist emails the current PDF to all waitlisted addresses and clears the list.
 func BroadcastResumeToWaitlist(ctx context.Context, pdfURI string) {
@@ -33,7 +33,7 @@ func broadcastResumeToWaitlist(ctx context.Context, pdfURI string) error {
 
 	var failed int
 	for _, email := range emails {
-		if err := SendEmail(ctx, email, subject, body, pdfBytes, resumeAttachmentName); err != nil {
+		if err := SendEmail(ctx, email, subject, body, pdfBytes, ResumeAttachmentName); err != nil {
 			log.Printf("waitlist email failed for %s: %v", email, err)
 			failed++
 		}
