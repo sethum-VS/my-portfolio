@@ -156,7 +156,7 @@ else
     --image "${PLACEHOLDER_IMAGE}" \
     --target-port "${TARGET_PORT}" \
     --ingress external \
-    --min-replicas 0 \
+    --min-replicas 1 \
     --max-replicas 3 \
     --cpu 0.5 \
     --memory 1.0Gi \

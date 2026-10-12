@@ -103,6 +103,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       # Configure GHCR credentials in Container App so it can pull the image
+      # Using GHCR_PAT (Personal Access Token) because GITHUB_TOKEN expires when workflow finishes
       - name: Configure GHCR credentials in Container App
         run: |
           az containerapp registry set \
@@ -110,16 +111,17 @@ jobs:
             --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
             --server "${{ env.IMAGE_REGISTRY }}" \
             --username "${{ github.actor }}" \
-            --password "${{ secrets.GITHUB_TOKEN }}"
+            --password "${{ secrets.GHCR_PAT }}"
 
-      # Update ONLY the image tag. Azure Container Apps resolves secretrefs
-      # at runtime from its own secret store — no re-application needed.
+      # Update ONLY the image tag and ensure min-replicas is 1 (never scale to zero).
+      # Azure Container Apps resolves secretrefs at runtime from its own secret store.
       - name: Update Container App image
         run: |
           az containerapp update \
             --name "${{ env.AZURE_CONTAINER_APP }}" \
             --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
-            --image "${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image-tag }}"
+            --image "${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image-tag }}" \
+            --min-replicas 1
 
       - name: Get deployed app URL
         run: |
